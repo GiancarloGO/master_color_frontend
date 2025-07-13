@@ -1,8 +1,8 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const toast = useToast();
@@ -71,7 +71,7 @@ const login = async () => {
 
     if (authStore.success) {
         toast.add({ severity: 'success', summary: 'Inicio de sesión exitoso', detail: 'Bienvenido, empleado.', life: 3000 });
-        router.push('/dashboard');
+        router.push('/profile');
     } else {
         if (authStore.validationErrors && authStore.validationErrors.length > 0) {
             authStore.validationErrors.forEach((err) => {
@@ -341,6 +341,7 @@ const submitForgotPassword = async () => {
         display: flex;
         justify-content: center;
         align-items: center;
+
         i {
             font-size: 4rem;
             color: var(--primary-color, #4f46e5);
@@ -348,63 +349,76 @@ const submitForgotPassword = async () => {
         }
     }
 }
+
 @keyframes scaleIn {
     0% {
         transform: scale(0.5);
         opacity: 0;
     }
+
     100% {
         transform: scale(1);
         opacity: 1;
     }
 }
+
 @keyframes pulse {
     0% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
     }
+
     70% {
         transform: scale(1);
         box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
     }
+
     100% {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
     }
 }
+
 @media (max-width: 400px) {
     .min-h-screen {
         padding: 0.25rem 0.125rem;
     }
+
     :deep(.p-inputtext) {
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
         font-size: 0.875rem;
     }
+
     :deep(.p-input-icon-left > i:first-of-type) {
         left: 0.875rem;
         font-size: 0.875rem;
     }
+
     :deep(.p-input-icon-left > .p-inputtext) {
         padding-left: 2.75rem;
     }
+
     :deep(.p-button) {
         padding: 0.75rem 1rem;
         font-size: 0.875rem;
         border-radius: 0.5rem;
     }
 }
+
 @media (min-width: 401px) and (max-width: 640px) {
     :deep(.p-inputtext) {
         padding: 0.875rem 1rem;
         border-radius: 0.625rem;
         font-size: 0.9375rem;
     }
+
     :deep(.p-button) {
         padding: 0.875rem 1.25rem;
         font-size: 0.9375rem;
     }
 }
+
 :deep(.p-inputtext) {
     padding: 1rem 1.25rem;
     border-radius: 0.75rem;
@@ -415,27 +429,33 @@ const submitForgotPassword = async () => {
     background-color: #ffffff;
     transition: all 0.3s ease;
 }
+
 :deep(.p-inputtext:focus) {
     border-color: #1d4ed8;
     box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
     background-color: #ffffff;
 }
+
 :deep(.p-inputtext.p-invalid) {
     border-color: #dc2626;
     box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15);
     background-color: #fef2f2;
 }
+
 :deep(.p-input-icon-left > i:first-of-type) {
     left: 1.25rem;
     color: #6b7280;
     font-weight: bold;
 }
+
 :deep(.p-input-icon-left > .p-inputtext) {
     padding-left: 3.5rem;
 }
+
 :deep(.p-input-icon-right > .p-inputtext) {
     padding-right: 3.5rem;
 }
+
 :deep(.p-button) {
     border-radius: 0.75rem;
     font-weight: 700;
@@ -445,33 +465,40 @@ const submitForgotPassword = async () => {
     overflow: hidden;
     border-width: 2px;
 }
+
 :deep(.p-button:not(.p-button-outlined):not(.p-button-text)) {
     background: #1d4ed8;
     border-color: #1d4ed8;
     color: #ffffff;
 }
+
 :deep(.p-button:not(.p-button-outlined):not(.p-button-text):hover) {
     background: #1e40af;
     border-color: #1e40af;
     transform: translateY(-2px);
     box-shadow: 0 12px 28px rgba(29, 78, 216, 0.4);
 }
+
 :deep(.p-button-outlined) {
     background: transparent;
     border-width: 2px;
 }
+
 :deep(.p-checkbox) {
     width: 1.25rem;
     height: 1.25rem;
 }
+
 :deep(.p-checkbox .p-checkbox-box) {
     border-width: 2px;
     border-color: #6b7280;
 }
+
 :deep(.p-checkbox.p-checkbox-checked .p-checkbox-box) {
     background-color: #1d4ed8;
     border-color: #1d4ed8;
 }
+
 :deep(.p-toast .p-toast-message) {
     border-radius: 0.75rem;
     box-shadow:
@@ -479,44 +506,55 @@ const submitForgotPassword = async () => {
         0 10px 10px -5px rgba(0, 0, 0, 0.08);
     border-width: 1px;
 }
+
 :deep(.p-toast .p-toast-message-success) {
     background-color: #dcfce7;
     border-color: #16a34a;
 }
+
 :deep(.p-toast .p-toast-message-error) {
     background-color: #fef2f2;
     border-color: #dc2626;
 }
+
 @media (hover: none) and (pointer: coarse) {
     .overflow-y-auto::-webkit-scrollbar {
         width: 0;
     }
+
     .overflow-y-auto {
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
+
     :deep(.p-button:hover) {
         transform: none;
         box-shadow: none;
     }
 }
+
 .p-button {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .p-inputtext {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 :deep(.p-button-outlined:hover) {
     transform: translateY(-1px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
+
 :deep(.p-inputtext::placeholder) {
     color: #9ca3af;
     font-weight: 500;
 }
+
 :deep(.p-button:hover) {
     font-weight: 700;
 }
+
 @media (max-width: 480px) {
     :deep(.p-toast .p-toast-message) {
         margin: 0.25rem;
@@ -524,14 +562,17 @@ const submitForgotPassword = async () => {
         width: calc(100vw - 2rem);
         max-width: 100%;
     }
+
     :deep(.p-toast .p-toast-message-content) {
         padding: 0.5rem;
         align-items: flex-start;
     }
 }
+
 :deep(.p-button:focus) {
     box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
 }
+
 :deep(.p-checkbox:focus .p-checkbox-box) {
     box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
 }

@@ -1,8 +1,8 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
-import { useRouter } from 'vue-router';
-import { ref, onMounted, computed } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 // Stores y servicios
 const authStore = useAuthStore();
@@ -43,6 +43,7 @@ onMounted(async () => {
     }
     loading.value = false;
 
+    console.log(authStore.currentUser);
     // Detectar modo oscuro del sistema
     isDarkMode.value = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 
