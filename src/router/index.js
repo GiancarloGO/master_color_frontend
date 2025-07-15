@@ -120,6 +120,25 @@ const router = createRouter({
             component: () => import('@/views/payment/PaymentReturn.vue'),
             meta: { public: true } // Pública para manejar redirecciones de MercadoPago
         },
+        // MercadoPago back_urls routes
+        {
+            path: '/payment/success',
+            name: 'payment-success',
+            component: () => import('@/views/payment/PaymentReturn.vue'),
+            meta: { public: true }
+        },
+        {
+            path: '/payment/failure',
+            name: 'payment-failure',
+            component: () => import('@/views/payment/PaymentReturn.vue'),
+            meta: { public: true }
+        },
+        {
+            path: '/payment/pending',
+            name: 'payment-pending',
+            component: () => import('@/views/payment/PaymentReturn.vue'),
+            meta: { public: true }
+        },
         {
             path: '/accessdenied',
             name: 'accessDenied',

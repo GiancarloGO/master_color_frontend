@@ -1,8 +1,8 @@
 <script setup>
-import MercadoPagoCheckout from '@/components/payment/MercadoPagoCheckout.vue';
 import { useOrdersStore } from '@/stores/orders';
 import { useToast } from 'primevue/usetoast';
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 // Props
 const props = defineProps({
@@ -21,11 +21,12 @@ const emit = defineEmits(['update:visible', 'payment-success', 'payment-failed']
 
 const ordersStore = useOrdersStore();
 const toast = useToast();
+const route = useRoute();
 
 // Estado
 const loading = ref(false);
-const useBricks = ref(true); // Activar modo Bricks por defecto para pagos integrados
-const preferenceData = ref(null);
+const isPolling = ref(false);
+const pollingInterval = ref(null);
 
 // Computed
 const isVisible = computed({
@@ -40,10 +41,13 @@ const orderTotal = computed(() => {
 // Watch for modal visibility changes
 watch(
     () => props.visible,
-    async (newValue) => {
-        if (newValue && props.order?.id) {
-            // Inicializar preferencia de pago para modo Bricks
-            await initializePaymentPreference();
+    (newValue) => {
+        if (newValue) {
+            // Check if we need to resume polling from URL params
+            checkAndResumePolling();
+        } else {
+            // Stop polling when modal closes
+            stopPolling();
         }
     }
 );
@@ -55,60 +59,77 @@ const hasValidOrder = computed(() => {
 
 // Métodos
 const closeModal = () => {
-    stopPolling(); // Stop polling when modal closes
+    stopPolling();
     isVisible.value = false;
     resetForm();
 };
 
 const resetForm = () => {
-    preferenceData.value = null;
+    loading.value = false;
+    isPolling.value = false;
 };
 
-const initializePaymentPreference = async () => {
-    if (!props.order?.id) return;
-
-    loading.value = true;
-
-    try {
-        const result = await ordersStore.generatePaymentLink(props.order.id);
-
-        if (result.success) {
-            preferenceData.value = result.data;
-        } else {
-            throw new Error(result.message || 'Error al generar preferencia de pago');
+const checkAndResumePolling = () => {
+    // Check URL params for order ID (when returning from MercadoPago)
+    const orderParam = route.query.order;
+    if (orderParam && !isPolling.value) {
+        const orderId = parseInt(orderParam);
+        if (orderId && orderId === props.order?.id) {
+            startPolling(orderId);
         }
-    } catch (error) {
-        console.error('Error initializing payment preference:', error);
-        console.error('Error details:', {
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message
-        });
-
-        let errorMessage = 'No se pudo inicializar el pago';
-
-        if (error.response?.status === 500) {
-            errorMessage = 'Error interno del servidor. Verifica que la orden exista y esté en estado pendiente_pago.';
-        } else if (error.response?.status === 404) {
-            errorMessage = 'La orden no fue encontrada. Por favor, crea una nueva orden.';
-        } else if (error.response?.status === 400) {
-            errorMessage = error.response.data?.message || 'Datos de la orden inválidos.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        toast.add({
-            severity: 'error',
-            summary: 'Error de pago',
-            detail: errorMessage,
-            life: 8000
-        });
-    } finally {
-        loading.value = false;
     }
 };
 
-// Handlers for MercadoPago Checkout events
+const startPolling = (orderId) => {
+    if (isPolling.value) return;
+
+    isPolling.value = true;
+
+    const pollPaymentStatus = async () => {
+        try {
+            const result = await ordersStore.checkPaymentStatus(orderId);
+
+            if (result.success && result.data) {
+                const paymentStatus = result.data.payment_status;
+
+                if (import.meta.env.MODE === 'development') {
+                    console.log('💳 Payment status:', paymentStatus);
+                }
+
+                // Stop polling if payment is completed (approved, rejected, or cancelled)
+                if (['approved', 'rejected', 'cancelled'].includes(paymentStatus)) {
+                    stopPolling();
+
+                    if (paymentStatus === 'approved') {
+                        handlePaymentSuccess(result.data);
+                    } else {
+                        handlePaymentError({ message: 'El pago no fue aprobado' });
+                    }
+                }
+            }
+        } catch (error) {
+            if (import.meta.env.MODE === 'development') {
+                console.error('💳 Error checking payment status:', error);
+            }
+        }
+    };
+
+    // Check immediately
+    pollPaymentStatus();
+
+    // Then check every 5 seconds
+    pollingInterval.value = setInterval(pollPaymentStatus, 5000);
+};
+
+const stopPolling = () => {
+    if (pollingInterval.value) {
+        clearInterval(pollingInterval.value);
+        pollingInterval.value = null;
+    }
+    isPolling.value = false;
+};
+
+// Payment event handlers
 const handlePaymentSuccess = (paymentData) => {
     toast.add({
         severity: 'success',
@@ -122,7 +143,9 @@ const handlePaymentSuccess = (paymentData) => {
 };
 
 const handlePaymentError = (error) => {
-    console.error('Payment error:', error);
+    if (import.meta.env.MODE === 'development') {
+        console.error('Payment error:', error);
+    }
 
     toast.add({
         severity: 'error',
@@ -134,59 +157,67 @@ const handlePaymentError = (error) => {
     emit('payment-failed', error);
 };
 
-const handlePaymentPending = (paymentData) => {
-    toast.add({
-        severity: 'info',
-        summary: 'Pago Pendiente',
-        detail: 'Tu pago está siendo procesado',
-        life: 5000
-    });
+// Process payment with MercadoPago
+const processPayment = async () => {
+    if (loading.value) return; // Prevent multiple calls
 
-    emit('payment-success', paymentData);
-    closeModal();
-};
-
-// State for payment polling
-const paymentWindow = ref(null);
-const pollingInterval = ref(null);
-const isPolling = ref(false);
-
-// Modo clásico de MercadoPago con nueva ventana y polling
-const switchToClassicMode = async () => {
-    useBricks.value = false;
     loading.value = true;
 
     try {
-        console.log('💳 Iniciando pago en modo clásico para orden:', props.order.id);
+        if (import.meta.env.MODE === 'development') {
+            console.log('💳 Iniciando pago para orden:', props.order.id);
+        }
+
         const result = await ordersStore.generatePaymentLink(props.order.id);
 
         if (result.success) {
-            // Determinar URL según entorno (sandbox vs producción)
-            const paymentUrl = result.data.init_point;
+            // Get init_point from response (handle both object and direct string)
+            let paymentUrl;
+            if (typeof result.data === 'string') {
+                paymentUrl = result.data;
+            } else if (result.data && result.data.init_point) {
+                paymentUrl = result.data.init_point;
+            } else {
+                throw new Error('No se recibió URL de pago válida');
+            }
 
-            console.log('💳 URL de pago generada:', paymentUrl);
+            // Add locale parameter if not present
+            try {
+                const url = new URL(paymentUrl);
+                if (!url.searchParams.has('locale')) {
+                    url.searchParams.set('locale', 'es-PE');
+                }
+                paymentUrl = url.toString();
+            } catch (e) {
+                if (import.meta.env.MODE === 'development') {
+                    console.warn('No se pudo analizar la URL de MercadoPago para añadir locale:', e);
+                }
+            }
 
-            // Usar iframe integrado en lugar de nueva ventana
-            console.log('💳 Usando iframe integrado para el pago');
+            if (import.meta.env.MODE === 'development') {
+                console.log('💳 URL de pago generada:', paymentUrl);
+            }
 
             toast.add({
                 severity: 'info',
-                summary: 'Preparando pago',
-                detail: 'Abriendo formulario de pago integrado...',
+                summary: 'Redirigiendo a MercadoPago',
+                detail: 'Serás redirigido para completar tu pago...',
                 life: 3000
             });
 
-            // Guardar ID de orden para polling
-            localStorage.setItem('pendingOrderId', props.order.id);
-            localStorage.setItem('currentOrderId', props.order.id);
+            // Start polling before redirect
+            startPolling(props.order.id);
 
-            // Redirigir directamente a MercadoPago
+            // Redirect to MercadoPago
             window.location.href = paymentUrl;
         } else {
             throw new Error(result.message || 'Error al generar enlace de MercadoPago');
         }
     } catch (error) {
-        console.error('💳 Error en modo clásico:', error);
+        if (import.meta.env.MODE === 'development') {
+            console.error('💳 Error procesando pago:', error);
+        }
+
         toast.add({
             severity: 'error',
             summary: 'Error de Pago',
@@ -198,111 +229,11 @@ const switchToClassicMode = async () => {
     }
 };
 
-// Start polling for payment status (unused but kept for potential future use)
-// const startPaymentPolling = () => {
-//     if (pollingInterval.value) {
-//         clearInterval(pollingInterval.value);
-//     }
+// Lifecycle hooks
+onMounted(() => {
+    checkAndResumePolling();
+});
 
-//     isPolling.value = true;
-//     let attempts = 0;
-//     const maxAttempts = 60; // 5 minutes (60 * 5 seconds)
-
-//     pollingInterval.value = setInterval(async () => {
-//         attempts++;
-//         console.log(`💳 Payment polling attempt ${attempts}/${maxAttempts}`);
-
-//         try {
-//             // Check if payment window is closed
-//             if (paymentWindow.value && paymentWindow.value.closed) {
-//                 console.log('💳 Payment window closed, checking payment status...');
-//             }
-
-//             // Check payment status
-//             const response = await ordersStore.checkPaymentStatus(props.order.id);
-
-//             if (response.success && ordersStore.paymentStatus) {
-//                 const status = ordersStore.paymentStatus;
-//                 console.log('💳 Payment status:', status);
-
-//                 // Payment completed successfully
-//                 if (status.payment_status === 'approved' && status.order_status === 'pendiente') {
-//                     stopPolling();
-//                     localStorage.removeItem('pendingOrderId');
-
-//                     toast.add({
-//                         severity: 'success',
-//                         summary: 'Pago Completado',
-//                         detail: 'Tu pago ha sido procesado exitosamente',
-//                         life: 5000
-//                     });
-
-//                     emit('payment-success', status);
-//                     closeModal();
-//                     return;
-//                 }
-
-//                 // Payment failed or rejected
-//                 if (status.payment_status === 'rejected' || status.order_status === 'pago_fallido') {
-//                     stopPolling();
-//                     localStorage.removeItem('pendingOrderId');
-
-//                     toast.add({
-//                         severity: 'error',
-//                         summary: 'Pago Rechazado',
-//                         detail: 'El pago fue rechazado. Puedes intentar nuevamente.',
-//                         life: 5000
-//                     });
-
-//                     emit('payment-failed', { message: 'Pago rechazado' });
-//                     return;
-//                 }
-//             }
-
-//             // Stop polling after max attempts
-//             if (attempts >= maxAttempts) {
-//                 stopPolling();
-
-//                 toast.add({
-//                     severity: 'warn',
-//                     summary: 'Verificación en progreso',
-//                     detail: 'La verificación del pago continúa. Te notificaremos cuando esté listo.',
-//                     life: 8000
-//                 });
-//             }
-//         } catch (error) {
-//             console.error('Error polling payment status:', error);
-
-//             // Stop polling after too many errors
-//             if (attempts >= 10) {
-//                 stopPolling();
-
-//                 toast.add({
-//                     severity: 'error',
-//                     summary: 'Error de verificación',
-//                     detail: 'No se pudo verificar el estado del pago. Contacta con soporte.',
-//                     life: 8000
-//                 });
-//             }
-//         }
-//     }, 5000); // Poll every 5 seconds
-// };
-
-// Stop polling
-const stopPolling = () => {
-    if (pollingInterval.value) {
-        clearInterval(pollingInterval.value);
-        pollingInterval.value = null;
-    }
-    isPolling.value = false;
-
-    // Close payment window if still open
-    if (paymentWindow.value && !paymentWindow.value.closed) {
-        paymentWindow.value.close();
-    }
-};
-
-// Cleanup on component unmount
 onBeforeUnmount(() => {
     stopPolling();
 });
@@ -326,11 +257,6 @@ onBeforeUnmount(() => {
                     <ProgressSpinner />
                     <p class="mt-4 text-gray-600">Preparando opciones de pago...</p>
                 </div>
-            </div>
-
-            <!-- Bricks Integration -->
-            <div v-else-if="useBricks && preferenceData">
-                <MercadoPagoCheckout :order-data="order" :preference-data="preferenceData" @payment-success="handlePaymentSuccess" @payment-error="handlePaymentError" @payment-pending="handlePaymentPending" @use-classic-mode="switchToClassicMode" />
             </div>
 
             <!-- Payment Polling Status (fallback) -->
@@ -372,7 +298,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div class="action-buttons">
-                        <Button class="pay-button" size="large" :loading="loading" :disabled="isPolling" @click="initializePaymentPreference">
+                        <Button class="pay-button" size="large" :loading="loading" :disabled="isPolling || loading" @click="processPayment">
                             <i class="pi pi-credit-card mr-2"></i>
                             Pagar con MercadoPago
                         </Button>
