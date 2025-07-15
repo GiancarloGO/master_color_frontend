@@ -72,7 +72,7 @@ onBeforeMount(() => {
 <template>
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
-            <router-link to="/dashboard" class="layout-topbar-logo">
+            <router-link to="/" class="layout-topbar-logo">
                 <img width="25px" src="/mc.png" alt="Logo MasterColor" />
                 <span>MasterColor</span>
             </router-link>
