@@ -1,9 +1,10 @@
 <script setup>
-import api from '@/api/axios';
+import { useOrdersStore } from '@/stores/orders';
 import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 
 // State
+const ordersStore = useOrdersStore();
 const purchases = ref([]);
 const loading = ref(false);
 const toast = useToast();
@@ -22,11 +23,11 @@ function getStatusSeverity(status) {
 async function loadPurchases() {
     loading.value = true;
     try {
-        const response = await api.get('/client/purchases');
-        if (response?.success) {
-            purchases.value = response.data || [];
+        const result = await ordersStore.fetchPurchasedProducts();
+        if (result.success) {
+            purchases.value = ordersStore.purchasedProducts;
         } else {
-            toast.add({ severity: 'warn', summary: 'Aviso', detail: response.message || 'No se pudieron obtener las compras', life: 4000 });
+            toast.add({ severity: 'warn', summary: 'Aviso', detail: result.message || 'No se pudieron obtener las compras', life: 4000 });
         }
     } catch (error) {
         console.error(error);
@@ -60,7 +61,7 @@ onMounted(() => {
             class="purchases-table"
             :value="purchases"
             :loading="loading"
-            data-key="order_id"
+            data-key="id"
             :paginator="true"
             :rows="10"
             :rows-per-page-options="[5, 10, 20]"
@@ -99,6 +100,13 @@ onMounted(() => {
             <Column field="product.name" header="Producto" sortable style="min-width: 200px">
                 <template #body="{ data }">
                     <span class="product-name">{{ data.product?.name }}</span>
+                </template>
+            </Column>
+
+            <!-- Fecha de compra -->
+            <Column field="order_created_at" header="Fecha de compra" sortable style="width: 120px; text-align: center">
+                <template #body="{ data }">
+                    {{ new Date(data.order_created_at).toLocaleDateString() }}
                 </template>
             </Column>
 
@@ -281,5 +289,4 @@ onMounted(() => {
         text-align: center;
     }
 }
-
 </style>

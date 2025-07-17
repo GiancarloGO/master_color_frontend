@@ -13,7 +13,8 @@ export const useOrdersStore = defineStore('ordersStore', {
         message: '',
         validationErrors: [],
         paymentStatus: null,
-        paymentPollingInterval: null
+        paymentPollingInterval: null,
+        purchasedProducts: []
     }),
 
     getters: {
@@ -27,10 +28,35 @@ export const useOrdersStore = defineStore('ordersStore', {
         getMessage: (state) => state.message,
         getPendingOrders: (state) => state.orders.filter((order) => order.status === 'pendiente_pago' || order.status === 'pago_fallido'),
         getActiveOrders: (state) => state.orders.filter((order) => ['confirmado', 'procesando', 'enviado'].includes(order.status)),
-        getCompletedOrders: (state) => state.orders.filter((order) => order.status === 'entregado')
+        getCompletedOrders: (state) => state.orders.filter((order) => order.status === 'entregado'),
+        getPurchasedProducts: (state) => state.purchasedProducts
     },
 
     actions: {
+        // Obtener todos los productos comprados del cliente
+        async fetchPurchasedProducts(forceRefresh = false) {
+            // Si ya tenemos datos y no se solicita refresco, usar caché
+            if (!forceRefresh && this.purchasedProducts.length) return { success: true, data: this.purchasedProducts };
+
+            this.resetState();
+            try {
+                const response = await ordersApi.getPurchasedProducts();
+                const processed = handleProcessSuccess(response, this);
+
+                if (processed.success) {
+                    this.purchasedProducts = processed.data.data || processed.data || [];
+                    // Guardar caché
+                    localStorage.setItem('purchasedProducts', JSON.stringify(this.purchasedProducts));
+                }
+                return processed;
+            } catch (error) {
+                this.error = error;
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al obtener productos comprados' };
+            } finally {
+                this.loading = false;
+            }
+        },
         // Obtener todas las órdenes del cliente
         async fetchOrders() {
             this.resetState();

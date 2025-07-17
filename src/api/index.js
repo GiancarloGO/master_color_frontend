@@ -118,7 +118,10 @@ export const ordersApi = {
     getPaymentStatus: (orderId) => axios.get(`/payment-status/${orderId}`),
 
     // Cancelar orden (solo si está en pendiente_pago)
-    cancelOrder: (orderId) => axios.patch(`/client/orders/${orderId}/cancel`)
+    cancelOrder: (orderId) => axios.patch(`/client/orders/${orderId}/cancel`),
+
+    // Obtener todos los productos comprados por el cliente (sin paginación)
+    getPurchasedProducts: (paginate = false) => axios.get(`/client/orders/purchased-products${paginate === false ? '?paginate=false' : ''}`)
 };
 
 // Funciones para pagos con MercadoPago Bricks
