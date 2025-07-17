@@ -85,7 +85,7 @@ onMounted(() => {
             </template>
 
             <!-- Imagen -->
-            <Column header="Imagen" style="width: 80px">
+            <Column header="Imagen" style="width: 5rem">
                 <template #body="{ data }">
                     <div class="product-image-container">
                         <img v-if="data.product?.image_url" :src="data.product.image_url" :alt="data.product?.name" class="product-image" @error="$event.target.style.display = 'none'" />
@@ -97,35 +97,42 @@ onMounted(() => {
             </Column>
 
             <!-- Nombre del producto -->
-            <Column field="product.name" header="Producto" sortable style="min-width: 200px">
+            <Column field="product.name" header="Producto" sortable style="min-width: 12rem">
                 <template #body="{ data }">
                     <span class="product-name">{{ data.product?.name }}</span>
                 </template>
             </Column>
 
+            <!--N° de orden-->
+            <Column field="order_id" header="N° de orden" sortable style="width: 7rem; text-align: center">
+                <template #body="{ data }">
+                    {{ data.order_id }}
+                </template>
+            </Column>
+
             <!-- Fecha de compra -->
-            <Column field="order_created_at" header="Fecha de compra" sortable style="width: 120px; text-align: center">
+            <Column field="order_created_at" header="Fecha de compra" sortable style="width: 9rem; text-align: center">
                 <template #body="{ data }">
                     {{ new Date(data.order_created_at).toLocaleDateString() }}
                 </template>
             </Column>
 
             <!-- Cantidad -->
-            <Column field="quantity" header="Cantidad" sortable style="width: 100px; text-align: center">
+            <Column field="quantity" header="Cantidad" sortable style="width: 6rem; text-align: center">
                 <template #body="{ data }">
                     <Tag :value="data.quantity" severity="info" />
                 </template>
             </Column>
 
             <!-- Precio unitario -->
-            <Column field="unit_price" header="Precio (S/)" sortable style="width: 120px; text-align: right">
+            <Column field="unit_price" header="Precio (S/)" sortable style="width: 8rem; text-align: right">
                 <template #body="{ data }">
                     {{ parseFloat(data.unit_price).toFixed(2) }}
                 </template>
             </Column>
 
             <!-- Estado de la orden -->
-            <Column field="order_status" header="Estado de Orden" sortable style="width: 160px; text-align: center">
+            <Column field="order_status" header="Estado" sortable style="width: 12rem; text-align: center">
                 <template #body="{ data }">
                     <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)" class="status-tag" />
                 </template>
