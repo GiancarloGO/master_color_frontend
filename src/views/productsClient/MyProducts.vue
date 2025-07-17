@@ -97,7 +97,7 @@ onMounted(() => {
             </Column>
 
             <!-- Nombre del producto -->
-            <Column field="product.name" header="Producto" sortable style="min-width: 12rem">
+            <Column field="product.name" header="Producto" sortable style="min-width: 10rem">
                 <template #body="{ data }">
                     <span class="product-name">{{ data.product?.name }}</span>
                 </template>
