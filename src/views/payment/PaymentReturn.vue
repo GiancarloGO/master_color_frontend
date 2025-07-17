@@ -1,8 +1,8 @@
 <script setup>
+import { ordersApi } from '@/api';
+import { useToast } from 'primevue/usetoast';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-import { paymentReturnApi } from '@/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -36,12 +36,11 @@ const startPolling = (orderId, maxAttempts = 10, intervalMs = 5000) => {
     const poll = async () => {
         attempts++;
         try {
-            const response = await paymentReturnApi.processPaymentReturn({
-                payment_id: route.query.payment_id,
-                order_id: orderId
-            });
+            const response = await ordersApi.getPaymentStatus(orderId);
 
-            if (response.data.processed) {
+            const processed = response.data.payment_status === 'approved' || response.data.order_status === 'pagado';
+
+            if (processed) {
                 // Payment was processed successfully
                 status.value = 'success';
                 icon.value = 'pi pi-check-circle';
@@ -155,12 +154,11 @@ onMounted(async () => {
 
     try {
         // Call backend to process payment return
-        const response = await paymentReturnApi.processPaymentReturn({
-            payment_id,
-            order_id: orderId
-        });
+        const response = await ordersApi.getPaymentStatus(orderId);
 
-        if (response.data.processed) {
+        const processed = response.data.payment_status === 'approved' || response.data.order_status === 'pagado';
+
+        if (processed) {
             // Payment was processed immediately
             status.value = 'success';
             icon.value = 'pi pi-check-circle';
@@ -181,9 +179,10 @@ onMounted(async () => {
                 router.push(`/orders?highlight=${orderId}`);
             }, 3000);
         } else {
-            // Payment not yet processed, start polling
+            // Payment no aprobado aún, iniciar polling con el intervalo recomendado
+            const nextInterval = (response.data.polling?.recommended_interval || 5) * 1000;
             message.value = 'Verificando el estado de tu pago...';
-            startPolling(orderId);
+            startPolling(orderId, 20, nextInterval);
         }
     } catch (error) {
         console.error('Error processing payment return:', error);
