@@ -1,8 +1,8 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
-import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const toast = useToast();
@@ -11,7 +11,6 @@ const authStore = useAuthStore();
 // Estado
 const email = ref('');
 const password = ref('');
-const rememberMe = ref(false);
 const loading = ref(false);
 const showPassword = ref(false);
 const emailError = ref('');
@@ -319,10 +318,6 @@ const submitForgotPassword = async () => {
 
                                 <!-- Checkbox recordarme -->
                                 <div class="flex items-center justify-between mt-2 mb-1">
-                                    <div class="flex items-center">
-                                        <Checkbox v-model="rememberMe" input-id="rememberMe" class="mr-2" />
-                                        <label for="rememberMe" class="text-sm text-gray-700 cursor-pointer select-none">Recordarme</label>
-                                    </div>
                                     <a href="#" class="text-sm text-blue-700 hover:text-blue-800 font-semibold" @click.prevent="openForgotPasswordDialog">¿Olvidaste tu contraseña?</a>
                                 </div>
 

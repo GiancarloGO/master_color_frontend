@@ -1,5 +1,6 @@
 <script setup>
 import { useOrdersStore } from '@/stores/orders';
+import { useConfirm } from 'primevue/useconfirm';
 import { computed, watch } from 'vue';
 
 // Props
@@ -18,6 +19,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'retry-payment', 'cancel-order']);
 
 const ordersStore = useOrdersStore();
+const confirm = useConfirm();
 
 // Computed
 const isVisible = computed({
@@ -61,7 +63,10 @@ const canRetryPayment = computed(() => {
 });
 
 const canCancelOrder = computed(() => {
-    return order.value && ordersStore.canCancelOrder(order.value);
+    if (!order.value) return false;
+    // Estados permitidos para cancelar
+    const cancellableStatuses = ['pendiente_pago', 'pendiente', 'confirmado', 'procesando'];
+    return cancellableStatuses.includes(order.value.status);
 });
 
 const orderItems = computed(() => {
@@ -195,10 +200,32 @@ const retryPayment = () => {
 };
 
 const cancelOrder = () => {
-    if (order.value) {
-        emit('cancel-order', order.value);
-        closeModal();
-    }
+    if (!order.value) return;
+
+    confirm.require({
+        header: 'Cancelar compra',
+        message: 'Para cancelar la compra debes enviar un mensaje de WhatsApp al +51 999 830 565 indicando el número de tu orden y el motivo de la devolución.',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Abrir WhatsApp',
+        rejectLabel: 'Cerrar',
+        accept: () => {
+            // Abrir WhatsApp
+            const phone = '51999830565';
+            const text = encodeURIComponent(`Hola, deseo cancelar la compra con número de orden #${order.value.id}. Motivo de la devolución: `);
+            const waUrl = `https://wa.me/${phone}?text=${text}`;
+            window.open(waUrl, '_blank');
+
+            emit('cancel-order', order.value);
+            closeModal();
+        },
+        reject: () => {
+            // Solo cerrar modal de orden
+            closeModal();
+        }
+    });
+
+    // La lógica adicional se maneja en el diálogo de confirmación.
+    return;
 };
 
 const getStatusIcon = (status) => {
@@ -453,6 +480,7 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
             </div>
         </template>
     </Dialog>
+    <ConfirmDialog />
 </template>
 
 <style scoped>

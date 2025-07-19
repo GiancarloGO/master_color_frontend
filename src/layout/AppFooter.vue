@@ -2,7 +2,6 @@
 
 <template>
     <div class="layout-footer">
-        SAKAI by
-        <a href="https://primevue.org" target="_blank" rel="noopener noreferrer" class="text-primary font-bold hover:underline">PrimeVue</a>
+        <span>© {{ new Date().getFullYear() }} <a href="https://master-color-frontend-mu.vercel.app/" target="_blank" rel="noopener noreferrer" class="text-primary font-bold hover:underline">MasterColor</a> . Todos los derechos reservados.</span>
     </div>
 </template>

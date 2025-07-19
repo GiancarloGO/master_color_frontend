@@ -53,7 +53,6 @@ const formData = reactive({
     unidad: '',
     description: '',
     image: null,
-    is_active: true,
     quantity: 0,
     min_stock: 0,
     max_stock: 0,
@@ -124,7 +123,6 @@ watch(
             formData.presentation = newProduct.presentation || '';
             formData.unidad = newProduct.unidad || '';
             formData.description = newProduct.description || '';
-            formData.is_active = newProduct.is_active !== undefined ? newProduct.is_active : true;
             formData.quantity = newProduct.stock_quantity || 0;
             formData.min_stock = newProduct.min_stock || 0;
             formData.max_stock = newProduct.max_stock || 0;
@@ -154,7 +152,6 @@ watch(
             formData.unidad = '';
             formData.description = '';
             formData.image = null;
-            formData.is_active = true;
             formData.quantity = 0;
             formData.min_stock = 0;
             formData.max_stock = 0;
@@ -381,30 +378,6 @@ const handleSubmit = () => {
                         <div class="form-field">
                             <label for="max_stock" class="field-label">Stock Máximo</label>
                             <InputNumber id="max_stock" v-model="formData.max_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Estado del Producto -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class="pi pi-cog"></i>
-                        Configuración
-                    </h3>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-row">
-                        <div class="form-field status-field">
-                            <label class="field-label">Estado del Producto</label>
-                            <div class="status-toggle">
-                                <Checkbox id="is_active" v-model="formData.is_active" :binary="true" class="mr-2" />
-                                <label for="is_active" class="status-label">
-                                    {{ formData.is_active ? 'Producto activo' : 'Producto inactivo' }}
-                                </label>
-                            </div>
                         </div>
                     </div>
                 </div>
