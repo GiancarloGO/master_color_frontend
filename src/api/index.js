@@ -168,3 +168,51 @@ export const paymentReturnApi = {
             }
         })
 };
+
+// Funciones para gestión de órdenes por staff (administradores/empleados)
+export const staffOrdersApi = {
+    // Listar todas las órdenes con filtros
+    getOrders: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/orders${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Obtener detalle de una orden específica
+    getOrderById: (id) => axios.get(`/orders/${id}`),
+
+    // Actualizar estado de una orden
+    updateOrderStatus: (id, payload) => axios.patch(`/orders/${id}/status`, payload),
+
+    // Obtener estadísticas de órdenes
+    getOrderStatistics: () => axios.get('/orders/statistics'),
+
+    // Obtener órdenes por estado específico
+    getOrdersByStatus: (status, params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/orders/status/${status}${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Buscar órdenes
+    searchOrders: (searchData, params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.post(`/orders/search${queryString ? '?' + queryString : ''}`, searchData);
+    }
+};

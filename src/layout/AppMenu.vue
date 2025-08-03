@@ -75,6 +75,12 @@ const menuConfig = ref([
                 icon: 'pi pi-fw pi-chart-bar',
                 to: '/stock',
                 roles: [ROLES.ADMIN, ROLES.ALMACEN, ROLES.VENDEDOR]
+            },
+            {
+                label: 'Gestión de Órdenes',
+                icon: 'pi pi-fw pi-shopping-bag',
+                to: '/staff-orders',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
             }
         ]
     },

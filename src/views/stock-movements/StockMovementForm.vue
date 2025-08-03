@@ -394,7 +394,7 @@ onMounted(() => {
                     <div v-for="(stock, index) in formData.stocks" :key="index" class="stock-item">
                         <div class="stock-item-header">
                             <span class="stock-item-number">#{{ index + 1 }}</span>
-                            <Button type="button" v-tooltip.top="'Eliminar producto'" icon="pi pi-trash" class="remove-button" text severity="danger" size="small" @click="removeStockItem(index)" />
+                            <Button v-tooltip.top="'Eliminar producto'" type="button" icon="pi pi-trash" class="remove-button" text severity="danger" size="small" @click="removeStockItem(index)" />
                         </div>
 
                         <div class="stock-item-form">
