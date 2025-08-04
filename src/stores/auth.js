@@ -350,6 +350,32 @@ export const useAuthStore = defineStore('authStore', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        /**
+         * Cambia la contraseña del usuario autenticado
+         * @param {Object} payload - Contiene current_password, password y password_confirmation
+         * @returns {Promise<Object>} - Resultado de la operación
+         */
+        async changePassword(payload) {
+            this.resetState();
+            try {
+                const response = await authApi.changePassword(payload);
+                const processed = handleProcessSuccess(response, this);
+                
+                if (processed.success) {
+                    // Al cambiar la contraseña exitosamente, invalidar tokens y cerrar sesión
+                    this.clearAuthData();
+                }
+                
+                return processed;
+            } catch (error) {
+                handleProcessError(error, this);
+                return { success: false, message: error.message || 'Error al cambiar la contraseña' };
+            } finally {
+                this.loading = false;
+            }
         }
+
     }
 });

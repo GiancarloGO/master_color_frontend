@@ -62,7 +62,6 @@ function canUpdateOrder(order) {
     return !finalStates.includes(order.status);
 }
 
-
 function formatCurrency(amount) {
     if (!amount) return '0.00';
     return new Intl.NumberFormat('es-PE', {

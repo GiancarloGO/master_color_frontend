@@ -18,6 +18,9 @@ export const resendVerificationEmail = (payload) => axios.post('/client/auth/res
 export const forgotPassword = (payload) => axios.post('/client/auth/forgot-password', payload);
 export const resetPassword = (payload) => axios.post('/client/auth/reset-password', payload);
 
+// Cambio de contraseña para usuarios autenticados
+export const changePassword = (payload) => axios.post('/auth/change-password', payload);
+
 // Función genérica para seleccionar el endpoint correcto según el tipo de usuario
 export const authApi = {
     login: (payload, type = 'user') => (type === 'client' ? loginClient(payload) : login(payload)),
@@ -28,7 +31,8 @@ export const authApi = {
     verifyEmail: (payload) => verifyEmail(payload), // Solo disponible para clientes
     resendVerificationEmail: (payload) => resendVerificationEmail(payload), // Solo disponible para clientes
     forgotPassword: (payload) => forgotPassword(payload), // Solo disponible para clientes
-    resetPassword: (payload) => resetPassword(payload) // Solo disponible para clientes
+    resetPassword: (payload) => resetPassword(payload), // Solo disponible para clientes
+    changePassword: (payload) => changePassword(payload) // Disponible para usuarios autenticados
 };
 
 // Funciones para direcciones de clientes
@@ -214,5 +218,80 @@ export const staffOrdersApi = {
         });
         const queryString = queryParams.toString();
         return axios.post(`/orders/search${queryString ? '?' + queryString : ''}`, searchData);
+    }
+};
+
+// Funciones para dashboard administrativo
+export const dashboardApi = {
+    // Vista general del dashboard
+    getOverview: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/overview${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Análisis de ventas
+    getSalesAnalytics: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/sales${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Análisis de inventario
+    getInventoryAnalytics: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/inventory${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Análisis de clientes
+    getCustomersAnalytics: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/customers${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Análisis financiero
+    getFinancialAnalytics: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/financial${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Métricas de rendimiento
+    getPerformanceMetrics: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/dashboard/performance${queryString ? '?' + queryString : ''}`);
     }
 };
