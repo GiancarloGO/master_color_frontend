@@ -362,12 +362,12 @@ export const useAuthStore = defineStore('authStore', {
             try {
                 const response = await authApi.changePassword(payload);
                 const processed = handleProcessSuccess(response, this);
-                
+
                 if (processed.success) {
                     // Al cambiar la contraseña exitosamente, invalidar tokens y cerrar sesión
                     this.clearAuthData();
                 }
-                
+
                 return processed;
             } catch (error) {
                 handleProcessError(error, this);
@@ -376,6 +376,5 @@ export const useAuthStore = defineStore('authStore', {
                 this.loading = false;
             }
         }
-
     }
 });

@@ -25,17 +25,21 @@ const chartRef = ref();
 const chartKey = ref(0);
 
 // Watch for data changes and force chart recreation
-watch(() => [props.data, props.type], async () => {
-    if (chartRef.value?.chart) {
-        try {
-            chartRef.value.chart.destroy();
-        } catch (error) {
-            // Chart might already be destroyed
+watch(
+    () => [props.data, props.type],
+    async () => {
+        if (chartRef.value?.chart) {
+            try {
+                chartRef.value.chart.destroy();
+            } catch (error) {
+                // Chart might already be destroyed
+            }
         }
-    }
-    await nextTick();
-    chartKey.value++;
-}, { deep: true });
+        await nextTick();
+        chartKey.value++;
+    },
+    { deep: true }
+);
 
 onBeforeUnmount(() => {
     if (chartRef.value?.chart) {
@@ -49,12 +53,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Chart
-        :key="chartKey"
-        ref="chartRef"
-        :type="type"
-        :data="data"
-        :options="options"
-        :class="class"
-    />
+    <Chart :key="chartKey" ref="chartRef" :type="type" :data="data" :options="options" :class="class" />
 </template>

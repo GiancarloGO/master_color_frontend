@@ -222,6 +222,27 @@ export const staffOrdersApi = {
 };
 
 // Funciones para dashboard administrativo
+// Funciones para reportes administrativos
+export const reportsApi = {
+    // Reporte de ventas
+    generateSalesReport: (params) =>
+        axios.post('/reports/sales', params, {
+            responseType: 'blob'
+        }),
+
+    // Reporte de compras
+    generatePurchasesReport: (params) =>
+        axios.post('/reports/purchases', params, {
+            responseType: 'blob'
+        }),
+
+    // Reporte de órdenes
+    generateOrdersReport: (params) =>
+        axios.post('/reports/orders', params, {
+            responseType: 'blob'
+        })
+};
+
 export const dashboardApi = {
     // Vista general del dashboard
     getOverview: (params = {}) => {

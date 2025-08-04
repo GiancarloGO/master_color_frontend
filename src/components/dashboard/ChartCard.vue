@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div v-else class="chart-card__chart" ref="chartContainer">
+                <div v-else ref="chartContainer" class="chart-card__chart">
                     <slot name="chart" :chart-instance="chartInstance"></slot>
                 </div>
 

@@ -1,7 +1,6 @@
 <script setup>
 import AlertPanel from '@/components/dashboard/AlertPanel.vue';
 import MetricCard from '@/components/dashboard/MetricCard.vue';
-import ChartCard from '@/components/dashboard/ChartCard.vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -32,18 +31,20 @@ const performanceData = computed(() => dashboardStore.getPerformanceMetrics);
 const alerts = computed(() => {
     const rawAlerts = dashboardStore.getAlerts;
     if (!rawAlerts || !Array.isArray(rawAlerts)) return [];
-    
+
     return rawAlerts.map((alert, index) => ({
         id: index + 1,
         type: alert.type === 'warning' ? 'low_stock' : 'pending_orders',
         title: alert.type === 'warning' ? 'Stock Bajo' : 'Órdenes Pendientes',
         message: alert.message,
         created_at: new Date().toISOString(),
-        action: alert.action ? { 
-            label: 'Ver detalles', 
-            route: alert.action, 
-            severity: alert.priority === 'high' ? 'warning' : 'info' 
-        } : null
+        action: alert.action
+            ? {
+                  label: 'Ver detalles',
+                  route: alert.action,
+                  severity: alert.priority === 'high' ? 'warning' : 'info'
+              }
+            : null
     }));
 });
 
@@ -55,7 +56,7 @@ async function loadDashboardData() {
     try {
         dashboardStore.setSelectedPeriod(selectedPeriod.value);
         const result = await dashboardStore.fetchAllDashboardData();
-        
+
         if (result.success) {
             toast.add({
                 severity: 'success',
@@ -140,38 +141,10 @@ function handleAlertAction(alert) {
                     </h2>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <MetricCard 
-                        title="Total Órdenes" 
-                        :value="generalMetrics.total_orders || 0" 
-                        icon="pi pi-shopping-cart" 
-                        type="number" 
-                        severity="primary" 
-                        :loading="isLoading" 
-                    />
-                    <MetricCard 
-                        title="Total Clientes" 
-                        :value="generalMetrics.total_customers || 0" 
-                        icon="pi pi-users" 
-                        type="number" 
-                        severity="success" 
-                        :loading="isLoading" 
-                    />
-                    <MetricCard 
-                        title="Total Productos" 
-                        :value="generalMetrics.total_products || 0" 
-                        icon="pi pi-box" 
-                        type="number" 
-                        severity="info" 
-                        :loading="isLoading" 
-                    />
-                    <MetricCard 
-                        title="Ingresos Totales" 
-                        :value="generalMetrics.total_revenue || 0" 
-                        icon="pi pi-dollar" 
-                        type="currency" 
-                        severity="warning" 
-                        :loading="isLoading" 
-                    />
+                    <MetricCard title="Total Órdenes" :value="generalMetrics.total_orders || 0" icon="pi pi-shopping-cart" type="number" severity="primary" :loading="isLoading" />
+                    <MetricCard title="Total Clientes" :value="generalMetrics.total_customers || 0" icon="pi pi-users" type="number" severity="success" :loading="isLoading" />
+                    <MetricCard title="Total Productos" :value="generalMetrics.total_products || 0" icon="pi pi-box" type="number" severity="info" :loading="isLoading" />
+                    <MetricCard title="Ingresos Totales" :value="generalMetrics.total_revenue || 0" icon="pi pi-dollar" type="currency" severity="warning" :loading="isLoading" />
                 </div>
             </section>
 
@@ -184,12 +157,8 @@ function handleAlertAction(alert) {
                     </h2>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <AlertPanel 
-                        :alerts="alerts" 
-                        :loading="isLoading" 
-                        @alert-action="handleAlertAction" 
-                    />
-                    
+                    <AlertPanel :alerts="alerts" :loading="isLoading" @alert-action="handleAlertAction" />
+
                     <Card>
                         <template #title>
                             <div class="flex items-center gap-2">
@@ -199,11 +168,7 @@ function handleAlertAction(alert) {
                         </template>
                         <template #content>
                             <div v-if="overviewData?.recent_activity?.recent_orders?.length" class="space-y-3">
-                                <div 
-                                    v-for="order in overviewData.recent_activity.recent_orders.slice(0, 5)" 
-                                    :key="order.id"
-                                    class="flex justify-between items-center p-3 bg-surface-50 rounded-lg"
-                                >
+                                <div v-for="order in overviewData.recent_activity.recent_orders.slice(0, 5)" :key="order.id" class="flex justify-between items-center p-3 bg-surface-50 rounded-lg">
                                     <div>
                                         <div class="font-medium text-surface-900">{{ order.client_name }}</div>
                                         <div class="text-sm text-surface-600">{{ order.items_count }} productos</div>
@@ -256,11 +221,7 @@ function handleAlertAction(alert) {
                         <template #title>Productos con Stock Bajo</template>
                         <template #content>
                             <div v-if="inventoryData.low_stock_products?.length" class="space-y-2 max-h-48 overflow-y-auto">
-                                <div 
-                                    v-for="product in inventoryData.low_stock_products.slice(0, 5)" 
-                                    :key="product.id"
-                                    class="flex justify-between items-center text-sm"
-                                >
+                                <div v-for="product in inventoryData.low_stock_products.slice(0, 5)" :key="product.id" class="flex justify-between items-center text-sm">
                                     <span class="truncate">{{ product.name }}</span>
                                     <Tag :value="product.current_stock" severity="warning" size="small" />
                                 </div>
@@ -276,9 +237,7 @@ function handleAlertAction(alert) {
                         <template #content>
                             <div v-if="inventoryData.inventory_value" class="space-y-3">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-primary-600">
-                                        S/ {{ parseFloat(inventoryData.inventory_value.total_sale_value || 0).toFixed(2) }}
-                                    </div>
+                                    <div class="text-2xl font-bold text-primary-600">S/ {{ parseFloat(inventoryData.inventory_value.total_sale_value || 0).toFixed(2) }}</div>
                                     <div class="text-sm text-surface-600">Valor total de venta</div>
                                 </div>
                                 <div class="text-center">
@@ -306,11 +265,7 @@ function handleAlertAction(alert) {
                         <template #title>Mejores Clientes</template>
                         <template #content>
                             <div v-if="customersData.top_customers?.length" class="space-y-3">
-                                <div 
-                                    v-for="customer in customersData.top_customers.slice(0, 5)" 
-                                    :key="customer.id"
-                                    class="flex justify-between items-center p-3 bg-surface-50 rounded-lg"
-                                >
+                                <div v-for="customer in customersData.top_customers.slice(0, 5)" :key="customer.id" class="flex justify-between items-center p-3 bg-surface-50 rounded-lg">
                                     <div>
                                         <div class="font-medium text-surface-900">{{ customer.name }}</div>
                                         <div class="text-sm text-surface-600">{{ customer.total_orders }} órdenes</div>
@@ -331,9 +286,7 @@ function handleAlertAction(alert) {
                         <template #content>
                             <div v-if="customersData.customer_lifetime_value" class="space-y-4">
                                 <div class="text-center">
-                                    <div class="text-xl font-bold text-primary-600">
-                                        S/ {{ parseFloat(customersData.customer_lifetime_value.avg_ltv || 0).toFixed(2) }}
-                                    </div>
+                                    <div class="text-xl font-bold text-primary-600">S/ {{ parseFloat(customersData.customer_lifetime_value.avg_ltv || 0).toFixed(2) }}</div>
                                     <div class="text-sm text-surface-600">Valor promedio por cliente</div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 text-center">
@@ -344,9 +297,7 @@ function handleAlertAction(alert) {
                                         <div class="text-sm text-surface-600">Órdenes promedio</div>
                                     </div>
                                     <div>
-                                        <div class="text-lg font-semibold text-surface-700">
-                                            S/ {{ parseFloat(customersData.customer_lifetime_value.avg_order_value || 0).toFixed(2) }}
-                                        </div>
+                                        <div class="text-lg font-semibold text-surface-700">S/ {{ parseFloat(customersData.customer_lifetime_value.avg_order_value || 0).toFixed(2) }}</div>
                                         <div class="text-sm text-surface-600">Valor promedio orden</div>
                                     </div>
                                 </div>
@@ -369,11 +320,7 @@ function handleAlertAction(alert) {
                         <template #title>Estado de Pagos</template>
                         <template #content>
                             <div v-if="financialData.payment_status?.length" class="space-y-3">
-                                <div 
-                                    v-for="status in financialData.payment_status" 
-                                    :key="status.status"
-                                    class="flex justify-between items-center"
-                                >
+                                <div v-for="status in financialData.payment_status" :key="status.status" class="flex justify-between items-center">
                                     <span class="capitalize">{{ status.status }}</span>
                                     <div class="text-right">
                                         <div class="font-semibold">{{ status.count }}</div>
@@ -390,21 +337,15 @@ function handleAlertAction(alert) {
                             <div v-if="financialData.financial_summary" class="space-y-3">
                                 <div class="flex justify-between items-center">
                                     <span>Ingresos Brutos</span>
-                                    <span class="font-semibold text-success-600">
-                                        S/ {{ parseFloat(financialData.financial_summary.gross_revenue || 0).toFixed(2) }}
-                                    </span>
+                                    <span class="font-semibold text-success-600"> S/ {{ parseFloat(financialData.financial_summary.gross_revenue || 0).toFixed(2) }} </span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span>Ingresos Netos</span>
-                                    <span class="font-semibold text-primary-600">
-                                        S/ {{ parseFloat(financialData.financial_summary.net_revenue || 0).toFixed(2) }}
-                                    </span>
+                                    <span class="font-semibold text-primary-600"> S/ {{ parseFloat(financialData.financial_summary.net_revenue || 0).toFixed(2) }} </span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span>Pagos Pendientes</span>
-                                    <span class="font-semibold text-warning-600">
-                                        S/ {{ parseFloat(financialData.financial_summary.pending_payments || 0).toFixed(2) }}
-                                    </span>
+                                    <span class="font-semibold text-warning-600"> S/ {{ parseFloat(financialData.financial_summary.pending_payments || 0).toFixed(2) }} </span>
                                 </div>
                             </div>
                         </template>
@@ -469,15 +410,15 @@ function handleAlertAction(alert) {
     .dashboard__header .flex {
         @apply flex-col items-start gap-4;
     }
-    
+
     .dashboard-section {
         @apply p-4;
     }
-    
+
     .section-title {
         @apply text-lg;
     }
-    
+
     .grid {
         @apply gap-4;
     }
@@ -490,7 +431,8 @@ function handleAlertAction(alert) {
 }
 
 @keyframes pulse {
-    0%, 100% {
+    0%,
+    100% {
         opacity: 1;
     }
     50% {

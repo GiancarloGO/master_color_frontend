@@ -166,7 +166,7 @@ const submitPasswordChange = async () => {
                 </div>
             </div>
         </Dialog>
-        
+
         <!-- Header del Perfil -->
         <div class="profile-header">
             <div class="banner-section">
@@ -518,7 +518,7 @@ const submitPasswordChange = async () => {
     .profile-container {
         padding: 1rem;
     }
-    
+
     .profile-info-header {
         padding: 0 1rem;
     }

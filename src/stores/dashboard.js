@@ -136,13 +136,13 @@ export const useDashboardStore = defineStore('dashboardStore', {
         isCacheValid(cacheData) {
             if (!cacheData || !cacheData.timestamp) return false;
             const now = Date.now();
-            return (now - cacheData.timestamp) < this.cacheConfig.ttl;
+            return now - cacheData.timestamp < this.cacheConfig.ttl;
         },
 
         getCachedData(section, params = {}) {
             const cacheKey = this.getCacheKey(section, params);
             const cachedData = cache.getItem(cacheKey);
-            
+
             if (cachedData && this.isCacheValid(cachedData)) {
                 return cachedData.data;
             }
@@ -164,7 +164,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
                 cache.removeItem(cacheKey);
             } else {
                 // Limpiar todo el caché del dashboard
-                Object.values(this.cacheConfig.keys).forEach(key => {
+                Object.values(this.cacheConfig.keys).forEach((key) => {
                     cache.removeItem(key);
                 });
             }
@@ -173,7 +173,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Vista general del dashboard
         async fetchOverview(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('overview', finalParams);
@@ -209,7 +209,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Análisis de ventas
         async fetchSalesAnalytics(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('sales', finalParams);
@@ -245,7 +245,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Análisis de inventario
         async fetchInventoryAnalytics(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('inventory', finalParams);
@@ -281,7 +281,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Análisis de clientes
         async fetchCustomersAnalytics(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('customers', finalParams);
@@ -317,7 +317,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Análisis financiero
         async fetchFinancialAnalytics(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('financial', finalParams);
@@ -353,7 +353,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         // Métricas de rendimiento
         async fetchPerformanceMetrics(params = {}, useCache = true) {
             const finalParams = { period: this.selectedPeriod, ...params };
-            
+
             // Intentar obtener datos del caché primero
             if (useCache) {
                 const cachedData = this.getCachedData('performance', finalParams);
@@ -399,10 +399,10 @@ export const useDashboardStore = defineStore('dashboardStore', {
                 ];
 
                 const results = await Promise.all(promises);
-                const fromCache = results.some(result => result.fromCache);
-                
-                return { 
-                    success: true, 
+                const fromCache = results.some((result) => result.fromCache);
+
+                return {
+                    success: true,
                     message: fromCache ? 'Dashboard cargado (algunos datos desde caché)' : 'Dashboard cargado correctamente',
                     fromCache
                 };
@@ -416,7 +416,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
         async refreshSection(section, params = {}) {
             // Limpiar caché de la sección antes de recargar
             this.clearCache(section);
-            
+
             switch (section) {
                 case 'overview':
                     return await this.fetchOverview(params, false);
