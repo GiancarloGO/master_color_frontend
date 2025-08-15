@@ -4,21 +4,30 @@ import { UbigeoPostal } from '@/utils/ubigeoPostal';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useEmailValidation, useNameValidation, usePasswordValidation, usePhoneValidation, useInputValidation } from '@/composables/useInputValidation';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
 
+// Validación de campos principales
+const nameValidation = useNameValidation({ required: true });
+const emailValidation = useEmailValidation({ required: true });
+const passwordValidation = usePasswordValidation({ required: true });
+const phoneValidation = usePhoneValidation({ required: false });
+
+// Destructuring para compatibilidad
+const { value: name, firstError: nameError, inputClasses: nameClasses } = nameValidation;
+const { value: email, firstError: emailError, inputClasses: emailClasses } = emailValidation;
+const { value: password, firstError: passwordError, inputClasses: passwordClasses } = passwordValidation;
+const { value: phone, firstError: phoneError, inputClasses: phoneClasses } = phoneValidation;
+
 // Estado
-const name = ref('');
-const email = ref('');
-const password = ref('');
 const confirmPassword = ref('');
 const clientType = ref('individual'); // persona o empresa
 const identityDocument = ref('');
 const documentType = ref('dni'); // dni, ce, pasaporte, ruc
-const phone = ref('');
 const acceptTerms = ref(false);
 const loading = ref(false);
 const showPassword = ref(false);
@@ -49,12 +58,9 @@ const resendLoading = ref(false);
 const verificationToken = ref('');
 
 // Errores
-const nameError = ref('');
-const emailError = ref('');
 const passwordError = ref('');
 const confirmPasswordError = ref('');
 const identityDocumentError = ref('');
-const phoneError = ref('');
 const termsError = ref('');
 
 // Errores de dirección

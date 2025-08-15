@@ -323,7 +323,6 @@ function formatDateTime(dateString) {
 
         <template #footer>
             <div class="flex justify-between">
-                <Button label="Cambiar Estado" icon="pi pi-pencil" severity="warning" :disabled="!canUpdateOrder()" @click="$emit('change-status')" />
                 <Button label="Cerrar" icon="pi pi-times" severity="secondary" @click="$emit('update:visible', false)" />
             </div>
         </template>

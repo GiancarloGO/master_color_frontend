@@ -3,18 +3,23 @@ import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useEmailValidation, usePasswordValidation } from '@/composables/useInputValidation';
 
 const router = useRouter();
 const toast = useToast();
 const authStore = useAuthStore();
 
 // Estado
-const email = ref('');
-const password = ref('');
 const loading = ref(false);
 const showPassword = ref(false);
-const emailError = ref('');
-const passwordError = ref('');
+
+// Validación de inputs con composables
+const emailValidation = useEmailValidation({ required: true });
+const passwordValidation = usePasswordValidation({ required: true });
+
+// Destructuring para compatibilidad
+const { value: email, firstError: emailError, inputClasses: emailClasses } = emailValidation;
+const { value: password, firstError: passwordError, inputClasses: passwordClasses } = passwordValidation;
 
 // Estado para recuperación de contraseña
 const showForgotPasswordDialog = ref(false);
@@ -25,27 +30,10 @@ const forgotPasswordSuccess = ref(false);
 
 // Métodos
 const validateForm = () => {
-    let isValid = true;
-    emailError.value = '';
-    passwordError.value = '';
-
-    if (!email.value) {
-        emailError.value = 'El correo electrónico es requerido';
-        isValid = false;
-    } else if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-        emailError.value = 'Ingrese un correo electrónico válido';
-        isValid = false;
-    }
-
-    if (!password.value) {
-        passwordError.value = 'La contraseña es requerida';
-        isValid = false;
-    } else if (password.value.length < 6) {
-        passwordError.value = 'La contraseña debe tener al menos 6 caracteres';
-        isValid = false;
-    }
-
-    return isValid;
+    const emailValid = emailValidation.validate();
+    const passwordValid = passwordValidation.validate();
+    
+    return emailValid && passwordValid;
 };
 
 const login = async () => {
@@ -281,7 +269,7 @@ const submitForgotPassword = async () => {
                                     <div class="relative">
                                         <IconField>
                                             <InputIcon class="pi pi-envelope" />
-                                            <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full text-gray-900 font-medium" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
+                                            <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full text-gray-900 font-medium" :class="emailClasses" maxlength="254" />
                                         </IconField>
                                     </div>
                                     <small v-if="emailError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
@@ -301,8 +289,8 @@ const submitForgotPassword = async () => {
                                                 :type="showPassword ? 'text' : 'password'"
                                                 placeholder="Tu contraseña"
                                                 class="w-full text-gray-900 font-medium"
-                                                :class="passwordError ? 'p-invalid' : ''"
-                                                @input="passwordError = ''"
+                                                :class="passwordClasses"
+                                                maxlength="128"
                                             />
                                             <i
                                                 :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"

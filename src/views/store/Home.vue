@@ -3,6 +3,7 @@ import { productsApi } from '@/api/index';
 import { useCart } from '@/composables/useCart';
 import { useAuthStore } from '@/stores/auth';
 import { useProductsStore } from '@/stores/products';
+import { sanitizeSearchInput } from '@/utils/inputSanitizer';
 import { useToast } from 'primevue/usetoast';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -25,6 +26,11 @@ const { addToCart: addProductToCart, proceedToCheckout, cartStore, restorePendin
 // State
 const searchQuery = ref('');
 const selectedCategory = ref(null);
+
+// Computed para sanitizar la búsqueda
+const sanitizedSearchQuery = computed(() => {
+    return sanitizeSearchInput(searchQuery.value);
+});
 const sortOption = ref('name-asc'); // Default sorting
 const cartVisible = ref(false);
 const loading = ref(false);
@@ -119,8 +125,8 @@ const loadProducts = async () => {
 const filteredProducts = computed(() => {
     let result = productsStore.productsList || [];
 
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase().trim();
+    if (sanitizedSearchQuery.value) {
+        const query = sanitizedSearchQuery.value.toLowerCase().trim();
         result = result.filter(
             (product) =>
                 (product.name || '').toLowerCase().includes(query) ||
@@ -356,6 +362,14 @@ watch(
     }
 );
 
+// Watcher para sanitizar la búsqueda en tiempo real
+watch(searchQuery, (newValue) => {
+    const sanitized = sanitizeSearchInput(newValue);
+    if (sanitized !== newValue) {
+        searchQuery.value = sanitized;
+    }
+});
+
 // Lifecycle hooks
 onMounted(async () => {
     checkScreenSize();
@@ -387,7 +401,7 @@ onBeforeUnmount(() => {
                     <div class="flex-1 max-w-md mx-0 sm:mx-2 md:mx-4 lg:mx-8 order-3 sm:order-2 w-full sm:w-auto mt-2 sm:mt-0">
                         <IconField>
                             <InputIcon class="pi pi-search" />
-                            <InputText v-model="searchQuery" placeholder="Buscar productos, categorías..." class="w-full" />
+                            <InputText v-model="searchQuery" placeholder="Buscar productos, categorías..." class="w-full" maxlength="50" />
                         </IconField>
                     </div>
 
