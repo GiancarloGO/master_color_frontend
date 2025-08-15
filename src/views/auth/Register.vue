@@ -58,7 +58,6 @@ const resendLoading = ref(false);
 const verificationToken = ref('');
 
 // Errores
-const passwordError = ref('');
 const confirmPasswordError = ref('');
 const identityDocumentError = ref('');
 const termsError = ref('');
@@ -206,13 +205,9 @@ const getLocationName = (locations, code) => {
 const validateForm = () => {
     let isValid = true;
 
-    // Limpiar errores
-    nameError.value = '';
-    emailError.value = '';
-    passwordError.value = '';
+    // Limpiar errores manuales
     confirmPasswordError.value = '';
     identityDocumentError.value = '';
-    phoneError.value = '';
     termsError.value = '';
 
     // Limpiar errores de dirección
@@ -223,32 +218,12 @@ const validateForm = () => {
     postalCodeError.value = '';
     referenceError.value = '';
 
-    // Validar nombre
-    if (!name.value.trim()) {
-        nameError.value = 'El nombre es requerido';
-        isValid = false;
-    } else if (name.value.trim().length < 2) {
-        nameError.value = 'El nombre debe tener al menos 2 caracteres';
-        isValid = false;
-    }
-
-    // Validar email
-    if (!email.value) {
-        emailError.value = 'El correo electrónico es requerido';
-        isValid = false;
-    } else if (!/^\S+@\S+\.\S+$/.test(email.value)) {
-        emailError.value = 'Ingrese un correo electrónico válido';
-        isValid = false;
-    }
-
-    // Validar contraseña
-    if (!password.value) {
-        passwordError.value = 'La contraseña es requerida';
-        isValid = false;
-    } else if (password.value.length < 6) {
-        passwordError.value = 'La contraseña debe tener al menos 6 caracteres';
-        isValid = false;
-    }
+    // Validar usando composables
+    const nameValid = nameValidation.validate();
+    const emailValid = emailValidation.validate();
+    const passwordValid = passwordValidation.validate();
+    
+    isValid = nameValid && emailValid && passwordValid;
 
     // Validar confirmación de contraseña
     if (!confirmPassword.value) {
@@ -280,14 +255,9 @@ const validateForm = () => {
         }
     }
 
-    // Validar teléfono
-    if (!phone.value) {
-        phoneError.value = 'El teléfono es requerido';
-        isValid = false;
-    } else if (!/^\d{9}$/.test(phone.value.trim())) {
-        phoneError.value = 'El teléfono debe tener 9 dígitos';
-        isValid = false;
-    }
+    // Validar teléfono con composable
+    const phoneValid = phoneValidation.validate();
+    isValid = isValid && phoneValid;
 
     // Validar términos y condiciones
     if (!acceptTerms.value) {
@@ -656,7 +626,7 @@ onMounted(() => {
                                             <label for="name" class="block text-sm font-semibold text-gray-800 mb-1">Nombre Completo</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-user" />
-                                                <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameError ? 'p-invalid' : ''" @input="nameError = ''" />
+                                                <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameClasses" maxlength="100" />
                                             </IconField>
                                             <small v-if="nameError" class="p-error text-red-600 text-xs mt-1 block">{{ nameError }}</small>
                                         </div>
@@ -665,7 +635,7 @@ onMounted(() => {
                                             <label for="email" class="block text-sm font-semibold text-gray-800 mb-1">Correo Electrónico</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-envelope" />
-                                                <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
+                                                <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailClasses" maxlength="254" />
                                             </IconField>
                                             <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
                                         </div>
@@ -674,7 +644,7 @@ onMounted(() => {
                                             <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-phone" />
-                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneError ? 'p-invalid' : ''" @input="phoneError = ''" />
+                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="15" />
                                             </IconField>
                                             <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
                                         </div>
