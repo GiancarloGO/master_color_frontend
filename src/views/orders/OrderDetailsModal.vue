@@ -34,12 +34,6 @@ const order = computed(() => {
         const orderFromList = ordersStore.getOrderById(props.orderId);
         const selectedOrder = currentOrder || orderFromList;
 
-        console.log('🔍 OrderDetailsModal: Computing order:', {
-            orderId: props.orderId,
-            currentOrder: currentOrder,
-            orderFromList: orderFromList,
-            selectedOrder: selectedOrder
-        });
 
         return selectedOrder;
     }
@@ -71,7 +65,6 @@ const canCancelOrder = computed(() => {
 
 const orderItems = computed(() => {
     if (!order.value) {
-        console.log('🔍 OrderDetailsModal: No order available for items');
         return [];
     }
 
@@ -80,10 +73,8 @@ const orderItems = computed(() => {
 
     if (order.value.items && order.value.items.length > 0) {
         items = order.value.items;
-        console.log('🔍 OrderDetailsModal: Using items array:', items);
     } else if (order.value.products && order.value.products.length > 0) {
         items = order.value.products;
-        console.log('🔍 OrderDetailsModal: Using products array:', items);
     } else if (order.value.order_details && order.value.order_details.length > 0) {
         // Map order_details to proper format
         items = order.value.order_details.map((detail) => ({
@@ -104,14 +95,8 @@ const orderItems = computed(() => {
             order_detail_id: detail.id,
             product_id: detail.product_id
         }));
-        console.log('🔍 OrderDetailsModal: Using order_details array, mapped to:', items);
     }
 
-    console.log('🔍 OrderDetailsModal: Final orderItems:', {
-        source: order.value.order_details ? 'order_details' : order.value.products ? 'products' : 'items',
-        count: items.length,
-        items: items
-    });
 
     return items;
 });
@@ -271,34 +256,18 @@ const getStatusColor = (severity) => {
 };
 
 const debugRefresh = async () => {
-    console.log('🔧 Debug: Manual refresh triggered for order ID:', props.orderId);
     if (props.orderId) {
         const result = await ordersStore.fetchOrderById(props.orderId);
-        console.log('🔧 Debug: Manual refresh result:', result);
     }
 };
 
 // Cargar detalles de la orden cuando se abra el modal
 watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
-    console.log('🔍 OrderDetailsModal: Watch triggered:', { visible, orderId });
     if (visible && orderId) {
-        console.log('🔍 OrderDetailsModal: Fetching order details for ID:', orderId);
-        console.log('🔍 OrderDetailsModal: Store state before fetch:', {
-            isLoading: ordersStore.isLoading,
-            currentOrder: ordersStore.getCurrentOrder,
-            ordersCount: ordersStore.getOrders.length
-        });
 
         const result = await ordersStore.fetchOrderById(orderId);
-        console.log('🔍 OrderDetailsModal: Fetch result:', result);
 
-        console.log('🔍 OrderDetailsModal: Store state after fetch:', {
-            isLoading: ordersStore.isLoading,
-            currentOrder: ordersStore.getCurrentOrder,
-            error: ordersStore.getError
-        });
 
-        console.log('🔍 OrderDetailsModal: Order from list:', ordersStore.getOrderById(orderId));
     }
 });
 </script>

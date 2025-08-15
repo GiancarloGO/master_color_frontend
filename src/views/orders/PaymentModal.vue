@@ -93,7 +93,6 @@ const startPolling = (orderId) => {
                 const paymentStatus = result.data.payment_status;
 
                 if (import.meta.env.MODE === 'development') {
-                    console.log('💳 Payment status:', paymentStatus);
                 }
 
                 // Stop polling if payment is completed (approved, rejected, or cancelled)
@@ -165,7 +164,6 @@ const processPayment = async () => {
 
     try {
         if (import.meta.env.MODE === 'development') {
-            console.log('💳 Iniciando pago para orden:', props.order.id);
         }
 
         const result = await ordersStore.generatePaymentLink(props.order.id);
@@ -195,7 +193,6 @@ const processPayment = async () => {
             }
 
             if (import.meta.env.MODE === 'development') {
-                console.log('💳 URL de pago generada:', paymentUrl);
             }
 
             toast.add({

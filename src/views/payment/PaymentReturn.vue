@@ -112,10 +112,6 @@ onMounted(async () => {
     // Get order_id from available sources
     const orderId = getOrderId();
 
-    console.log('Payment return params:', route.params);
-    console.log('Payment return query:', route.query);
-    console.log('Detected order_id:', orderId);
-
     if (!payment_id) {
         status.value = 'error';
         icon.value = 'pi pi-exclamation-triangle';

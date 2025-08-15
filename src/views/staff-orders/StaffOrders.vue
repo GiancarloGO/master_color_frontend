@@ -44,7 +44,6 @@ const statistics = computed(() => staffOrdersStore.getStatistics);
 
 onMounted(async () => {
     await loadData();
-    console.log('StaffOrders', staffOrdersStore.getOrders);
 });
 
 async function loadData() {

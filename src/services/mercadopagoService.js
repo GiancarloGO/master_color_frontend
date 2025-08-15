@@ -26,7 +26,6 @@ class MercadoPagoService {
                 locale: 'es-PE' // Configurar para Perú
             });
             this.initialized = true;
-            console.log('MercadoPago initialized successfully with key:', this.publicKey?.substring(0, 8) + '...');
             return this.mp;
         } catch (error) {
             console.error('Error initializing MercadoPago:', error);
@@ -55,7 +54,6 @@ class MercadoPagoService {
             script.async = true;
             script.onload = () => {
                 this.scriptLoaded = true;
-                console.log('MercadoPago script loaded successfully');
                 resolve();
             };
             script.onerror = (error) => {
@@ -105,11 +103,9 @@ class MercadoPagoService {
             // Configuración de callbacks
             callbacks: {
                 onReady: () => {
-                    console.log('Payment Brick ready');
                 },
                 onSubmit: async (cardFormData) => {
                     try {
-                        console.log('Card form data:', cardFormData);
                         return options.callbacks?.onSubmit ? await options.callbacks.onSubmit(cardFormData) : null;
                     } catch (error) {
                         console.error('Error in onSubmit:', error);
@@ -138,7 +134,6 @@ class MercadoPagoService {
             }
         };
 
-        console.log('MercadoPago Card Brick options:', mergedOptions);
 
         try {
             const bricksBuilder = this.mp.bricks();
@@ -166,11 +161,9 @@ class MercadoPagoService {
             },
             callbacks: {
                 onReady: () => {
-                    console.log('Wallet Brick ready');
                 },
                 onSubmit: async (walletFormData) => {
                     try {
-                        console.log('Wallet form data:', walletFormData);
                         return options.onSubmit ? await options.onSubmit(walletFormData) : null;
                     } catch (error) {
                         console.error('Error in wallet onSubmit:', error);
@@ -221,7 +214,6 @@ class MercadoPagoService {
             },
             callbacks: {
                 onReady: () => {
-                    console.log('Status Screen Brick ready');
                 },
                 onError: (error) => {
                     console.error('Status Screen Brick error:', error);
@@ -319,7 +311,6 @@ class MercadoPagoService {
         if (brickInstance && typeof brickInstance.unmount === 'function') {
             try {
                 await brickInstance.unmount();
-                console.log('Brick destroyed successfully');
             } catch (error) {
                 console.error('Error destroying brick:', error);
             }
@@ -337,7 +328,6 @@ class MercadoPagoService {
             throw new Error('Invalid MercadoPago public key format. Must start with TEST- or APP_USR-');
         }
 
-        console.log('MercadoPago configuration validated successfully');
         return true;
     }
 }

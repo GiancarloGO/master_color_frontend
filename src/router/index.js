@@ -187,7 +187,6 @@ router.beforeEach(async (to, from, next) => {
 
     // Verificar autenticación
     if (!authStore.currentUser) {
-        console.log(authStore.currentUser);
         return next({ name: 'login' });
     }
 

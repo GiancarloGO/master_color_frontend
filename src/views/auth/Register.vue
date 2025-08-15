@@ -109,7 +109,6 @@ const loadDepartments = () => {
     try {
         departments.value = ubigeo.getDepartments();
         filteredDepartments.value = departments.value;
-        console.log('Departments loaded:', departments.value.length);
     } catch (error) {
         console.error('Error loading departments:', error);
         departments.value = [];
@@ -147,7 +146,6 @@ const onDepartmentChange = () => {
         try {
             provinces.value = ubigeo.getProvincesByDepartment(departmentName);
             filteredProvinces.value = provinces.value;
-            console.log('Provinces loaded for', departmentName, ':', provinces.value.length);
         } catch (error) {
             console.error('Error loading provinces:', error);
             provinces.value = [];
@@ -172,7 +170,6 @@ const onProvinceChange = () => {
         try {
             districts.value = ubigeo.getDistrictsByProvince(provinceName);
             filteredDistricts.value = districts.value;
-            console.log('Districts loaded for', provinceName, ':', districts.value.length);
         } catch (error) {
             console.error('Error loading districts:', error);
             districts.value = [];

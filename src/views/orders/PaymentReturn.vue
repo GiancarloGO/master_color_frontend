@@ -28,17 +28,6 @@ const preference_id = route.query.preference_id;
 // Get order ID from URL or localStorage (saved before redirect)
 const orderId = route.query.order || localStorage.getItem('currentOrderId') || localStorage.getItem('pendingOrderId');
 
-console.log('🔄 PaymentReturn: URL parameters:', {
-    collection_id,
-    collection_status,
-    payment_id,
-    status,
-    external_reference,
-    payment_type,
-    merchant_order_id,
-    preference_id,
-    orderId
-});
 
 // Computed - Basado en la estructura del backend según la guía
 const paymentResult = computed(() => {
@@ -110,13 +99,11 @@ const statusDetail = computed(() => {
 
 // Methods - Implementación exacta según la guía
 const startPaymentVerification = (orderId) => {
-    console.log('🔄 PaymentReturn: Starting payment verification for order:', orderId);
     let attempts = 0;
     const maxAttempts = 20; // 1 minuto (20 x 3 segundos)
 
     const interval = setInterval(async () => {
         attempts++;
-        console.log(`🔍 PaymentReturn: Verification attempt ${attempts}/${maxAttempts}`);
 
         try {
             const status = await checkPaymentStatus(orderId);
@@ -161,7 +148,6 @@ const startPaymentVerification = (orderId) => {
                 // Pago pendiente - continuar verificando
                 if (status.paymentStatus === 'pending') {
                     paymentStatus.value = status;
-                    console.log('💳 PaymentReturn: Payment still pending, continuing verification...');
                 }
             }
 
@@ -198,14 +184,12 @@ const startPaymentVerification = (orderId) => {
 
 const checkPaymentStatus = async (orderId) => {
     try {
-        console.log('🔍 PaymentReturn: Checking payment status for order:', orderId);
 
         // Usar el endpoint exacto de la guía: /api/payment-status/{orderId}
         const response = await ordersStore.checkPaymentStatus(orderId);
 
         if (response.success) {
             const statusData = response.data || ordersStore.paymentStatus;
-            console.log('💳 PaymentReturn: Payment status response:', statusData);
 
             // Estructura según la guía del backend
             return {
@@ -232,7 +216,6 @@ const loadOrderDetails = async (orderId) => {
         const orderResult = await ordersStore.fetchOrderById(orderId);
         if (orderResult.success) {
             order.value = ordersStore.getCurrentOrder;
-            console.log('📋 PaymentReturn: Order loaded:', order.value);
         }
     } catch (error) {
         console.error('PaymentReturn: Error loading order:', error);
@@ -255,7 +238,6 @@ const retryPayment = () => {
 
 // Lifecycle - Implementación según la guía
 onMounted(async () => {
-    console.log('🚀 PaymentReturn: Component mounted');
 
     if (!orderId) {
         console.error('PaymentReturn: No order ID found');
@@ -269,7 +251,6 @@ onMounted(async () => {
         return;
     }
 
-    console.log('📋 PaymentReturn: Processing order:', orderId);
 
     // Step 1: Load order details
     await loadOrderDetails(orderId);

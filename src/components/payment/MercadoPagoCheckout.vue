@@ -41,7 +41,6 @@ const initializePayment = async () => {
 
     try {
         await mercadoPagoService.initialize();
-        console.log('MercadoPago service initialized successfully');
 
         // Don't load payment brick automatically - wait for user selection
         // await nextTick()
@@ -201,16 +200,12 @@ const processCardPayment = async (cardFormData) => {
     processing.value = true;
 
     try {
-        console.log('Processing card payment for order:', props.orderData.id);
-        console.log('Card form data:', cardFormData);
 
         // Para Checkout Bricks, necesitamos generar una preferencia de pago y redirigir a MercadoPago
         // Usar el endpoint correcto del backend
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
-        console.log('Backend response:', response);
 
         const result = response.data;
-        console.log('Payment result:', result);
 
         if (result && result.success) {
             toast.add({
@@ -276,8 +271,6 @@ const processWalletPayment = async (walletFormData) => {
     processing.value = true;
 
     try {
-        console.log('Processing wallet payment for order:', props.orderData.id);
-        console.log('Wallet form data:', walletFormData);
 
         // For wallet payments, redirect to MercadoPago
         if (walletFormData.init_point) {
@@ -334,7 +327,6 @@ const processBankTransfer = async () => {
     processing.value = true;
 
     try {
-        console.log('Processing bank transfer for order:', props.orderData.id);
 
         // Para transferencia bancaria, generar preferencia de pago también
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
@@ -396,19 +388,15 @@ const proceedToMercadoPago = async () => {
     processing.value = true;
 
     try {
-        console.log('Proceeding to MercadoPago for order:', props.orderData.id);
 
         // Generate payment link using the correct backend endpoint
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
-        console.log('Backend response:', response);
-        console.log('Response.data:', response.data);
 
         // The response.data contains the payment data directly
         const paymentData = response.data;
 
         // Check if we have the required payment URLs
         if (paymentData && paymentData.init_point) {
-            console.log('Payment data:', paymentData);
 
             toast.add({
                 severity: 'success',
@@ -425,10 +413,7 @@ const proceedToMercadoPago = async () => {
 
                 // Log the payment URL for debugging
                 const returnUrl = `${window.location.origin}/payment-return`;
-                console.log('🔗 MercadoPago: Return URL configured:', returnUrl);
-                console.log('🔗 MercadoPago: Payment URL:', paymentUrl);
 
-                console.log('🚀 MercadoPago: Redirecting to payment page...');
                 window.location.href = paymentUrl;
             } else {
                 throw new Error('No se pudo obtener el enlace de pago');
