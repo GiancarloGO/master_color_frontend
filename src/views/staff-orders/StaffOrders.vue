@@ -48,7 +48,7 @@ async function loadData() {
             severity: 'error',
             summary: 'Error',
             detail: 'Error al cargar los datos',
-            life: 3000
+            life: 5000
         });
     }
 }
@@ -59,7 +59,7 @@ async function refreshOrders() {
         severity: 'success',
         summary: 'Actualizado',
         detail: 'Datos actualizados correctamente',
-        life: 3000
+        life: 5000
     });
 }
 
@@ -114,7 +114,7 @@ async function handleStatusUpdate() {
         severity: 'success',
         summary: 'Estado Actualizado',
         detail: 'El estado de la orden se actualizó correctamente',
-        life: 3000
+        life: 5000
     });
 }
 
