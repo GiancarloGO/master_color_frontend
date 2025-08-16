@@ -11,14 +11,21 @@ const toast = useToast();
 
 // Estado reactivo
 const selectedReport = ref('sales');
-const showFilters = ref(false);
+const showFilters = ref(true);
+const loadingReport = ref(''); // Para controlar loading individual
 const filters = ref({
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
     client_id: null,
     user_id: null,
-    status: '',
-    format: 'pdf'
+    status: ''
+});
+
+// Formatos por tipo de reporte
+const reportFormats = ref({
+    sales: 'pdf',
+    purchases: 'excel',
+    orders: 'pdf'
 });
 
 const availableClients = ref([]);
@@ -54,9 +61,17 @@ onMounted(async () => {
 });
 
 // Métodos
-const generateReport = async () => {
+const generateSpecificReport = async (reportType, format) => {
     try {
-        const validation = reportsStore.validateFilters(filters.value);
+        loadingReport.value = `${reportType}-${format}`;
+
+        // Combinar filtros con el formato seleccionado
+        const reportData = {
+            ...filters.value,
+            format: format
+        };
+
+        const validation = reportsStore.validateFilters(reportData);
         if (!validation.isValid) {
             toast.add({
                 severity: 'warn',
@@ -68,15 +83,15 @@ const generateReport = async () => {
         }
 
         let result;
-        switch (selectedReport.value) {
+        switch (reportType) {
             case 'sales':
-                result = await reportsStore.generateSalesReport(filters.value);
+                result = await reportsStore.generateSalesReport(reportData);
                 break;
             case 'purchases':
-                result = await reportsStore.generatePurchasesReport(filters.value);
+                result = await reportsStore.generatePurchasesReport(reportData);
                 break;
             case 'orders':
-                result = await reportsStore.generateOrdersReport(filters.value);
+                result = await reportsStore.generateOrdersReport(reportData);
                 break;
             default:
                 throw new Error('Tipo de reporte no válido');
@@ -86,7 +101,7 @@ const generateReport = async () => {
             toast.add({
                 severity: 'success',
                 summary: 'Reporte generado',
-                detail: result.message,
+                detail: `${getReportTypeLabel(reportType)} descargado en formato ${format.toUpperCase()}`,
                 life: 5000
             });
         } else {
@@ -104,6 +119,8 @@ const generateReport = async () => {
             detail: error.message || 'Error al generar el reporte',
             life: 5000
         });
+    } finally {
+        loadingReport.value = '';
     }
 };
 
@@ -113,8 +130,7 @@ const resetFilters = () => {
         end_date: new Date().toISOString().split('T')[0],
         client_id: null,
         user_id: null,
-        status: '',
-        format: 'pdf'
+        status: ''
     };
 };
 
@@ -146,6 +162,17 @@ const getReportTypeLabel = (type) => {
 const getSelectedReportType = computed(() => {
     return reportTypes.value.find((rt) => rt.value === selectedReport.value);
 });
+
+// Métodos para etiquetas de filtros
+const getStatusLabel = (statusValue) => {
+    const status = validStatuses.value.find((s) => s.value === statusValue);
+    return status ? status.label : statusValue;
+};
+
+const getUserLabel = (userId) => {
+    const user = availableUsers.value.find((u) => u.value === userId);
+    return user ? user.label : userId;
+};
 </script>
 
 <template>
@@ -163,6 +190,57 @@ const getSelectedReportType = computed(() => {
             </div>
         </div>
 
+        <!-- Filtros -->
+        <Transition name="filters">
+            <section v-if="showFilters" class="reports-section mb-6">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="pi pi-sliders-h"></i>
+                        Filtros Generales
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- Fechas -->
+                    <div class="field">
+                        <label class="block text-surface-700 font-medium mb-2">Fecha de Inicio</label>
+                        <Calendar v-model="filters.start_date" date-format="dd/mm/yy" show-icon class="w-full" />
+                    </div>
+                    <div class="field">
+                        <label class="block text-surface-700 font-medium mb-2">Fecha de Fin</label>
+                        <Calendar v-model="filters.end_date" date-format="dd/mm/yy" show-icon class="w-full" />
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="field">
+                        <label class="block text-surface-700 font-medium mb-2">Estado</label>
+                        <Select v-model="filters.status" :options="validStatuses" option-label="label" option-value="value" placeholder="Todos los estados" class="w-full" clearable />
+                    </div>
+
+                    <!-- Usuario -->
+                    <div class="field">
+                        <label class="block text-surface-700 font-medium mb-2">Vendedor</label>
+                        <Select v-model="filters.user_id" :options="availableUsers" option-label="label" option-value="value" placeholder="Todos los vendedores" class="w-full" clearable />
+                    </div>
+                </div>
+
+                <!-- Filtros Aplicados -->
+                <div class="applied-filters mb-4">
+                    <span class="text-sm font-medium text-surface-700">Filtros aplicados:</span>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <Tag v-if="filters.start_date" severity="info" icon="pi pi-calendar"> Desde: {{ new Date(filters.start_date).toLocaleDateString('es-ES') }} </Tag>
+                        <Tag v-if="filters.end_date" severity="info" icon="pi pi-calendar"> Hasta: {{ new Date(filters.end_date).toLocaleDateString('es-ES') }} </Tag>
+                        <Tag v-if="filters.status" severity="warning" icon="pi pi-info-circle"> Estado: {{ getStatusLabel(filters.status) }} </Tag>
+                        <Tag v-if="filters.user_id" severity="success" icon="pi pi-user"> Vendedor: {{ getUserLabel(filters.user_id) }} </Tag>
+                        <Tag v-if="!filters.start_date && !filters.end_date && !filters.status && !filters.user_id" severity="secondary"> Sin filtros específicos </Tag>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <Button label="Limpiar Filtros" icon="pi pi-refresh" severity="secondary" text @click="resetFilters" />
+                </div>
+            </section>
+        </Transition>
+
         <!-- Contenido -->
         <div class="reports__content space-y-6">
             <!-- Selector de Tipo de Reporte -->
@@ -170,11 +248,11 @@ const getSelectedReportType = computed(() => {
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="pi pi-list"></i>
-                        Selecciona el tipo de reporte
+                        Reportes Disponibles
                     </h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div v-for="type in reportTypes" :key="type.value" class="report-type-card" :class="{ selected: selectedReport === type.value }" @click="selectedReport = type.value">
+                    <div v-for="type in reportTypes" :key="type.value" class="report-type-card">
                         <div class="card-icon" :style="{ color: type.color }">
                             <i :class="type.icon"></i>
                         </div>
@@ -185,84 +263,24 @@ const getSelectedReportType = computed(() => {
                                 <span v-else-if="type.value === 'purchases'">Histórico de compras por cliente</span>
                                 <span v-else>Gestión completa de órdenes</span>
                             </p>
-                        </div>
-                        <div v-if="selectedReport === type.value" class="card-indicator">
-                            <i class="pi pi-check"></i>
+
+                            <!-- Botones de descarga -->
+                            <div class="download-actions mt-4">
+                                <div class="flex gap-2 justify-center">
+                                    <Button label="Descargar PDF" icon="pi pi-file-pdf" severity="danger" size="small" :loading="isLoading && loadingReport === `${type.value}-pdf`" @click="generateSpecificReport(type.value, 'pdf')" />
+                                    <Button label="Descargar Excel" icon="pi pi-file-excel" severity="success" size="small" :loading="isLoading && loadingReport === `${type.value}-excel`" @click="generateSpecificReport(type.value, 'excel')" />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Panel Principal -->
-                <div class="col-span-2">
-                    <!-- Filtros -->
-                    <Transition name="filters">
-                        <section v-if="showFilters" class="reports-section mb-6">
-                            <div class="section-header">
-                                <h2 class="section-title">
-                                    <i class="pi pi-sliders-h"></i>
-                                    Filtros Avanzados
-                                </h2>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <!-- Fechas -->
-                                <div class="field">
-                                    <label class="block text-surface-700 font-medium mb-2">Fecha de Inicio</label>
-                                    <Calendar v-model="filters.start_date" date-format="dd/mm/yy" show-icon class="w-full" />
-                                </div>
-                                <div class="field">
-                                    <label class="block text-surface-700 font-medium mb-2">Fecha de Fin</label>
-                                    <Calendar v-model="filters.end_date" date-format="dd/mm/yy" show-icon class="w-full" />
-                                </div>
-
-                                <!-- Estado -->
-                                <div class="field">
-                                    <label class="block text-surface-700 font-medium mb-2">Estado</label>
-                                    <Select v-model="filters.status" :options="validStatuses" option-label="label" option-value="value" placeholder="Todos los estados" class="w-full" clearable />
-                                </div>
-
-                                <!-- Usuario -->
-                                <div v-if="selectedReport !== 'purchases' && availableUsers.length > 0" class="field">
-                                    <label class="block text-surface-700 font-medium mb-2">Vendedor</label>
-                                    <Select v-model="filters.user_id" :options="availableUsers" option-label="label" option-value="value" placeholder="Todos los vendedores" class="w-full" clearable />
-                                </div>
-
-                                <!-- Formato -->
-                                <div class="field col-span-full">
-                                    <label class="block text-surface-700 font-medium mb-2">Formato</label>
-                                    <div class="flex gap-2">
-                                        <Button
-                                            v-for="format in availableFormats"
-                                            :key="format.value"
-                                            :label="format.label"
-                                            :icon="format.icon"
-                                            :severity="filters.format === format.value ? 'primary' : 'secondary'"
-                                            :outlined="filters.format !== format.value"
-                                            @click="filters.format = format.value"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <Button label="Limpiar Filtros" icon="pi pi-refresh" severity="secondary" text @click="resetFilters" />
-                            </div>
-                        </section>
-                    </Transition>
-
-                    <!-- Generación -->
-                    <section class="reports-section">
-                        <div class="text-center">
-                            <Button :label="`Generar ${getSelectedReportType.label}`" icon="pi pi-download" size="large" :loading="isLoading" class="w-full max-w-sm" @click="generateReport" />
-                            <p class="text-surface-600 text-sm mt-3">Formato: {{ filters.format.toUpperCase() }} • Período: {{ new Date(filters.start_date).toLocaleDateString() }} - {{ new Date(filters.end_date).toLocaleDateString() }}</p>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Sidebar -->
-                <div class="col-span-1">
+            <!-- Historial y Sidebar -->
+            <section class="reports-section">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Historial -->
-                    <section class="reports-section mb-6">
+                    <div>
                         <div class="section-header">
                             <h2 class="section-title">
                                 <i class="pi pi-history"></i>
@@ -292,10 +310,10 @@ const getSelectedReportType = computed(() => {
                             <i class="pi pi-inbox text-4xl text-surface-400 mb-4"></i>
                             <p class="text-surface-500">No hay reportes generados</p>
                         </div>
-                    </section>
+                    </div>
 
                     <!-- Información -->
-                    <section class="reports-section">
+                    <div>
                         <div class="section-header">
                             <h2 class="section-title">
                                 <i class="pi pi-info-circle"></i>
@@ -318,9 +336,9 @@ const getSelectedReportType = computed(() => {
                                 </div>
                             </div>
                         </div>
-                    </section>
+                    </div>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </template>
@@ -356,19 +374,12 @@ const getSelectedReportType = computed(() => {
 
 /* Report Type Cards */
 .report-type-card {
-    @apply bg-white border-2 border-surface-200 rounded-lg p-4 cursor-pointer transition-all duration-200 hover:border-primary-300 hover:shadow-md relative;
-}
-
-.report-type-card.selected {
-    @apply border-primary-500 bg-primary-50;
+    @apply bg-white border-2 border-surface-200 rounded-lg p-4 transition-all duration-200 hover:border-primary-300 hover:shadow-md relative;
+    min-height: 240px;
 }
 
 .card-icon {
     @apply w-12 h-12 rounded-full bg-surface-100 flex items-center justify-center mb-3 mx-auto text-2xl transition-all duration-200;
-}
-
-.report-type-card.selected .card-icon {
-    @apply bg-primary-100;
 }
 
 .card-title {
@@ -381,6 +392,20 @@ const getSelectedReportType = computed(() => {
 
 .card-indicator {
     @apply absolute top-2 right-2 w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center text-white text-xs;
+}
+
+/* Download Actions */
+.download-actions {
+    @apply border-t border-surface-200 pt-4 mt-4;
+}
+
+.download-actions .p-button {
+    @apply text-xs;
+}
+
+/* Applied Filters */
+.applied-filters {
+    @apply bg-surface-50 rounded-lg p-4 border border-surface-200;
 }
 
 /* History Items */
