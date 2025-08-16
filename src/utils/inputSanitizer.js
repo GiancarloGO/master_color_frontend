@@ -17,11 +17,7 @@ export function sanitizeInput(input, options = {}) {
         return '';
     }
 
-    const {
-        maxLength = options.isTextarea ? 500 : 100,
-        isTextarea = false,
-        allowBasicHtml = false
-    } = options;
+    const { maxLength = options.isTextarea ? 500 : 100, isTextarea = false, allowBasicHtml = false } = options;
 
     let sanitized = input;
 
@@ -30,7 +26,7 @@ export function sanitizeInput(input, options = {}) {
 
     // Remover caracteres peligrosos para prevenir XSS y SQL injection
     const dangerousChars = /[<>'"&`${}()[\]\\;|*?~^]/g;
-    
+
     if (!allowBasicHtml) {
         sanitized = sanitized.replace(dangerousChars, '');
     } else {
@@ -74,7 +70,7 @@ export function sanitizeSearchInput(input, maxLength = 50) {
     // Para búsquedas, ser más permisivo pero aún seguro
     // Remover solo los caracteres más peligrosos
     sanitized = sanitized.replace(/[<>'"&`${}[\]\\;|*?~^]/g, '');
-    
+
     // Permitir guiones, puntos y algunos caracteres especiales comunes en productos
     // Solo remover caracteres de control
     sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
@@ -84,7 +80,7 @@ export function sanitizeSearchInput(input, maxLength = 50) {
 
     // Trim y aplicar límite
     sanitized = sanitized.trim();
-    
+
     if (sanitized.length > maxLength) {
         sanitized = sanitized.substring(0, maxLength);
     }
@@ -107,16 +103,16 @@ export function sanitizeName(input, maxLength = 100) {
 
     // Para nombres, permitir letras, números, espacios, guiones y algunos acentos
     sanitized = sanitized.replace(/[^a-zA-Z0-9\sáéíóúüñÁÉÍÓÚÜÑ.-]/g, '');
-    
+
     // Remover múltiples espacios
     sanitized = sanitized.replace(/\s{2,}/g, ' ');
-    
+
     // Remover múltiples guiones
     sanitized = sanitized.replace(/-{2,}/g, '-');
 
     // Trim y aplicar límite
     sanitized = sanitized.trim();
-    
+
     if (sanitized.length > maxLength) {
         sanitized = sanitized.substring(0, maxLength);
     }
@@ -136,12 +132,12 @@ export function sanitizeEmail(input) {
 
     let sanitized = input;
 
-    // Para emails, solo permitir caracteres válidos de email
-    sanitized = sanitized.replace(/[^a-zA-Z0-9@._-]/g, '');
-    
+    // Para emails, solo permitir caracteres válidos de email según RFC 5322
+    sanitized = sanitized.replace(/[^a-zA-Z0-9@._+%-]/g, '');
+
     // Trim y límite de 254 caracteres (RFC estándar)
     sanitized = sanitized.trim();
-    
+
     if (sanitized.length > 254) {
         sanitized = sanitized.substring(0, 254);
     }
@@ -191,40 +187,55 @@ export function sanitizeTextarea(input, maxLength = 1000) {
 }
 
 /**
+ * Sanitiza input para contraseñas (más permisivo con caracteres especiales)
+ * @param {string} input - Contraseña a sanitizar
+ * @param {number} maxLength - Longitud máxima (default: 128)
+ * @returns {string} Contraseña sanitizada
+ */
+export function sanitizePasswordInput(input, maxLength = 128) {
+    if (!input || typeof input !== 'string') {
+        return '';
+    }
+
+    let sanitized = input;
+
+    // Para contraseñas, solo remover caracteres de control y caracteres extremadamente peligrosos
+    // Permitir la mayoría de caracteres especiales incluyendo #, @, !, etc.
+    sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+    // Solo remover los caracteres más peligrosos para XSS básico
+    sanitized = sanitized.replace(/[<>'"`]/g, '');
+
+    // Aplicar límite de longitud
+    if (sanitized.length > maxLength) {
+        sanitized = sanitized.substring(0, maxLength);
+    }
+
+    return sanitized;
+}
+
+/**
  * Valida que un input no contenga patrones sospechosos
  * @param {string} input - Texto a validar
  * @returns {Object} Resultado de validación {isValid: boolean, errors: string[]}
  */
 export function validateInput(input) {
     const errors = [];
-    
+
     if (!input || typeof input !== 'string') {
         return { isValid: true, errors: [] };
     }
 
     // Detectar patrones de SQL injection
-    const sqlPatterns = [
-        /(\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bunion\b)/i,
-        /(\bor\b|\band\b)\s*['"]?\s*[\w\s]*['"]?\s*=\s*['"]?\s*[\w\s]*['"]?/i,
-        /['"];\s*(\bdrop\b|\bdelete\b|\binsert\b)/i,
-        /--|\#|\/\*/
-    ];
+    const sqlPatterns = [/(\bselect\b|\binsert\b|\bupdate\b|\bdelete\b|\bdrop\b|\bunion\b)/i, /(\bor\b|\band\b)\s*['"]?\s*[\w\s]*['"]?\s*=\s*['"]?\s*[\w\s]*['"]?/i, /['"];\s*(\bdrop\b|\bdelete\b|\binsert\b)/i, /--|\#|\/\*/];
 
     // Detectar patrones de XSS
-    const xssPatterns = [
-        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-        /javascript:/i,
-        /on\w+\s*=/i,
-        /<iframe\b/i,
-        /<object\b/i,
-        /<embed\b/i,
-        /<form\b/i
-    ];
+    const xssPatterns = [/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, /javascript:/i, /on\w+\s*=/i, /<iframe\b/i, /<object\b/i, /<embed\b/i, /<form\b/i];
 
     // Verificar SQL injection
     for (const pattern of sqlPatterns) {
         if (pattern.test(input)) {
-            errors.push('Contiene patrones sospechosos de SQL injection');
+            errors.push('Contenido no válido');
             break;
         }
     }
@@ -232,7 +243,7 @@ export function validateInput(input) {
     // Verificar XSS
     for (const pattern of xssPatterns) {
         if (pattern.test(input)) {
-            errors.push('Contiene patrones sospechosos de XSS');
+            errors.push('Contenido no válido');
             break;
         }
     }

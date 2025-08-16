@@ -200,7 +200,6 @@ const processCardPayment = async (cardFormData) => {
     processing.value = true;
 
     try {
-
         // Para Checkout Bricks, necesitamos generar una preferencia de pago y redirigir a MercadoPago
         // Usar el endpoint correcto del backend
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
@@ -271,7 +270,6 @@ const processWalletPayment = async (walletFormData) => {
     processing.value = true;
 
     try {
-
         // For wallet payments, redirect to MercadoPago
         if (walletFormData.init_point) {
             localStorage.setItem('currentOrderId', props.orderData.id);
@@ -327,7 +325,6 @@ const processBankTransfer = async () => {
     processing.value = true;
 
     try {
-
         // Para transferencia bancaria, generar preferencia de pago también
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
         const result = response.data;
@@ -388,7 +385,6 @@ const proceedToMercadoPago = async () => {
     processing.value = true;
 
     try {
-
         // Generate payment link using the correct backend endpoint
         const response = await ordersApi.generatePaymentLink(props.orderData.id);
 
@@ -397,7 +393,6 @@ const proceedToMercadoPago = async () => {
 
         // Check if we have the required payment URLs
         if (paymentData && paymentData.init_point) {
-
             toast.add({
                 severity: 'success',
                 summary: 'Procesando pago',

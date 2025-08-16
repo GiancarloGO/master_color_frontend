@@ -28,7 +28,6 @@ const preference_id = route.query.preference_id;
 // Get order ID from URL or localStorage (saved before redirect)
 const orderId = route.query.order || localStorage.getItem('currentOrderId') || localStorage.getItem('pendingOrderId');
 
-
 // Computed - Basado en la estructura del backend según la guía
 const paymentResult = computed(() => {
     // Si no hay paymentStatus, usar parámetros de URL para estado inicial
@@ -184,7 +183,6 @@ const startPaymentVerification = (orderId) => {
 
 const checkPaymentStatus = async (orderId) => {
     try {
-
         // Usar el endpoint exacto de la guía: /api/payment-status/{orderId}
         const response = await ordersStore.checkPaymentStatus(orderId);
 
@@ -238,7 +236,6 @@ const retryPayment = () => {
 
 // Lifecycle - Implementación según la guía
 onMounted(async () => {
-
     if (!orderId) {
         console.error('PaymentReturn: No order ID found');
         toast.add({
@@ -250,7 +247,6 @@ onMounted(async () => {
         router.push('/orders');
         return;
     }
-
 
     // Step 1: Load order details
     await loadOrderDetails(orderId);

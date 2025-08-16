@@ -1,12 +1,5 @@
 import { ref, watch, computed } from 'vue';
-import { 
-    sanitizeInput, 
-    sanitizeEmail, 
-    sanitizeName, 
-    sanitizeNumber, 
-    sanitizeTextarea,
-    validateInput 
-} from '@/utils/inputSanitizer';
+import { sanitizeInput, sanitizeEmail, sanitizeName, sanitizeNumber, sanitizeTextarea, sanitizePasswordInput, validateInput } from '@/utils/inputSanitizer';
 
 /**
  * Composable para manejo de validación y sanitización de inputs
@@ -14,12 +7,7 @@ import {
  * @param {Object} options - Opciones de configuración
  */
 export function useInputValidation(inputType = 'text', options = {}) {
-    const {
-        maxLength = getDefaultMaxLength(inputType),
-        required = false,
-        customValidation = null,
-        realTimeValidation = true
-    } = options;
+    const { maxLength = getDefaultMaxLength(inputType), required = false, customValidation = null, realTimeValidation = true } = options;
 
     const value = ref('');
     const errors = ref([]);
@@ -62,6 +50,9 @@ export function useInputValidation(inputType = 'text', options = {}) {
                 return sanitizeNumber(inputValue, false).substring(0, 8);
             case 'address':
                 return sanitizeInput(inputValue, { maxLength: 255, allowBasicHtml: false });
+            case 'password':
+                // Para contraseñas, ser más permisivo con caracteres especiales
+                return sanitizePasswordInput(inputValue, maxLength);
             default:
                 return sanitizeInput(inputValue, { maxLength });
         }
@@ -72,7 +63,7 @@ export function useInputValidation(inputType = 'text', options = {}) {
         const validationErrors = [];
 
         if (required && !inputValue.trim()) {
-            validationErrors.push('Este campo es requerido');
+            validationErrors.push('Requerido');
             return validationErrors;
         }
 
@@ -84,63 +75,56 @@ export function useInputValidation(inputType = 'text', options = {}) {
             case 'email':
                 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
                 if (!emailRegex.test(inputValue)) {
-                    validationErrors.push('Ingresa un email válido');
-                }
-                // Verificar dominios comunes mal escritos
-                const commonDomains = ['gmail.com', 'hotmail.com', 'outlook.com', 'yahoo.com'];
-                const domain = inputValue.split('@')[1];
-                if (domain) {
-                    const suggestions = getSimilarDomains(domain, commonDomains);
-                    if (suggestions.length > 0) {
-                        validationErrors.push(`¿Quisiste decir @${suggestions[0]}?`);
-                    }
+                    validationErrors.push('Email inválido');
                 }
                 break;
 
             case 'name':
                 if (inputValue.length < 2) {
-                    validationErrors.push('El nombre debe tener al menos 2 caracteres');
+                    validationErrors.push('Mínimo 2 caracteres');
                 }
                 if (!/^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s.-]+$/.test(inputValue)) {
-                    validationErrors.push('El nombre solo puede contener letras, espacios, puntos y guiones');
+                    validationErrors.push('Solo letras y espacios');
                 }
                 break;
 
             case 'phone':
                 if (inputValue.length < 9) {
-                    validationErrors.push('El teléfono debe tener al menos 9 dígitos');
+                    validationErrors.push('Mínimo 9 dígitos');
                 }
                 if (!/^[0-9]+$/.test(inputValue)) {
-                    validationErrors.push('El teléfono solo puede contener números');
+                    validationErrors.push('Solo números');
                 }
                 break;
 
             case 'dni':
                 if (inputValue.length !== 8) {
-                    validationErrors.push('El DNI debe tener exactamente 8 dígitos');
+                    validationErrors.push('8 dígitos exactos');
                 }
                 if (!/^[0-9]{8}$/.test(inputValue)) {
-                    validationErrors.push('El DNI solo puede contener números');
+                    validationErrors.push('Solo números');
                 }
                 break;
 
             case 'number':
                 if (!/^-?[0-9]+(\.[0-9]+)?$/.test(inputValue)) {
-                    validationErrors.push('Ingresa un número válido');
+                    validationErrors.push('Número inválido');
                 }
                 break;
 
             case 'password':
                 if (inputValue.length < 6) {
-                    validationErrors.push('La contraseña debe tener al menos 6 caracteres');
+                    validationErrors.push('Mínimo 6 caracteres');
                 }
                 break;
         }
 
-        // Validación general de seguridad
-        const securityValidation = validateInput(inputValue);
-        if (!securityValidation.isValid) {
-            validationErrors.push(...securityValidation.errors);
+        // Validación general de seguridad (excluir emails y passwords ya que tienen su propia validación)
+        if (type !== 'email' && type !== 'password') {
+            const securityValidation = validateInput(inputValue);
+            if (!securityValidation.isValid) {
+                validationErrors.push(...securityValidation.errors);
+            }
         }
 
         // Validación personalizada si se proporciona
@@ -155,55 +139,51 @@ export function useInputValidation(inputType = 'text', options = {}) {
     }
 
     // Función para sugerir dominios similares
-    function getSimilarDomains(domain, validDomains) {
+    function getSimilarDomains(domain, validDomains, maxDistance = 2) {
         const suggestions = [];
         const lowerDomain = domain.toLowerCase();
-        
+
         for (const validDomain of validDomains) {
-            if (getLevenshteinDistance(lowerDomain, validDomain) <= 2) {
+            if (getLevenshteinDistance(lowerDomain, validDomain) <= maxDistance) {
                 suggestions.push(validDomain);
             }
         }
-        
+
         return suggestions;
     }
 
     // Algoritmo de distancia de Levenshtein simplificado
     function getLevenshteinDistance(str1, str2) {
         const matrix = [];
-        
+
         for (let i = 0; i <= str2.length; i++) {
             matrix[i] = [i];
         }
-        
+
         for (let j = 0; j <= str1.length; j++) {
             matrix[0][j] = j;
         }
-        
+
         for (let i = 1; i <= str2.length; i++) {
             for (let j = 1; j <= str1.length; j++) {
                 if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
                     matrix[i][j] = matrix[i - 1][j - 1];
                 } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j] + 1
-                    );
+                    matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
                 }
             }
         }
-        
+
         return matrix[str2.length][str1.length];
     }
 
     // Watcher para sanitización y validación en tiempo real
     watch(value, (newValue) => {
         isDirty.value = true;
-        
+
         // Sanitizar el valor
         const sanitized = sanitizeByType(newValue, inputType);
-        
+
         // Solo actualizar si el valor cambió después de sanitizar
         if (sanitized !== newValue) {
             value.value = sanitized;

@@ -222,7 +222,7 @@ const validateForm = () => {
     const nameValid = nameValidation.validate();
     const emailValid = emailValidation.validate();
     const passwordValid = passwordValidation.validate();
-    
+
     isValid = nameValid && emailValid && passwordValid;
 
     // Validar confirmación de contraseña

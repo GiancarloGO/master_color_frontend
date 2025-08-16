@@ -23,16 +23,18 @@ const { value: password, firstError: passwordError, inputClasses: passwordClasse
 
 // Estado para recuperación de contraseña
 const showForgotPasswordDialog = ref(false);
-const forgotPasswordEmail = ref('');
 const forgotPasswordLoading = ref(false);
-const forgotPasswordEmailError = ref('');
 const forgotPasswordSuccess = ref(false);
+
+// Validación para forgot password email con composable
+const forgotPasswordEmailValidation = useEmailValidation({ required: true });
+const { value: forgotPasswordEmail, firstError: forgotPasswordEmailError, inputClasses: forgotPasswordEmailClasses } = forgotPasswordEmailValidation;
 
 // Métodos
 const validateForm = () => {
     const emailValid = emailValidation.validate();
     const passwordValid = passwordValidation.validate();
-    
+
     return emailValid && passwordValid;
 };
 
@@ -87,7 +89,7 @@ const togglePasswordVisibility = () => {
 // Métodos para recuperación de contraseña
 const openForgotPasswordDialog = () => {
     forgotPasswordEmail.value = email.value; // Pre-llenar con el email del login si existe
-    forgotPasswordEmailError.value = '';
+    forgotPasswordEmailValidation.clearErrors(); // Limpiar errores del composable
     forgotPasswordSuccess.value = false;
     showForgotPasswordDialog.value = true;
 };
@@ -96,22 +98,8 @@ const closeForgotPasswordDialog = () => {
     showForgotPasswordDialog.value = false;
 };
 
-const validateForgotPasswordEmail = () => {
-    forgotPasswordEmailError.value = '';
-
-    if (!forgotPasswordEmail.value) {
-        forgotPasswordEmailError.value = 'El correo electrónico es requerido';
-        return false;
-    } else if (!/^\S+@\S+\.\S+$/.test(forgotPasswordEmail.value)) {
-        forgotPasswordEmailError.value = 'Ingrese un correo electrónico válido';
-        return false;
-    }
-
-    return true;
-};
-
 const submitForgotPassword = async () => {
-    if (!validateForgotPasswordEmail()) {
+    if (!forgotPasswordEmailValidation.validate()) {
         return;
     }
 
@@ -161,10 +149,10 @@ const submitForgotPassword = async () => {
                     <span class="p-input-icon-left w-full">
                         <IconField>
                             <InputIcon class="pi pi-envelope" />
-                            <InputText id="forgotPasswordEmail" v-model="forgotPasswordEmail" type="email" class="w-full" placeholder="correo@ejemplo.com" :disabled="forgotPasswordLoading" :class="{ 'p-invalid': forgotPasswordEmailError }" />
+                            <InputText id="forgotPasswordEmail" v-model="forgotPasswordEmail" type="email" class="w-full" placeholder="correo@ejemplo.com" :disabled="forgotPasswordLoading" :class="forgotPasswordEmailClasses" maxlength="254" />
                         </IconField>
                     </span>
-                    <small v-if="forgotPasswordEmailError" class="p-error block mt-1">
+                    <small v-if="forgotPasswordEmailError" class="p-error text-red-600 text-xs mt-1 block font-medium leading-tight">
                         {{ forgotPasswordEmailError }}
                     </small>
                 </div>
@@ -272,7 +260,7 @@ const submitForgotPassword = async () => {
                                             <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full text-gray-900 font-medium" :class="emailClasses" maxlength="254" />
                                         </IconField>
                                     </div>
-                                    <small v-if="emailError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
+                                    <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block font-medium leading-tight">
                                         {{ emailError }}
                                     </small>
                                 </div>
@@ -283,15 +271,7 @@ const submitForgotPassword = async () => {
                                     <div class="relative">
                                         <IconField>
                                             <InputIcon class="pi pi-lock" />
-                                            <InputText
-                                                id="password"
-                                                v-model="password"
-                                                :type="showPassword ? 'text' : 'password'"
-                                                placeholder="Tu contraseña"
-                                                class="w-full text-gray-900 font-medium"
-                                                :class="passwordClasses"
-                                                maxlength="128"
-                                            />
+                                            <InputText id="password" v-model="password" :type="showPassword ? 'text' : 'password'" placeholder="Tu contraseña" class="w-full text-gray-900 font-medium" :class="passwordClasses" maxlength="128" />
                                             <i
                                                 :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
                                                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors text-lg"
@@ -299,7 +279,7 @@ const submitForgotPassword = async () => {
                                             ></i>
                                         </IconField>
                                     </div>
-                                    <small v-if="passwordError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
+                                    <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block font-medium leading-tight">
                                         {{ passwordError }}
                                     </small>
                                 </div>

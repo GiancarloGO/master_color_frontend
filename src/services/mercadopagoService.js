@@ -102,8 +102,7 @@ class MercadoPagoService {
 
             // Configuración de callbacks
             callbacks: {
-                onReady: () => {
-                },
+                onReady: () => {},
                 onSubmit: async (cardFormData) => {
                     try {
                         return options.callbacks?.onSubmit ? await options.callbacks.onSubmit(cardFormData) : null;
@@ -134,7 +133,6 @@ class MercadoPagoService {
             }
         };
 
-
         try {
             const bricksBuilder = this.mp.bricks();
             const cardPaymentBrick = await bricksBuilder.create('payment', container, mergedOptions);
@@ -160,8 +158,7 @@ class MercadoPagoService {
                 }
             },
             callbacks: {
-                onReady: () => {
-                },
+                onReady: () => {},
                 onSubmit: async (walletFormData) => {
                     try {
                         return options.onSubmit ? await options.onSubmit(walletFormData) : null;
@@ -213,8 +210,7 @@ class MercadoPagoService {
                 }
             },
             callbacks: {
-                onReady: () => {
-                },
+                onReady: () => {},
                 onError: (error) => {
                     console.error('Status Screen Brick error:', error);
                     if (options.onError) {

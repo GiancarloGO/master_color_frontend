@@ -34,7 +34,6 @@ const order = computed(() => {
         const orderFromList = ordersStore.getOrderById(props.orderId);
         const selectedOrder = currentOrder || orderFromList;
 
-
         return selectedOrder;
     }
     return null;
@@ -96,7 +95,6 @@ const orderItems = computed(() => {
             product_id: detail.product_id
         }));
     }
-
 
     return items;
 });
@@ -264,10 +262,7 @@ const debugRefresh = async () => {
 // Cargar detalles de la orden cuando se abra el modal
 watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
     if (visible && orderId) {
-
         const result = await ordersStore.fetchOrderById(orderId);
-
-
     }
 });
 </script>
