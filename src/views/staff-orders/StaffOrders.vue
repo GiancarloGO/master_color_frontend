@@ -12,9 +12,6 @@ const toast = useToast();
 const orderDetailDialog = ref(false);
 const statusDialog = ref(false);
 const selectedOrder = ref(null);
-const searchQuery = ref('');
-const searchType = ref('all');
-
 const filters = ref({
     status: '',
     date_from: null,
@@ -33,14 +30,11 @@ const statusOptions = [
     { label: 'Pago Fallido', value: 'pago_fallido' }
 ];
 
-const searchTypeOptions = [
-    { label: 'Todo', value: 'all' },
-    { label: 'ID de Orden', value: 'order_id' },
-    { label: 'Nombre de Cliente', value: 'client_name' },
-    { label: 'Email de Cliente', value: 'client_email' }
-];
-
 const statistics = computed(() => staffOrdersStore.getStatistics);
+
+const hasActiveFilters = computed(() => {
+    return !!(filters.value.status || filters.value.date_from || filters.value.date_to);
+});
 
 onMounted(async () => {
     await loadData();
@@ -88,17 +82,7 @@ async function applyFilters() {
 }
 
 async function performSearch() {
-    if (!searchQuery.value.trim()) {
-        await applyFilters();
-        return;
-    }
-
-    const searchData = {
-        search: searchQuery.value.trim(),
-        search_type: searchType.value
-    };
-
-    await staffOrdersStore.searchOrders(searchData, { paginate: true });
+    await applyFilters();
 }
 
 function clearFilters() {
@@ -107,8 +91,6 @@ function clearFilters() {
         date_from: null,
         date_to: null
     };
-    searchQuery.value = '';
-    searchType.value = 'all';
     staffOrdersStore.clearFilters();
     refreshOrders();
 }
@@ -148,6 +130,15 @@ function formatCurrency(amount) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     }).format(parseFloat(amount));
+}
+
+function formatDate(date) {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('es-PE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
 }
 </script>
 
@@ -204,39 +195,77 @@ function formatCurrency(amount) {
             </div>
         </div>
 
-        <!-- Filtros y búsqueda -->
+        <!-- Filtros -->
         <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Búsqueda -->
-                <div class="flex flex-col">
-                    <label class="text-sm font-medium text-surface-700 mb-1">Buscar</label>
-                    <div class="flex gap-2">
-                        <InputText v-model="searchQuery" placeholder="ID, cliente, email..." class="flex-1" @keyup.enter="performSearch" />
-                        <Button icon="pi pi-search" :disabled="!searchQuery.trim()" @click="performSearch" />
-                    </div>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-surface-900">Filtros de Órdenes</h3>
+                <div class="flex gap-2">
+                    <Button icon="pi pi-filter-slash" label="Limpiar Filtros" severity="secondary" outlined size="small" @click="clearFilters" />
+                    <Button icon="pi pi-filter" label="Aplicar Filtros" :disabled="!hasActiveFilters" @click="performSearch" />
                 </div>
+            </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Filtro por estado -->
                 <div class="flex flex-col">
-                    <label class="text-sm font-medium text-surface-700 mb-1">Estado</label>
-                    <Dropdown v-model="filters.status" :options="statusOptions" option-label="label" option-value="value" placeholder="Todos los estados" class="w-full" @change="applyFilters" />
+                    <label class="text-sm font-medium text-surface-700 mb-2">Estado de la Orden</label>
+                    <Dropdown v-model="filters.status" :options="statusOptions" option-label="label" option-value="value" placeholder="Seleccionar estado" class="w-full" show-clear @change="applyFilters" />
                 </div>
 
                 <!-- Fecha desde -->
                 <div class="flex flex-col">
-                    <label class="text-sm font-medium text-surface-700 mb-1">Desde</label>
-                    <DatePicker v-model="filters.date_from" placeholder="Fecha desde" date-format="yy-mm-dd" @date-select="applyFilters" />
+                    <label class="text-sm font-medium text-surface-700 mb-2">Fecha Desde</label>
+                    <Calendar v-model="filters.date_from" placeholder="Seleccionar fecha" date-format="dd/mm/yy" show-icon show-button-bar class="w-full" @date-select="applyFilters" />
                 </div>
 
                 <!-- Fecha hasta -->
                 <div class="flex flex-col">
-                    <label class="text-sm font-medium text-surface-700 mb-1">Hasta</label>
-                    <DatePicker v-model="filters.date_to" placeholder="Fecha hasta" date-format="yy-mm-dd" @date-select="applyFilters" />
+                    <label class="text-sm font-medium text-surface-700 mb-2">Fecha Hasta</label>
+                    <Calendar v-model="filters.date_to" placeholder="Seleccionar fecha" date-format="dd/mm/yy" show-icon show-button-bar class="w-full" @date-select="applyFilters" />
                 </div>
             </div>
 
-            <div class="flex justify-end gap-2 mt-4">
-                <Button icon="pi pi-filter-slash" label="Limpiar Filtros" severity="secondary" @click="clearFilters" />
+            <!-- Filtros aplicados -->
+            <div v-if="hasActiveFilters" class="mt-4 pt-4 border-t border-surface-200">
+                <span class="text-sm font-medium text-surface-700 mb-2 block">Filtros aplicados:</span>
+                <div class="flex flex-wrap gap-2">
+                    <Tag
+                        v-if="filters.status"
+                        severity="warning"
+                        icon="pi pi-filter"
+                        removable
+                        @remove="
+                            filters.status = '';
+                            applyFilters();
+                        "
+                    >
+                        Estado: {{ statusOptions.find((s) => s.value === filters.status)?.label }}
+                    </Tag>
+                    <Tag
+                        v-if="filters.date_from"
+                        severity="success"
+                        icon="pi pi-calendar"
+                        removable
+                        @remove="
+                            filters.date_from = null;
+                            applyFilters();
+                        "
+                    >
+                        Desde: {{ formatDate(filters.date_from) }}
+                    </Tag>
+                    <Tag
+                        v-if="filters.date_to"
+                        severity="success"
+                        icon="pi pi-calendar"
+                        removable
+                        @remove="
+                            filters.date_to = null;
+                            applyFilters();
+                        "
+                    >
+                        Hasta: {{ formatDate(filters.date_to) }}
+                    </Tag>
+                </div>
             </div>
         </div>
 

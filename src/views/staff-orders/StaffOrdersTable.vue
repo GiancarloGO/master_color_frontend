@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+import { FilterMatchMode } from '@primevue/core/api';
 import { useStaffOrdersStore } from '@/stores/staffOrders';
 
 const props = defineProps({
@@ -13,6 +15,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['view-order', 'update-status']);
+
+const dt = ref();
+
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
 
 const staffOrdersStore = useStaffOrdersStore();
 
@@ -88,10 +96,16 @@ function formatTime(dateString) {
         minute: '2-digit'
     });
 }
+
+const exportCSV = () => {
+    dt.value.exportCSV();
+};
 </script>
 
 <template>
     <DataTable
+        ref="dt"
+        v-model:filters="filters"
         :value="orders"
         :loading="loading"
         paginator
@@ -101,7 +115,11 @@ function formatTime(dateString) {
         current-page-report-template="Mostrando {first} a {last} de {totalRecords} órdenes"
         responsive-layout="scroll"
         class="p-datatable-striped"
+        data-key="id"
+        filter-display="menu"
         :global-filter-fields="['id', 'client.name', 'client.lastname', 'client.email', 'total', 'status']"
+        :meta-key-selection="false"
+        :row-hover="true"
     >
         <template #empty>
             <div class="text-center py-8">
@@ -114,6 +132,22 @@ function formatTime(dateString) {
             <div class="text-center py-8">
                 <ProgressSpinner />
                 <p class="text-surface-500 mt-2">Cargando órdenes...</p>
+            </div>
+        </template>
+
+        <template #header>
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <h4 class="text-lg font-semibold text-surface-900">Órdenes</h4>
+                    <Badge :value="orders.length" severity="info" />
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search" />
+                        <InputText v-model="filters['global'].value" placeholder="Buscar en todas las columnas..." class="w-60" />
+                    </span>
+                    <Button v-tooltip.top="'Exportar CSV'" icon="pi pi-download" severity="secondary" outlined @click="exportCSV" />
+                </div>
             </div>
         </template>
 
