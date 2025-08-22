@@ -1,7 +1,7 @@
+import { usersApi } from '@/api/index';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { usersApi } from '@/api/index';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useUsersStore = defineStore('usersStore', {
     state: () => ({
@@ -30,6 +30,7 @@ export const useUsersStore = defineStore('usersStore', {
                 this.usersList = processed.data.users || processed.data || [];
                 cache.setItem('usersList', this.usersList);
                 this.success = true;
+                console.log(this.usersList)
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);

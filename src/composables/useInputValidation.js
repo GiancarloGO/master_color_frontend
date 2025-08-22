@@ -113,8 +113,20 @@ export function useInputValidation(inputType = 'text', options = {}) {
                 break;
 
             case 'password':
-                if (inputValue.length < 6) {
-                    validationErrors.push('Mínimo 6 caracteres');
+                if (inputValue.length < 10) {
+                    validationErrors.push('Mínimo 10 caracteres');
+                }
+                if (!/[a-z]/.test(inputValue)) {
+                    validationErrors.push('Debe incluir al menos una letra minúscula');
+                }
+                if (!/[A-Z]/.test(inputValue)) {
+                    validationErrors.push('Debe incluir al menos una letra mayúscula');
+                }
+                if (!/[0-9]/.test(inputValue)) {
+                    validationErrors.push('Debe incluir al menos un número');
+                }
+                if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(inputValue)) {
+                    validationErrors.push('Debe incluir al menos un carácter especial');
                 }
                 break;
         }

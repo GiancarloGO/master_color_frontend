@@ -364,7 +364,7 @@ export const useAuthStore = defineStore('authStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    // Al cambiar la contraseña exitosamente, invalidar tokens y cerrar sesión
+                    // Al cambiar la contraseña exitosamente, invalidar tokens y cerrar sesión por seguridad
                     this.clearAuthData();
                 }
 

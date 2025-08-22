@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue';
-import { FilterMatchMode } from '@primevue/core/api';
 import { useRolesStore } from '@/stores/roles';
+import { FilterMatchMode } from '@primevue/core/api';
+import { ref } from 'vue';
 
 const rolesStore = useRolesStore();
 
@@ -152,6 +152,16 @@ const exportCSV = () => {
             :meta-key-selection="false"
             :row-hover="true"
         >
+            <!-- <template #header>
+                <div class="table-header-filters">
+                    <div class="flex justify-content-end">
+                        <IconField>
+                            <InputIcon class="pi pi-search" />
+                            <InputText v-model="filters['global'].value" placeholder="Buscar usuarios..." class="w-full sm:w-auto" />
+                        </IconField>
+                    </div>
+                </div>
+            </template> -->
             <template #empty>
                 <div class="empty-state">
                     <div class="empty-icon">
@@ -424,5 +434,32 @@ const exportCSV = () => {
 /* Dark mode support for empty state */
 [data-theme='dark'] .empty-icon {
     background: var(--surface-ground);
+}
+
+/* Table header filters */
+.table-header-filters {
+    padding: 1rem;
+    background: var(--surface-section);
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.table-header-filters :deep(.p-inputtext) {
+    border-radius: 8px;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-card);
+    padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.table-header-filters :deep(.p-inputtext:focus) {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.table-header-filters :deep(.p-icon-field .p-input-icon) {
+    right: 0.75rem;
+    left: auto;
+    color: var(--text-color-secondary);
 }
 </style>

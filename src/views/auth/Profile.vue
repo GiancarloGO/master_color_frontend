@@ -1,4 +1,5 @@
 <script setup>
+import { usePasswordValidation } from '@/composables/useInputValidation';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -13,10 +14,13 @@ const toast = useToast();
 const loading = ref(true);
 const showPasswordDialog = ref(false);
 const currentPassword = ref('');
-const newPassword = ref('');
 const confirmPassword = ref('');
 const passwordLoading = ref(false);
 const passwordError = ref('');
+
+// Validación de nueva contraseña
+const passwordValidation = usePasswordValidation({ required: true });
+const { value: newPassword, firstError: newPasswordError, validate: validateNewPassword } = passwordValidation;
 
 // Datos computados
 const user = computed(() => authStore.currentUser);
@@ -68,6 +72,7 @@ const cancelPasswordChange = () => {
     newPassword.value = '';
     confirmPassword.value = '';
     passwordError.value = '';
+    passwordValidation.reset();
 };
 
 const submitPasswordChange = async () => {
@@ -79,13 +84,10 @@ const submitPasswordChange = async () => {
         return;
     }
 
-    if (!newPassword.value) {
-        passwordError.value = 'La nueva contraseña es requerida';
-        return;
-    }
-
-    if (newPassword.value.length < 8) {
-        passwordError.value = 'La contraseña debe tener al menos 8 caracteres';
+    // Validar nueva contraseña con las reglas de fortaleza
+    const isNewPasswordValid = validateNewPassword();
+    if (!isNewPasswordValid) {
+        passwordError.value = newPasswordError.value || 'La nueva contraseña no cumple con los requisitos';
         return;
     }
 
@@ -97,6 +99,7 @@ const submitPasswordChange = async () => {
     passwordLoading.value = true;
 
     try {
+        let userType = authStore.getUserType;
         const result = await authStore.changePassword({
             current_password: currentPassword.value,
             password: newPassword.value,
@@ -107,7 +110,7 @@ const submitPasswordChange = async () => {
             toast.add({
                 severity: 'success',
                 summary: 'Contraseña actualizada',
-                detail: 'Tu contraseña ha sido cambiada exitosamente. Serás redirigido al login.',
+                detail: 'Tu contraseña ha sido cambiada exitosamente. Por seguridad, debes iniciar sesión nuevamente.',
                 life: 5000
             });
 
@@ -115,11 +118,16 @@ const submitPasswordChange = async () => {
             currentPassword.value = '';
             newPassword.value = '';
             confirmPassword.value = '';
+            passwordValidation.reset();
 
-            // Redirigir al login después de 2 segundos
+            // Redirigir al login después de 3 segundos por seguridad
             setTimeout(() => {
-                router.push('/auth/login');
-            }, 2000);
+                if (userType === 'client') {
+                    router.push('/auth/login');
+                } else {
+                    router.push('/auth/employee-login');
+                }
+            }, 3000);
         } else {
             passwordError.value = result.message || 'Error al cambiar la contraseña';
         }
@@ -129,6 +137,90 @@ const submitPasswordChange = async () => {
         passwordLoading.value = false;
     }
 };
+
+// Función para calcular la fortaleza de la contraseña
+const getPasswordStrength = () => {
+    let score = 0;
+    const pass = newPassword.value;
+
+    if (pass.length >= 10) score++;
+    if (/[a-z]/.test(pass)) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) score++;
+
+    return score;
+};
+
+// Función para obtener el color de la barra de fortaleza
+const getPasswordStrengthColor = (index) => {
+    const strength = getPasswordStrength();
+
+    if (index > strength) {
+        return 'bg-gray-200';
+    }
+
+    switch (strength) {
+        case 1:
+        case 2:
+            return 'bg-red-500';
+        case 3:
+            return 'bg-yellow-500';
+        case 4:
+            return 'bg-blue-500';
+        case 5:
+            return 'bg-green-500';
+        default:
+            return 'bg-gray-200';
+    }
+};
+
+// Función para obtener el texto de fortaleza
+const getPasswordStrengthText = () => {
+    const strength = getPasswordStrength();
+
+    switch (strength) {
+        case 0:
+        case 1:
+            return 'Muy débil';
+        case 2:
+            return 'Débil';
+        case 3:
+            return 'Regular';
+        case 4:
+            return 'Fuerte';
+        case 5:
+            return 'Muy fuerte';
+        default:
+            return 'Muy débil';
+    }
+};
+
+// Función para obtener el color del texto de fortaleza
+const getPasswordStrengthTextColor = () => {
+    const strength = getPasswordStrength();
+
+    switch (strength) {
+        case 0:
+        case 1:
+            return 'text-red-600';
+        case 2:
+            return 'text-red-500';
+        case 3:
+            return 'text-yellow-600';
+        case 4:
+            return 'text-blue-600';
+        case 5:
+            return 'text-green-600';
+        default:
+            return 'text-red-600';
+    }
+};
+
+// Computed para validar caracteres especiales
+const hasSpecialChar = computed(() => {
+    return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword.value);
+});
 </script>
 
 <template>
@@ -150,7 +242,50 @@ const submitPasswordChange = async () => {
 
                 <div class="field mb-4">
                     <label for="newPassword" class="block text-900 font-medium mb-2">Nueva contraseña</label>
-                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="true" :toggle-mask="true" placeholder="Ingresa tu nueva contraseña" fluid />
+                    <Password id="newPassword" v-model="newPassword" class="w-full" :feedback="false" :toggle-mask="true" placeholder="Ingresa tu nueva contraseña" fluid />
+
+                    <!-- Indicador de fortaleza de contraseña -->
+                    <div v-if="newPassword" class="mt-3 p-3 border-round" style="background: #f8f9fa; border: 1px solid #e9ecef">
+                        <div class="flex align-items-center justify-content-between mb-2">
+                            <span class="text-sm font-medium text-700">Fortaleza de la contraseña</span>
+                            <span class="text-sm font-semibold" :class="getPasswordStrengthTextColor()">{{ getPasswordStrengthText() }}</span>
+                        </div>
+                        <div class="flex gap-1 mb-3">
+                            <div v-for="i in 4" :key="i" class="h-1rem flex-1 border-round-lg transition-all transition-duration-300" :class="getPasswordStrengthColor(i)"></div>
+                        </div>
+                        <div class="grid">
+                            <div class="col-6">
+                                <div class="flex align-items-center text-sm transition-all transition-duration-200" :class="newPassword.length >= 10 ? 'text-green-600' : 'text-500'">
+                                    <i :class="newPassword.length >= 10 ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-2"></i>
+                                    <span>Mínimo 10 caracteres</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="flex align-items-center text-sm transition-all transition-duration-200" :class="/[a-z]/.test(newPassword) ? 'text-green-600' : 'text-500'">
+                                    <i :class="/[a-z]/.test(newPassword) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-2"></i>
+                                    <span>Una letra minúscula</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="flex align-items-center text-sm transition-all transition-duration-200" :class="/[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-500'">
+                                    <i :class="/[A-Z]/.test(newPassword) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-2"></i>
+                                    <span>Una letra mayúscula</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="flex align-items-center text-sm transition-all transition-duration-200" :class="/[0-9]/.test(newPassword) ? 'text-green-600' : 'text-500'">
+                                    <i :class="/[0-9]/.test(newPassword) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-2"></i>
+                                    <span>Un número</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="flex align-items-center text-sm transition-all transition-duration-200" :class="hasSpecialChar ? 'text-green-600' : 'text-500'">
+                                    <i :class="hasSpecialChar ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-2"></i>
+                                    <span>Un carácter especial (!@#$%^&*)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="field mb-4">
