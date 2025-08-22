@@ -30,7 +30,6 @@ export const useUsersStore = defineStore('usersStore', {
                 this.usersList = processed.data.users || processed.data || [];
                 cache.setItem('usersList', this.usersList);
                 this.success = true;
-                console.log(this.usersList)
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
