@@ -6,6 +6,7 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { onBeforeMount, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import AppConfigurator from './AppConfigurator.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -91,7 +92,7 @@ onBeforeMount(() => {
                 <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
-                <!-- <div class="relative">
+                <div class="relative">
                     <button
                         v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
                         type="button"
@@ -100,7 +101,7 @@ onBeforeMount(() => {
                         <i class="pi pi-palette"></i>
                     </button>
                     <AppConfigurator />
-                </div> -->
+                </div>
             </div>
 
             <button

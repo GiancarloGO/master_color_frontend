@@ -41,6 +41,7 @@ export const useOrdersStore = defineStore('ordersStore', {
             this.resetState();
             try {
                 const response = await ordersApi.getPurchasedProducts();
+
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
@@ -61,27 +62,12 @@ export const useOrdersStore = defineStore('ordersStore', {
         async fetchOrders() {
             this.resetState();
             try {
-                console.log('💾 OrdersStore: Fetching all orders');
                 const response = await ordersApi.getMyOrders();
-                console.log('💾 OrdersStore: Raw orders response:', response);
 
                 const processed = handleProcessSuccess(response, this);
-                console.log('💾 OrdersStore: Processed orders:', processed);
 
                 if (processed.success) {
                     this.orders = processed.data.orders || processed.data || [];
-                    console.log('💾 OrdersStore: Orders set to:', this.orders);
-
-                    // Log structure of first order to understand data format
-                    if (this.orders.length > 0) {
-                        console.log('💾 OrdersStore: First order structure:', {
-                            id: this.orders[0].id,
-                            keys: Object.keys(this.orders[0]),
-                            items: this.orders[0].items,
-                            products: this.orders[0].products,
-                            order_details: this.orders[0].order_details
-                        });
-                    }
                 }
 
                 return processed;
@@ -99,38 +85,12 @@ export const useOrdersStore = defineStore('ordersStore', {
         async fetchOrderById(id) {
             this.resetState();
             try {
-                console.log('💾 OrdersStore: Fetching order by ID:', id);
                 const response = await ordersApi.getOrderById(id);
-                console.log('💾 OrdersStore: Raw API response:', response);
 
                 const processed = handleProcessSuccess(response, this);
-                console.log('💾 OrdersStore: Processed response:', processed);
 
                 if (processed.success) {
                     this.currentOrder = processed.data.order || processed.data;
-                    console.log('💾 OrdersStore: Current order set to:', this.currentOrder);
-
-                    // Log the structure of the order to understand the data
-                    if (this.currentOrder) {
-                        console.log('💾 OrdersStore: Order structure:', {
-                            id: this.currentOrder.id,
-                            keys: Object.keys(this.currentOrder),
-                            items: this.currentOrder.items,
-                            products: this.currentOrder.products,
-                            order_details: this.currentOrder.order_details
-                        });
-
-                        // Additional detailed logging of each potential products array
-                        if (this.currentOrder.items) {
-                            console.log('💾 OrdersStore: Items array:', this.currentOrder.items);
-                        }
-                        if (this.currentOrder.products) {
-                            console.log('💾 OrdersStore: Products array:', this.currentOrder.products);
-                        }
-                        if (this.currentOrder.order_details) {
-                            console.log('💾 OrdersStore: Order details array:', this.currentOrder.order_details);
-                        }
-                    }
                 }
 
                 return processed;

@@ -1,9 +1,9 @@
-import { computed, reactive } from 'vue';
 import cache from '@/utils/cache';
+import { computed, reactive } from 'vue';
 
 const layoutConfig = reactive({
-    preset: 'Aura',
-    primary: 'emerald',
+    preset: 'Lara',
+    primary: 'cyan',
     surface: null,
     darkTheme: cache.getItem('darkMode') === true,
     menuMode: 'static'
