@@ -18,9 +18,18 @@ function getStockSeverity(product) {
     const quantity = product.stock_quantity || 0;
     const minStock = product.min_stock || 0;
 
-    if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'danger';
-    return 'success';
+    if (quantity === 0) return 'danger'; // Rojo - Sin stock
+    if (quantity <= minStock) return 'warning'; // Amarillo - Stock bajo
+    return 'success'; // Verde - Stock normal
+}
+
+function getStockCssClass(product) {
+    const quantity = product.stock_quantity || 0;
+    const minStock = product.min_stock || 0;
+
+    if (quantity === 0) return 'stock-danger'; // Rojo - Sin stock
+    if (quantity <= minStock) return 'stock-warning'; // Amarillo - Stock bajo
+    return 'stock-success'; // Verde - Stock normal
 }
 
 function getStockStatus(product) {
@@ -36,9 +45,9 @@ function getStockStatusSeverity(product) {
     const quantity = product.stock_quantity || 0;
     const minStock = product.min_stock || 0;
 
-    if (quantity === 0) return 'danger';
-    if (quantity <= minStock) return 'danger';
-    return 'success';
+    if (quantity === 0) return 'danger'; // Rojo - Sin stock
+    if (quantity <= minStock) return 'warning'; // Amarillo - Stock bajo
+    return 'success'; // Verde - Stock normal
 }
 
 function formatPrice(price) {
@@ -125,7 +134,7 @@ function viewMovements(product) {
             <Column field="stock_quantity" header="Stock Actual" :sortable="true" style="width: 120px">
                 <template #body="{ data }">
                     <div class="stock-quantity">
-                        <Tag :value="data.stock_quantity || 0" :severity="getStockSeverity(data)" class="stock-tag" />
+                        <span :class="['custom-stock-tag', getStockCssClass(data)]">{{ data.stock_quantity || 0 }}</span>
                     </div>
                 </template>
             </Column>
@@ -174,7 +183,7 @@ function viewMovements(product) {
             <Column header="Estado" :sortable="false" style="width: 100px">
                 <template #body="{ data }">
                     <div class="stock-status">
-                        <Tag :value="getStockStatus(data)" :severity="getStockStatusSeverity(data)" class="status-tag" />
+                        <span :class="['custom-status-tag', getStockCssClass(data)]">{{ getStockStatus(data) }}</span>
                     </div>
                 </template>
             </Column>
@@ -394,6 +403,67 @@ function viewMovements(product) {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+}
+
+/* Custom stock tags with proper colors */
+.custom-stock-tag,
+.custom-status-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-align: center;
+    min-width: 60px;
+    border: 1px solid transparent;
+}
+
+.custom-status-tag {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.625rem;
+    min-width: 80px;
+}
+
+/* Rojo - Sin stock (Lara theme danger colors) */
+.stock-danger {
+    background-color: #ef4444;
+    color: #ffffff;
+    border-color: #dc2626;
+}
+
+/* Amarillo - Stock bajo (Amarillo más puro) */
+.stock-warning {
+    background-color: #eab308;
+    color: #ffffff;
+    border-color: #ca8a04;
+}
+
+/* Verde - Stock normal (Lara theme success colors) */
+.stock-success {
+    background-color: #10b981;
+    color: #ffffff;
+    border-color: #059669;
+}
+
+/* Dark mode styles (Lara dark theme) */
+[data-theme='dark'] .stock-danger {
+    background-color: #dc2626;
+    color: #ffffff;
+    border-color: #b91c1c;
+}
+
+[data-theme='dark'] .stock-warning {
+    background-color: #ca8a04;
+    color: #ffffff;
+    border-color: #a16207;
+}
+
+[data-theme='dark'] .stock-success {
+    background-color: #059669;
+    color: #ffffff;
+    border-color: #047857;
 }
 
 /* Dark mode enhancements */
