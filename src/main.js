@@ -1,9 +1,9 @@
-import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 
-import Aura from '@primeuix/themes/aura';
+import Lara from '@primeuix/themes/lara';
 import PrimeVue from 'primevue/config';
 import ConfirmationService from 'primevue/confirmationservice';
 import StyleClass from 'primevue/styleclass';
@@ -20,9 +20,9 @@ app.use(pinia);
 app.use(PrimeVue, {
     theme: {
         preset: {
-            ...Aura,
+            ...Lara,
             semantic: {
-                ...Aura.semantic,
+                ...Lara.semantic,
                 semantic: {
                     primary: {
                         50: '{blue.50}',

@@ -113,10 +113,10 @@ onBeforeMount(() => {
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action" @click="goToRefresh()">
+                    <!-- <button type="button" class="layout-topbar-action" @click="goToRefresh()">
                         <i class="pi pi-refresh"></i>
                         <span>Actualizar</span>
-                    </button>
+                    </button> -->
                     <button type="button" class="layout-topbar-action" @click="goToProfile()">
                         <i class="pi pi-user"></i>
                         <span>Perfil</span>

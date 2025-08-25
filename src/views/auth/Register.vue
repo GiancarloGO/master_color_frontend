@@ -1,11 +1,11 @@
 <script setup>
+import { useEmailValidation, useNameValidation, usePasswordValidation, usePhoneValidation } from '@/composables/useInputValidation';
 import { useAuthStore } from '@/stores/auth';
 import { useDocumentLookupStore } from '@/stores/documentLookup';
 import { UbigeoPostal } from '@/utils/ubigeoPostal';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useEmailValidation, useNameValidation, usePasswordValidation, usePhoneValidation, useInputValidation } from '@/composables/useInputValidation';
 
 const authStore = useAuthStore();
 const documentLookupStore = useDocumentLookupStore();
@@ -634,6 +634,90 @@ const toggleConfirmPasswordVisibility = () => {
     showConfirmPassword.value = !showConfirmPassword.value;
 };
 
+// Función para calcular la fortaleza de la contraseña
+const getPasswordStrength = () => {
+    let score = 0;
+    const pass = password.value;
+
+    if (pass.length >= 10) score++;
+    if (/[a-z]/.test(pass)) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) score++;
+
+    return score;
+};
+
+// Función para obtener el color de la barra de fortaleza
+const getPasswordStrengthColor = (index) => {
+    const strength = getPasswordStrength();
+
+    if (index > strength) {
+        return 'bg-gray-200';
+    }
+
+    switch (strength) {
+        case 1:
+        case 2:
+            return 'bg-red-500';
+        case 3:
+            return 'bg-yellow-500';
+        case 4:
+            return 'bg-blue-500';
+        case 5:
+            return 'bg-green-500';
+        default:
+            return 'bg-gray-200';
+    }
+};
+
+// Función para obtener el texto de fortaleza
+const getPasswordStrengthText = () => {
+    const strength = getPasswordStrength();
+    
+    switch (strength) {
+        case 0:
+        case 1:
+            return 'Muy débil';
+        case 2:
+            return 'Débil';
+        case 3:
+            return 'Regular';
+        case 4:
+            return 'Fuerte';
+        case 5:
+            return 'Muy fuerte';
+        default:
+            return 'Muy débil';
+    }
+};
+
+// Función para obtener el color del texto de fortaleza
+const getPasswordStrengthTextColor = () => {
+    const strength = getPasswordStrength();
+    
+    switch (strength) {
+        case 0:
+        case 1:
+            return 'text-red-600';
+        case 2:
+            return 'text-red-500';
+        case 3:
+            return 'text-yellow-600';
+        case 4:
+            return 'text-blue-600';
+        case 5:
+            return 'text-green-600';
+        default:
+            return 'text-red-600';
+    }
+};
+
+// Computed para validar caracteres especiales
+const hasSpecialChar = computed(() => {
+    return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password.value);
+});
+
 // Check if coming from checkout flow
 const isCheckoutFlow = computed(() => {
     return route.query.checkout === 'true';
@@ -860,6 +944,38 @@ onMounted(() => {
                                                 </IconField>
                                             </div>
                                             <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
+                                            <!-- Indicador de fortaleza de contraseña -->
+                                            <div v-if="password" class="mt-2 bg-gray-50 p-3 rounded-lg border">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <span class="text-xs font-medium text-gray-700">Fortaleza de la contraseña</span>
+                                                    <span class="text-xs font-semibold" :class="getPasswordStrengthTextColor()">{{ getPasswordStrengthText() }}</span>
+                                                </div>
+                                                <div class="flex space-x-1 mb-3">
+                                                    <div v-for="i in 4" :key="i" class="h-2 flex-1 rounded-full transition-colors duration-300" :class="getPasswordStrengthColor(i)"></div>
+                                                </div>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="password.length >= 10 ? 'text-green-600' : 'text-gray-500'">
+                                                        <i :class="password.length >= 10 ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
+                                                        <span>Mínimo 10 caracteres</span>
+                                                    </div>
+                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[a-z]/.test(password) ? 'text-green-600' : 'text-gray-500'">
+                                                        <i :class="/[a-z]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
+                                                        <span>Una letra minúscula</span>
+                                                    </div>
+                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-500'">
+                                                        <i :class="/[A-Z]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
+                                                        <span>Una letra mayúscula</span>
+                                                    </div>
+                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-500'">
+                                                        <i :class="/[0-9]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
+                                                        <span>Un número</span>
+                                                    </div>
+                                                    <div class="flex items-center text-xs transition-colors duration-200 sm:col-span-2" :class="hasSpecialChar ? 'text-green-600' : 'text-gray-500'">
+                                                        <i :class="hasSpecialChar ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
+                                                        <span>Un carácter especial (!@#$%^&*)</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div>
                                             <label for="confirmPassword" class="block text-sm font-semibold text-gray-800 mb-1">Confirmar Contraseña</label>

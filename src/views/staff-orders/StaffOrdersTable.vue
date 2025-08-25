@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue';
-import { FilterMatchMode } from '@primevue/core/api';
 import { useStaffOrdersStore } from '@/stores/staffOrders';
+import { FilterMatchMode } from '@primevue/core/api';
+import { ref } from 'vue';
 
 const props = defineProps({
     orders: {
@@ -103,119 +103,467 @@ const exportCSV = () => {
 </script>
 
 <template>
-    <DataTable
-        ref="dt"
-        v-model:filters="filters"
-        :value="orders"
-        :loading="loading"
-        paginator
-        :rows="15"
-        :rows-per-page-options="[10, 15, 25, 50]"
-        paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-        current-page-report-template="Mostrando {first} a {last} de {totalRecords} órdenes"
-        responsive-layout="scroll"
-        class="p-datatable-striped"
-        data-key="id"
-        filter-display="menu"
-        :global-filter-fields="['id', 'client.name', 'client.lastname', 'client.email', 'total', 'status']"
-        :meta-key-selection="false"
-        :row-hover="true"
-    >
-        <template #empty>
-            <div class="text-center py-8">
-                <i class="pi pi-shopping-cart text-4xl text-surface-400 mb-4"></i>
-                <p class="text-surface-500">No hay órdenes para mostrar</p>
-            </div>
-        </template>
-
-        <template #loading>
-            <div class="text-center py-8">
-                <ProgressSpinner />
-                <p class="text-surface-500 mt-2">Cargando órdenes...</p>
-            </div>
-        </template>
-
-        <template #header>
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <h4 class="text-lg font-semibold text-surface-900">Órdenes</h4>
-                    <Badge :value="orders.length" severity="info" />
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="p-input-icon-left">
-                        <i class="pi pi-search" />
-                        <InputText v-model="filters['global'].value" placeholder="Buscar en todas las columnas..." class="w-60" />
-                    </span>
-                    <Button v-tooltip.top="'Exportar CSV'" icon="pi pi-download" severity="secondary" outlined @click="exportCSV" />
-                </div>
-            </div>
-        </template>
-
-        <Column field="id" header="ID" :sortable="true" class="w-20">
-            <template #body="{ data }">
-                <span class="font-semibold text-primary-600">#{{ data.id }}</span>
-            </template>
-        </Column>
-
-        <Column field="client" header="Cliente" :sortable="false" class="min-w-60">
-            <template #body="{ data }">
-                <div v-if="data.client">
-                    <div class="font-semibold">{{ data.client.name }}</div>
-                    <div class="text-sm text-surface-500">{{ data.client.email }}</div>
-                    <div v-if="data.client.phone" class="text-sm text-surface-500"><i class="pi pi-phone text-xs mr-1"></i>{{ data.client.phone }}</div>
-                </div>
-                <span v-else class="text-surface-400">Sin cliente</span>
-            </template>
-        </Column>
-
-        <Column field="total" header="Total" :sortable="true" class="w-32">
-            <template #body="{ data }">
-                <span class="font-semibold">S/ {{ formatCurrency(data.total) }}</span>
-            </template>
-        </Column>
-
-        <Column field="status" header="Estado" :sortable="true" class="w-40">
-            <template #body="{ data }">
-                <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" :icon="getStatusIcon(data.status)" />
-            </template>
-        </Column>
-
-        <Column field="created_at" header="Fecha" :sortable="true" class="w-40">
-            <template #body="{ data }">
-                <div>
-                    <div class="font-medium">{{ formatDate(data.created_at) }}</div>
-                    <div class="text-sm text-surface-500">{{ formatTime(data.created_at) }}</div>
+    <div class="staff-orders-table-container">
+        <DataTable
+            ref="dt"
+            v-model:filters="filters"
+            :value="orders"
+            :loading="loading"
+            paginator
+            :rows="15"
+            :rows-per-page-options="[10, 15, 25, 50]"
+            paginator-template="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+            current-page-report-template="Mostrando {first} a {last} de {totalRecords} órdenes"
+            responsive-layout="scroll"
+            class="staff-orders-table"
+            striped-rows
+            data-key="id"
+            filter-display="menu"
+            :global-filter-fields="['id', 'client.name', 'client.email', 'client.identity_document', 'client.phone', 'total', 'status']"
+            :meta-key-selection="false"
+            :row-hover="true"
+        >
+            <template #empty>
+                <div class="empty-state">
+                    <i class="pi pi-shopping-cart" style="font-size: 3rem; color: var(--text-color-secondary)"></i>
+                    <h3>No hay órdenes</h3>
+                    <p>No se encontraron órdenes en el sistema</p>
                 </div>
             </template>
-        </Column>
 
-        <Column field="order_details" header="Productos" :sortable="false" class="w-24">
-            <template #body="{ data }">
-                <div class="text-center">
-                    <span class="inline-flex items-center justify-center w-6 h-6 bg-primary-100 text-primary-700 rounded-full text-sm font-semibold">
-                        {{ getProductCount(data) }}
-                    </span>
+            <template #loading>
+                <div class="loading-state">
+                    <ProgressSpinner style="width: 50px; height: 50px" stroke-width="4" />
+                    <p>Cargando órdenes...</p>
                 </div>
             </template>
-        </Column>
 
-        <Column field="payment_status" header="Pago" :sortable="false" class="w-32">
-            <template #body="{ data }">
-                <div v-if="data.payments && data.payments.length > 0">
-                    <Tag v-for="payment in data.payments" :key="payment.id" :value="getPaymentStatusLabel(payment.status)" :severity="getPaymentStatusSeverity(payment.status)" class="mb-1" />
-                </div>
-                <Tag v-else-if="data.status === 'pendiente_pago' || data.status === 'pago_fallido'" value="Pendiente" severity="warning" />
-                <span v-else class="text-surface-400">-</span>
-            </template>
-        </Column>
-
-        <Column header="Acciones" :exportable="false" style="min-width: 8rem">
-            <template #body="{ data }">
-                <div class="flex gap-2">
-                    <Button v-tooltip.top="'Ver detalle'" icon="pi pi-eye" severity="info" size="small" @click="$emit('view-order', data)" />
-                    <Button v-tooltip.top="'Cambiar estado'" icon="pi pi-pencil" severity="warning" size="small" :disabled="!canUpdateOrder(data)" @click="$emit('update-status', data)" />
+            <template #header>
+                <div class="table-header">
+                    <div class="header-left">
+                        <h4 class="header-title">Órdenes de Staff</h4>
+                        <Badge :value="orders.length" severity="info" class="header-badge" />
+                    </div>
+                    <div class="header-right">
+                        <span class="search-wrapper">
+                            <i class="pi pi-search search-icon"></i>
+                            <InputText v-model="filters['global'].value" placeholder="Buscar órdenes..." class="search-input" />
+                        </span>
+                        <Button v-tooltip.top="'Exportar CSV'" icon="pi pi-download" class="export-button" outlined @click="exportCSV" />
+                    </div>
                 </div>
             </template>
-        </Column>
-    </DataTable>
+
+            <!-- ID de la orden -->
+            <Column field="id" header="ID" :sortable="true" style="width: 80px">
+                <template #body="{ data }">
+                    <div class="order-id">
+                        <span class="id-number">#{{ data.id }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Información del cliente -->
+            <Column field="client" header="Cliente" :sortable="false" style="min-width: 200px">
+                <template #body="{ data }">
+                    <div v-if="data.client" class="client-info">
+                        <div class="client-name">{{ data.client.name }}</div>
+                        <div class="client-details">
+                            <span class="email">{{ data.client.email }}</span>
+                        </div>
+                        <div v-if="data.client.identity_document || data.client.phone" class="client-contact">
+                            <span v-if="data.client.identity_document" class="contact-item">
+                                <i class="pi pi-id-card"></i>{{ data.client.identity_document }}
+                            </span>
+                            <span v-if="data.client.phone" class="contact-item">
+                                <i class="pi pi-phone"></i>{{ data.client.phone }}
+                            </span>
+                        </div>
+                    </div>
+                    <span v-else class="no-client">Sin cliente</span>
+                </template>
+            </Column>
+
+            <!-- Total de la orden -->
+            <Column field="total" header="Total" :sortable="true" style="width: 120px">
+                <template #body="{ data }">
+                    <div class="order-total">
+                        <span class="total-amount">S/ {{ formatCurrency(data.total) }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Estado de la orden -->
+            <Column field="status" header="Estado" :sortable="true" style="width: 130px">
+                <template #body="{ data }">
+                    <div class="order-status">
+                        <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" :icon="getStatusIcon(data.status)" class="status-tag" />
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Fecha y hora -->
+            <Column field="created_at" header="Fecha" :sortable="true" style="width: 140px">
+                <template #body="{ data }">
+                    <div class="order-date">
+                        <div class="date-value">{{ formatDate(data.created_at) }}</div>
+                        <div class="time-value">{{ formatTime(data.created_at) }}</div>
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Número de productos -->
+            <Column field="order_details" header="Items" :sortable="false" style="width: 80px">
+                <template #body="{ data }">
+                    <div class="products-count">
+                        <span class="count-badge">{{ getProductCount(data) }}</span>
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Estado del pago -->
+            <Column field="payment_status" header="Pago" :sortable="false" style="width: 110px">
+                <template #body="{ data }">
+                    <div class="payment-status">
+                        <div v-if="data.payments && data.payments.length > 0">
+                            <Tag v-for="payment in data.payments" :key="payment.id" :value="getPaymentStatusLabel(payment.status)" :severity="getPaymentStatusSeverity(payment.status)" class="payment-tag" />
+                        </div>
+                        <Tag v-else-if="data.status === 'pendiente_pago' || data.status === 'pago_fallido'" value="Pendiente" severity="warning" class="payment-tag" />
+                        <span v-else class="no-payment">-</span>
+                    </div>
+                </template>
+            </Column>
+
+            <!-- Acciones -->
+            <Column header="Acciones" :exportable="false" style="width: 120px">
+                <template #body="{ data }">
+                    <div class="action-buttons">
+                        <Button v-tooltip="'Ver detalle'" icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info p-button-sm" @click="$emit('view-order', data)" />
+                        <Button v-tooltip="'Cambiar estado'" icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning p-button-sm" :disabled="!canUpdateOrder(data)" @click="$emit('update-status', data)" />
+                    </div>
+                </template>
+            </Column>
+        </DataTable>
+    </div>
 </template>
+
+<style scoped>
+.staff-orders-table-container {
+    width: 100%;
+}
+
+.staff-orders-table {
+    box-shadow: none;
+}
+
+.staff-orders-table :deep(.p-datatable-header) {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.staff-orders-table :deep(.p-datatable-thead > tr > th) {
+    background: var(--surface-100);
+    border: 1px solid var(--surface-200);
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.staff-orders-table :deep(.p-datatable-tbody > tr > td) {
+    padding: 1rem 0.75rem;
+    border: 1px solid var(--surface-200);
+}
+
+.staff-orders-table :deep(.p-datatable-tbody > tr:hover) {
+    background: var(--surface-50);
+}
+
+/* Table Header */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.header-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--text-color-secondary);
+    z-index: 1;
+}
+
+.search-input {
+    padding-left: 2.5rem;
+    width: 250px;
+    border-radius: 8px;
+}
+
+.export-button {
+    border-radius: 8px;
+}
+
+/* Order ID */
+.order-id {
+    display: flex;
+    justify-content: center;
+}
+
+.id-number {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.875rem;
+}
+
+/* Client Info */
+.client-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.client-name {
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.3;
+}
+
+.client-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.email {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+}
+
+.client-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    margin-top: 0.25rem;
+}
+
+.contact-item {
+    font-size: 0.7rem;
+    color: var(--text-color-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.contact-item i {
+    font-size: 0.6rem;
+    color: var(--primary-color);
+}
+
+.no-client {
+    color: var(--text-color-secondary);
+    font-style: italic;
+}
+
+/* Order Total */
+.order-total {
+    text-align: center;
+}
+
+.total-amount {
+    font-weight: 600;
+    color: var(--green-600);
+    font-size: 0.875rem;
+}
+
+/* Order Status */
+.order-status {
+    display: flex;
+    justify-content: center;
+}
+
+.status-tag {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+}
+
+/* Order Date */
+.order-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.date-value {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.8rem;
+}
+
+.time-value {
+    font-size: 0.7rem;
+    color: var(--text-color-secondary);
+}
+
+/* Products Count */
+.products-count {
+    display: flex;
+    justify-content: center;
+}
+
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--primary-100);
+    color: var(--primary-700);
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* Payment Status */
+.payment-status {
+    display: flex;
+    justify-content: center;
+}
+
+.payment-tag {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.no-payment {
+    color: var(--text-color-secondary);
+    font-size: 0.875rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.action-buttons .p-button {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Empty and Loading States */
+.empty-state,
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-color-secondary);
+}
+
+.empty-state h3 {
+    margin: 1rem 0 0.5rem 0;
+    color: var(--text-color);
+}
+
+.empty-state p,
+.loading-state p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Dark mode styles */
+[data-theme='dark'] .total-amount {
+    color: var(--green-400);
+}
+
+[data-theme='dark'] .staff-orders-table :deep(.p-datatable-thead > tr > th) {
+    background: var(--surface-800);
+    border-color: var(--surface-700);
+}
+
+[data-theme='dark'] .staff-orders-table :deep(.p-datatable-tbody > tr > td) {
+    border-color: var(--surface-700);
+}
+
+[data-theme='dark'] .staff-orders-table :deep(.p-datatable-tbody > tr:hover) {
+    background: var(--surface-800);
+}
+
+[data-theme='dark'] .count-badge {
+    background: var(--primary-900);
+    color: var(--primary-100);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .staff-orders-table :deep(.p-datatable-thead > tr > th),
+    .staff-orders-table :deep(.p-datatable-tbody > tr > td) {
+        padding: 0.5rem 0.375rem;
+        font-size: 0.8rem;
+    }
+
+    .table-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .header-right {
+        justify-content: space-between;
+    }
+
+    .search-input {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .client-name {
+        font-size: 0.875rem;
+    }
+
+    .action-buttons .p-button {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+}
+</style>

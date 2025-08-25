@@ -62,6 +62,7 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
             try {
                 const queryParams = { ...this.filters, ...params };
                 const response = await staffOrdersApi.getOrders(queryParams);
+                console.log('💾 StaffOrdersStore: Raw orders response:', response);
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
@@ -79,6 +80,8 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
                         this.orders = processed.data || [];
                     }
                 }
+
+                console.log('💾 StaffOrdersStore: Orders set to:', this.orders);
 
                 return processed;
             } catch (error) {

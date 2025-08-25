@@ -1,7 +1,7 @@
+import { usersApi } from '@/api/index';
+import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
-import { usersApi } from '@/api/index';
-import { handleProcessSuccess, handleProcessError } from '@/utils/apiHelpers';
 
 export const useUsersStore = defineStore('usersStore', {
     state: () => ({

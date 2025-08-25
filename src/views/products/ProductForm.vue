@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, watchEffect } from 'vue';
 
 const props = defineProps({
     product: {
@@ -66,7 +66,11 @@ const errors = reactive({
     barcode: '',
     unidad: '',
     purchase_price: '',
-    sale_price: ''
+    sale_price: '',
+    quantity: '',
+    min_stock: '',
+    max_stock: '',
+    stock_coherence: ''
 });
 
 const selectedImage = ref(null);
@@ -171,6 +175,7 @@ const validateForm = () => {
     clearErrors();
     let isValid = true;
 
+    // Validaciones básicas
     if (!formData.name.trim()) {
         errors.name = 'El nombre es requerido';
         isValid = false;
@@ -191,18 +196,154 @@ const validateForm = () => {
         isValid = false;
     }
 
+    // Validaciones de precios con límites máximos
     if (!formData.purchase_price || formData.purchase_price <= 0) {
         errors.purchase_price = 'El precio de compra es requerido y debe ser mayor a 0';
+        isValid = false;
+    } else if (formData.purchase_price > 1000000) {
+        errors.purchase_price = 'El precio de compra no puede exceder S/ 1,000,000';
+        isValid = false;
+    } else if (formData.purchase_price < 0.01) {
+        errors.purchase_price = 'El precio de compra debe ser al menos S/ 0.01';
         isValid = false;
     }
 
     if (!formData.sale_price || formData.sale_price <= 0) {
         errors.sale_price = 'El precio de venta es requerido y debe ser mayor a 0';
         isValid = false;
+    } else if (formData.sale_price > 1000000) {
+        errors.sale_price = 'El precio de venta no puede exceder S/ 1,000,000';
+        isValid = false;
+    } else if (formData.sale_price < 0.01) {
+        errors.sale_price = 'El precio de venta debe ser al menos S/ 0.01';
+        isValid = false;
+    }
+
+    // Validación de coherencia de precios
+    if (formData.purchase_price && formData.sale_price) {
+        if (formData.sale_price <= formData.purchase_price) {
+            errors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
+            isValid = false;
+        }
+        
+        // Alerta si el margen es muy bajo (menos del 10%)
+        const margin = ((formData.sale_price - formData.purchase_price) / formData.purchase_price) * 100;
+        if (margin < 10 && margin > 0) {
+            // Solo advertencia, no bloquea el formulario
+            console.warn(`Margen de ganancia bajo: ${margin.toFixed(2)}%`);
+        }
+    }
+
+    // Validaciones de stock
+    if (formData.quantity < 0) {
+        errors.quantity = 'La cantidad inicial no puede ser negativa';
+        isValid = false;
+    } else if (formData.quantity > 1000000) {
+        errors.quantity = 'La cantidad inicial no puede exceder 1,000,000 unidades';
+        isValid = false;
+    }
+
+    if (formData.min_stock < 0) {
+        errors.min_stock = 'El stock mínimo no puede ser negativo';
+        isValid = false;
+    } else if (formData.min_stock > 100000) {
+        errors.min_stock = 'El stock mínimo no puede exceder 100,000 unidades';
+        isValid = false;
+    }
+
+    if (formData.max_stock < 0) {
+        errors.max_stock = 'El stock máximo no puede ser negativo';
+        isValid = false;
+    } else if (formData.max_stock > 1000000) {
+        errors.max_stock = 'El stock máximo no puede exceder 1,000,000 unidades';
+        isValid = false;
+    }
+
+    // Validación de coherencia de stock
+    if (formData.min_stock >= 0 && formData.max_stock >= 0) {
+        if (formData.max_stock > 0 && formData.max_stock <= formData.min_stock) {
+            errors.stock_coherence = 'El stock máximo debe ser mayor al stock mínimo';
+            isValid = false;
+        }
+    }
+
+    // Validación de cantidad inicial vs stock mínimo/máximo
+    if (!isEdit.value) { // Solo al crear nuevo producto
+        if (formData.quantity < formData.min_stock) {
+            errors.quantity = 'La cantidad inicial debe ser al menos igual al stock mínimo';
+            isValid = false;
+        }
+        if (formData.max_stock > 0 && formData.quantity > formData.max_stock) {
+            errors.quantity = 'La cantidad inicial no puede exceder el stock máximo';
+            isValid = false;
+        }
     }
 
     return isValid;
 };
+
+// Validación en tiempo real para coherencia de precios
+watchEffect(() => {
+    if (formData.purchase_price && formData.sale_price) {
+        if (formData.sale_price > 0 && formData.purchase_price > 0) {
+            if (formData.sale_price <= formData.purchase_price) {
+                errors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
+            } else if (errors.sale_price === 'El precio de venta debe ser mayor al precio de compra') {
+                errors.sale_price = '';
+            }
+        }
+    }
+});
+
+// Validación en tiempo real para coherencia de stock
+watchEffect(() => {
+    if (formData.min_stock >= 0 && formData.max_stock >= 0) {
+        if (formData.max_stock > 0 && formData.max_stock <= formData.min_stock) {
+            errors.stock_coherence = 'El stock máximo debe ser mayor al stock mínimo';
+        } else {
+            errors.stock_coherence = '';
+        }
+    }
+});
+
+// Computados para mostrar indicadores de ayuda
+const priceMargin = computed(() => {
+    if (formData.purchase_price && formData.sale_price && formData.purchase_price > 0 && formData.sale_price > formData.purchase_price) {
+        return ((formData.sale_price - formData.purchase_price) / formData.purchase_price) * 100;
+    }
+    return 0;
+});
+
+const marginColor = computed(() => {
+    const margin = priceMargin.value;
+    if (margin === 0) return '';
+    if (margin < 10) return 'text-orange-600';
+    if (margin < 25) return 'text-yellow-600';
+    return 'text-green-600';
+});
+
+const marginIcon = computed(() => {
+    const margin = priceMargin.value;
+    if (margin === 0) return '';
+    if (margin < 10) return 'pi pi-exclamation-triangle';
+    if (margin < 25) return 'pi pi-info-circle';
+    return 'pi pi-check-circle';
+});
+
+const stockCoherenceStatus = computed(() => {
+    if (formData.min_stock >= 0 && formData.max_stock > 0) {
+        if (formData.max_stock > formData.min_stock) {
+            const range = formData.max_stock - formData.min_stock;
+            return {
+                valid: true,
+                message: `Rango de stock: ${range} unidades`,
+                icon: 'pi pi-check-circle',
+                class: 'text-green-600'
+            };
+        }
+    }
+    return { valid: false, message: '', icon: '', class: '' };
+});
 
 const handleSubmit = () => {
     if (validateForm()) {
@@ -328,7 +469,8 @@ const handleSubmit = () => {
                                 mode="currency"
                                 currency="PEN"
                                 locale="es-PE"
-                                :min="0"
+                                :min="0.01"
+                                :max="1000000"
                                 :max-fraction-digits="2"
                                 class="compact-input"
                             />
@@ -344,11 +486,18 @@ const handleSubmit = () => {
                                 mode="currency"
                                 currency="PEN"
                                 locale="es-PE"
-                                :min="0"
+                                :min="0.01"
+                                :max="1000000"
                                 :max-fraction-digits="2"
                                 class="compact-input"
                             />
                             <small v-if="errors.sale_price" class="p-error">{{ errors.sale_price }}</small>
+                            <div v-else-if="priceMargin > 0" class="margin-indicator">
+                                <small :class="['margin-text', marginColor]">
+                                    <i :class="marginIcon"></i>
+                                    Margen: {{ priceMargin.toFixed(1) }}%
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -368,16 +517,54 @@ const handleSubmit = () => {
                     <div class="form-row stock-row">
                         <div class="form-field">
                             <label for="quantity" class="field-label">Cantidad Inicial</label>
-                            <InputNumber id="quantity" v-model="formData.quantity" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" :disabled="isEdit" />
-                            <small v-if="isEdit" class="edit-note">Solo editable al crear el producto</small>
+                            <InputNumber 
+                                id="quantity" 
+                                v-model="formData.quantity" 
+                                :class="{ 'p-invalid': errors.quantity }"
+                                placeholder="0" 
+                                :min="0" 
+                                :max="1000000"
+                                :max-fraction-digits="0" 
+                                class="compact-input" 
+                                :disabled="isEdit" 
+                            />
+                            <small v-if="errors.quantity" class="p-error">{{ errors.quantity }}</small>
+                            <small v-else-if="isEdit" class="edit-note">Solo editable al crear el producto</small>
                         </div>
                         <div class="form-field">
                             <label for="min_stock" class="field-label">Stock Mínimo</label>
-                            <InputNumber id="min_stock" v-model="formData.min_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
+                            <InputNumber 
+                                id="min_stock" 
+                                v-model="formData.min_stock" 
+                                :class="{ 'p-invalid': errors.min_stock || errors.stock_coherence }"
+                                placeholder="0" 
+                                :min="0" 
+                                :max="100000"
+                                :max-fraction-digits="0" 
+                                class="compact-input" 
+                            />
+                            <small v-if="errors.min_stock" class="p-error">{{ errors.min_stock }}</small>
                         </div>
                         <div class="form-field">
                             <label for="max_stock" class="field-label">Stock Máximo</label>
-                            <InputNumber id="max_stock" v-model="formData.max_stock" placeholder="0" :min="0" :max-fraction-digits="0" class="compact-input" />
+                            <InputNumber 
+                                id="max_stock" 
+                                v-model="formData.max_stock" 
+                                :class="{ 'p-invalid': errors.max_stock || errors.stock_coherence }"
+                                placeholder="0" 
+                                :min="0" 
+                                :max="1000000"
+                                :max-fraction-digits="0" 
+                                class="compact-input" 
+                            />
+                            <small v-if="errors.max_stock" class="p-error">{{ errors.max_stock }}</small>
+                            <small v-else-if="errors.stock_coherence" class="p-error">{{ errors.stock_coherence }}</small>
+                            <div v-else-if="stockCoherenceStatus.valid" class="stock-indicator">
+                                <small :class="['stock-text', stockCoherenceStatus.class]">
+                                    <i :class="stockCoherenceStatus.icon"></i>
+                                    {{ stockCoherenceStatus.message }}
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -604,6 +791,103 @@ const handleSubmit = () => {
         max-width: 150px;
         max-height: 150px;
     }
+}
+
+/* Indicadores de ayuda */
+.margin-indicator,
+.stock-indicator {
+    margin-top: 0.25rem;
+}
+
+.margin-text,
+.stock-text {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
+}
+
+.margin-text i,
+.stock-text i {
+    font-size: 0.7rem;
+}
+
+/* Colores para indicadores de margen */
+.text-orange-600 {
+    color: #ea580c;
+}
+
+.text-yellow-600 {
+    color: #ca8a04;
+}
+
+.text-green-600 {
+    color: #16a34a;
+}
+
+/* Estilos para campos con errores de coherencia */
+.p-invalid {
+    border-color: #ef4444 !important;
+}
+
+/* Mejoras visuales para indicadores */
+.margin-indicator {
+    padding: 0.375rem 0.5rem;
+    background: rgba(var(--primary-50), 0.3);
+    border-radius: 4px;
+    border-left: 3px solid;
+}
+
+.margin-indicator .text-orange-600 {
+    border-left-color: #ea580c;
+    background: rgba(234, 88, 12, 0.1);
+}
+
+.margin-indicator .text-yellow-600 {
+    border-left-color: #ca8a04;
+    background: rgba(202, 138, 4, 0.1);
+}
+
+.margin-indicator .text-green-600 {
+    border-left-color: #16a34a;
+    background: rgba(22, 163, 74, 0.1);
+}
+
+.stock-indicator {
+    padding: 0.375rem 0.5rem;
+    background: rgba(22, 163, 74, 0.1);
+    border-radius: 4px;
+    border-left: 3px solid #16a34a;
+}
+
+/* Animaciones sutiles */
+.margin-indicator,
+.stock-indicator {
+    transition: all 0.2s ease-in-out;
+}
+
+.margin-indicator:hover,
+.stock-indicator:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Iconos de información */
+.field-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-icon {
+    color: var(--primary-500);
+    cursor: help;
+    font-size: 0.75rem;
+}
+
+.info-icon:hover {
+    color: var(--primary-700);
 }
 
 /* Responsive para tablets */
