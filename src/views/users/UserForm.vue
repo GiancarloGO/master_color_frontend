@@ -1,8 +1,12 @@
 <script setup>
-import { computed, reactive, watch, onMounted } from 'vue';
+import { computed, reactive, watch, onMounted, ref } from 'vue';
 import { useRolesStore } from '@/stores/roles';
+import { useDocumentLookupStore } from '@/stores/documentLookup';
+import { useToast } from 'primevue/usetoast';
 
 const rolesStore = useRolesStore();
+const documentLookupStore = useDocumentLookupStore();
+const toast = useToast();
 
 const props = defineProps({
     user: {
@@ -56,6 +60,79 @@ const clearErrors = () => {
 
 const formatDNI = (event) => {
     formData.dni = event.target.value.replace(/\D/g, '');
+};
+
+// Estados para búsqueda de documentos
+const isLookingUpDocument = ref(false);
+const lookupButtonDisabled = computed(() => {
+    return !formData.dni || formData.dni.length !== 8 || isLookingUpDocument.value;
+});
+
+// Función para consultar DNI
+const lookupDNI = async () => {
+    if (!formData.dni.trim()) {
+        toast.add({
+            severity: 'warn',
+            summary: 'DNI requerido',
+            detail: 'Por favor ingrese un número de DNI',
+            life: 3000
+        });
+        return;
+    }
+
+    // Validar formato antes de consultar
+    const validation = documentLookupStore.validateDocumentFormat('dni', formData.dni);
+    if (!validation.valid) {
+        errors.dni = validation.message;
+        toast.add({
+            severity: 'error',
+            summary: 'Formato inválido',
+            detail: validation.message,
+            life: 4000
+        });
+        return;
+    }
+
+    isLookingUpDocument.value = true;
+    errors.dni = '';
+
+    try {
+        const result = await documentLookupStore.lookupDocument('dni', formData.dni);
+
+        if (result.success) {
+            // Autocompletar nombre desde DNI
+            const formattedData = documentLookupStore.getFormattedData();
+
+            if (formattedData && formattedData.type === 'dni') {
+                formData.name = formattedData.fullName;
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'DNI encontrado',
+                    detail: `Datos de ${formattedData.fullName} cargados correctamente`,
+                    life: 5000
+                });
+            }
+        } else {
+            errors.dni = result.message;
+            toast.add({
+                severity: 'error',
+                summary: 'DNI no encontrado',
+                detail: result.message,
+                life: 4000
+            });
+        }
+    } catch (error) {
+        console.error('Error en consulta de DNI:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Error de consulta',
+            detail: 'No se pudo consultar el DNI. Inténtelo nuevamente.',
+            life: 4000
+        });
+    } finally {
+        isLookingUpDocument.value = false;
+    }
 };
 
 // Función helper para obtener el rol por defecto
@@ -200,7 +277,10 @@ const handleSubmit = () => {
                 <div class="form-row">
                     <div class="form-field">
                         <label for="dni" class="field-label">DNI *</label>
-                        <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="compact-input" @input="formatDNI" />
+                        <div class="flex gap-2">
+                            <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="flex-1 compact-input" @input="formatDNI" @keyup.enter="lookupDNI" />
+                            <Button v-tooltip.top="'Buscar datos del DNI'" icon="pi pi-search" class="p-button-outlined p-button-sm" :loading="isLookingUpDocument" :disabled="lookupButtonDisabled" @click="lookupDNI" />
+                        </div>
                         <small v-if="errors.dni" class="p-error">{{ errors.dni }}</small>
                     </div>
                     <div class="form-field">
@@ -254,6 +334,9 @@ const handleSubmit = () => {
             </div>
         </form>
     </div>
+
+    <!-- Toast para notificaciones -->
+    <Toast position="top-right" />
 </template>
 
 <style scoped>

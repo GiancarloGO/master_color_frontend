@@ -221,6 +221,12 @@ export const staffOrdersApi = {
     }
 };
 
+// Funciones para consulta de documentos de identidad (endpoint público)
+export const documentLookupApi = {
+    // Consultar DNI o RUC a través de API externa
+    lookupDocument: (payload) => axios.post('/document/lookup', payload)
+};
+
 // Funciones para dashboard administrativo
 // Funciones para reportes administrativos
 export const reportsApi = {

@@ -1,5 +1,6 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
+import { useDocumentLookupStore } from '@/stores/documentLookup';
 import { UbigeoPostal } from '@/utils/ubigeoPostal';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
@@ -7,6 +8,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useEmailValidation, useNameValidation, usePasswordValidation, usePhoneValidation, useInputValidation } from '@/composables/useInputValidation';
 
 const authStore = useAuthStore();
+const documentLookupStore = useDocumentLookupStore();
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
@@ -98,6 +100,159 @@ const onClientTypeChange = () => {
     }
     identityDocument.value = '';
     identityDocumentError.value = '';
+    // Limpiar datos de consulta anterior
+    documentLookupStore.clearData();
+};
+
+// Estados para búsqueda de documentos
+const isLookingUpDocument = ref(false);
+const lookupButtonDisabled = computed(() => {
+    return !identityDocument.value || identityDocument.value.length < 6 || isLookingUpDocument.value;
+});
+
+// Funciones para limpiar errores
+const clearDocumentError = () => {
+    identityDocumentError.value = '';
+};
+
+const clearPasswordError = () => {
+    passwordError.value = '';
+};
+
+const clearConfirmPasswordError = () => {
+    confirmPasswordError.value = '';
+};
+
+const clearAddressFullError = () => {
+    addressFullError.value = '';
+};
+
+const clearPostalCodeError = () => {
+    postalCodeError.value = '';
+};
+
+const clearReferenceError = () => {
+    referenceError.value = '';
+};
+
+// Función para consultar documento
+const lookupDocument = async () => {
+    if (!identityDocument.value.trim()) {
+        toast.add({
+            severity: 'warn',
+            summary: 'Documento requerido',
+            detail: 'Por favor ingrese un número de documento',
+            life: 3000
+        });
+        return;
+    }
+
+    // Validar formato antes de consultar
+    const validation = documentLookupStore.validateDocumentFormat(documentType.value, identityDocument.value);
+    if (!validation.valid) {
+        identityDocumentError.value = validation.message;
+        toast.add({
+            severity: 'error',
+            summary: 'Formato inválido',
+            detail: validation.message,
+            life: 4000
+        });
+        return;
+    }
+
+    isLookingUpDocument.value = true;
+    identityDocumentError.value = '';
+
+    try {
+        const result = await documentLookupStore.lookupDocument(documentType.value, identityDocument.value);
+
+        if (result.success) {
+            // Autocompletar campos según el tipo de documento
+            const formattedData = documentLookupStore.getFormattedData();
+
+            if (formattedData.type === 'dni') {
+                // Para DNI: autocompletar nombre
+                name.value = formattedData.fullName;
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'DNI encontrado',
+                    detail: `Datos de ${formattedData.fullName} cargados correctamente`,
+                    life: 5000
+                });
+            } else if (formattedData.type === 'ruc') {
+                // Para RUC: autocompletar nombre de la empresa
+                name.value = formattedData.businessName;
+
+                // Si hay teléfono, autocompletar
+                if (formattedData.phones.length > 0) {
+                    phone.value = formattedData.phones[0].replace(/[^\d]/g, '');
+                }
+
+                // Autocompletar dirección si está disponible
+                if (formattedData.fullAddress) {
+                    addressFull.value = formattedData.fullAddress;
+                }
+
+                // Si tenemos datos de ubigeo, intentar autocompletar
+                if (formattedData.department && formattedData.province && formattedData.district) {
+                    try {
+                        // Buscar departamento
+                        const foundDept = departments.value.find((dept) => dept.label.toLowerCase().includes(formattedData.department.toLowerCase()));
+                        if (foundDept) {
+                            selectedDepartment.value = foundDept;
+                            onDepartmentChange();
+
+                            // Buscar provincia después de un breve delay para que se carguen
+                            setTimeout(() => {
+                                const foundProv = provinces.value.find((prov) => prov.label.toLowerCase().includes(formattedData.province.toLowerCase()));
+                                if (foundProv) {
+                                    selectedProvince.value = foundProv;
+                                    onProvinceChange();
+
+                                    // Buscar distrito
+                                    setTimeout(() => {
+                                        const foundDist = districts.value.find((dist) => dist.label.toLowerCase().includes(formattedData.district.toLowerCase()));
+                                        if (foundDist) {
+                                            selectedDistrict.value = foundDist;
+                                            onDistrictChange();
+                                        }
+                                    }, 300);
+                                }
+                            }, 300);
+                        }
+                    } catch (error) {
+                        console.warn('Error al autocompletar ubicación:', error);
+                    }
+                }
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'RUC encontrado',
+                    detail: `Datos de ${formattedData.businessName} cargados correctamente`,
+                    life: 5000
+                });
+            }
+        } else {
+            identityDocumentError.value = result.message;
+            toast.add({
+                severity: 'error',
+                summary: 'Documento no encontrado',
+                detail: result.message,
+                life: 4000
+            });
+        }
+    } catch (error) {
+        console.error('Error en consulta de documento:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Error de consulta',
+            detail: 'No se pudo consultar el documento. Inténtelo nuevamente.',
+            life: 4000
+        });
+    } finally {
+        isLookingUpDocument.value = false;
+    }
 };
 
 // Crear instancia de ubigeo con códigos postales
@@ -510,11 +665,11 @@ onMounted(() => {
 
 <template>
     <div class="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2">
-        <div class="w-full max-w-7xl h-[calc(100vh-1rem)]">
+        <div class="w-full max-w-6xl h-[calc(100vh-1rem)]">
             <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 h-full">
                 <div class="flex flex-col xl:flex-row h-full">
-                    <!-- Panel lateral izquierdo - Compacto -->
-                    <div class="xl:w-2/5 bg-gradient-to-br from-blue-700 to-blue-800 p-4 xl:p-6 text-white relative overflow-hidden xl:min-h-0 hidden xl:block">
+                    <!-- Panel lateral izquierdo - Más compacto -->
+                    <div class="xl:w-1/3 bg-gradient-to-br from-blue-700 to-blue-800 p-3 xl:p-4 text-white relative overflow-hidden xl:min-h-0 hidden xl:block">
                         <!-- Elementos decorativos de fondo -->
                         <div class="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-blue-600 opacity-20 rounded-full -translate-y-16 sm:-translate-y-32 translate-x-16 sm:translate-x-32"></div>
                         <div class="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-blue-900 opacity-20 rounded-full translate-y-12 sm:translate-y-24 -translate-x-12 sm:-translate-x-24"></div>
@@ -522,62 +677,62 @@ onMounted(() => {
                         <div class="relative z-10 h-full flex flex-col justify-between">
                             <!-- Logo y título -->
                             <div class="text-left">
-                                <div class="flex items-center mb-2">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-10 h-10 object-contain" />
+                                <div class="flex items-center mb-1">
+                                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-8 h-8 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-2xl font-bold mb-1 text-white">Master Color</h1>
-                                <p class="text-blue-50 font-light">Únete a nuestra comunidad</p>
+                                <h1 class="text-xl font-bold mb-1 text-white">Master Color</h1>
+                                <p class="text-blue-50 font-light text-sm">Únete a nuestra comunidad</p>
                             </div>
 
-                            <!-- Beneficios de registrarse - Compacto -->
-                            <div class="space-y-3 my-4">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-shopping-cart text-blue-700 text-sm"></i>
+                            <!-- Beneficios de registrarse - Más compacto -->
+                            <div class="space-y-2 my-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-shopping-cart text-blue-700 text-xs"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-sm text-white">Compras Rápidas</h3>
-                                        <p class="text-blue-100 text-xs">Acceso exclusivo a nuestro catálogo</p>
+                                        <h3 class="font-semibold text-xs text-white">Compras Rápidas</h3>
+                                        <p class="text-blue-100 text-xs">Acceso exclusivo</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-tags text-blue-700 text-sm"></i>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-tags text-blue-700 text-xs"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-sm text-white">Ofertas Especiales</h3>
-                                        <p class="text-blue-100 text-xs">Descuentos exclusivos para clientes</p>
+                                        <h3 class="font-semibold text-xs text-white">Ofertas Especiales</h3>
+                                        <p class="text-blue-100 text-xs">Descuentos exclusivos</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-truck text-blue-700 text-sm"></i>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
+                                        <i class="pi pi-truck text-blue-700 text-xs"></i>
                                     </div>
                                     <div>
-                                        <h3 class="font-semibold text-sm text-white">Seguimiento de Pedidos</h3>
-                                        <p class="text-blue-100 text-xs">Rastrea tus compras en tiempo real</p>
+                                        <h3 class="font-semibold text-xs text-white">Seguimiento</h3>
+                                        <p class="text-blue-100 text-xs">Rastrea compras</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Call to action -->
-                            <div class="mt-4">
+                            <div class="mt-2">
                                 <Button
                                     label="Explorar Tienda"
                                     icon="pi pi-shopping-cart"
-                                    class="w-full bg-yellow-500 border-yellow-500 text-blue-900 font-bold hover:bg-yellow-400 hover:border-yellow-400 transition-all duration-300"
+                                    class="w-full bg-yellow-500 border-yellow-500 text-blue-900 font-semibold text-sm py-2 hover:bg-yellow-400 hover:border-yellow-400 transition-all duration-300"
                                     @click="goToStore"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel de registro - Sin scroll -->
-                    <div class="xl:w-3/5 w-full p-4 xl:p-6 bg-white h-full overflow-y-auto">
+                    <!-- Panel de registro - Más amplio -->
+                    <div class="xl:w-2/3 w-full p-3 xl:p-5 bg-white h-full overflow-y-auto">
                         <!-- Pantalla de verificación de email después del registro -->
                         <div v-if="registrationComplete" class="h-full flex flex-col justify-center items-center px-4 py-8 text-center space-y-6">
                             <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center">
@@ -603,25 +758,25 @@ onMounted(() => {
                         <!-- Formulario de registro -->
                         <div v-else class="h-full flex flex-col">
                             <!-- Header del formulario -->
-                            <div class="text-center mb-3 xl:hidden">
-                                <div class="flex items-center justify-center mb-2">
-                                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-8 h-8 object-contain" />
+                            <div class="text-center mb-2 xl:hidden">
+                                <div class="flex items-center justify-center mb-1">
+                                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-6 h-6 object-contain" />
                                     </div>
                                 </div>
-                                <h2 class="text-xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
-                                <p class="text-gray-600 text-sm">Regístrate en Master Color</p>
+                                <h2 class="text-lg font-bold text-gray-900 mb-1">Crear Cuenta</h2>
+                                <p class="text-gray-600 text-xs">Regístrate en Master Color</p>
                             </div>
 
-                            <div class="hidden xl:block text-center mb-3">
-                                <h2 class="text-2xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
-                                <p class="text-gray-600">Regístrate y únete a nosotros</p>
+                            <div class="hidden xl:block text-center mb-2">
+                                <h2 class="text-xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
+                                <p class="text-gray-600 text-sm">Regístrate y únete a nosotros</p>
                             </div>
 
                             <div class="flex-1 overflow-y-auto">
-                                <form class="space-y-3" @submit.prevent="register">
+                                <form class="space-y-2" @submit.prevent="register">
                                     <!-- Información personal en 3 columnas -->
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
                                         <div>
                                             <label for="name" class="block text-sm font-semibold text-gray-800 mb-1">Nombre Completo</label>
                                             <IconField>
@@ -651,7 +806,7 @@ onMounted(() => {
                                     </div>
 
                                     <!-- Documento y tipo de cliente en 3 columnas -->
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
                                         <div>
                                             <label for="clientType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Cliente</label>
                                             <Select v-model="clientType" :options="clientTypeOptions" option-label="label" option-value="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
@@ -664,21 +819,25 @@ onMounted(() => {
 
                                         <div>
                                             <label for="identityDocument" class="block text-sm font-semibold text-gray-800 mb-1">Número de Documento</label>
-                                            <InputText
-                                                id="identityDocument"
-                                                v-model="identityDocument"
-                                                type="text"
-                                                :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
-                                                class="w-full compact-input"
-                                                :class="identityDocumentError ? 'p-invalid' : ''"
-                                                @input="identityDocumentError = ''"
-                                            />
+                                            <div class="flex gap-2">
+                                                <InputText
+                                                    id="identityDocument"
+                                                    v-model="identityDocument"
+                                                    type="text"
+                                                    :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
+                                                    class="flex-1 compact-input"
+                                                    :class="identityDocumentError ? 'p-invalid' : ''"
+                                                    @input="clearDocumentError"
+                                                    @keyup.enter="lookupDocument"
+                                                />
+                                                <Button v-tooltip.top="'Buscar datos del documento'" icon="pi pi-search" class="p-button-outlined p-button-sm" :loading="isLookingUpDocument" :disabled="lookupButtonDisabled" @click="lookupDocument" />
+                                            </div>
                                             <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-1 block">{{ identityDocumentError }}</small>
                                         </div>
                                     </div>
 
                                     <!-- Contraseñas en 2 columnas -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                         <div>
                                             <label for="password" class="block text-sm font-semibold text-gray-800 mb-1">Contraseña</label>
                                             <div class="relative">
@@ -691,7 +850,7 @@ onMounted(() => {
                                                         placeholder="Tu contraseña"
                                                         class="w-full compact-input pr-12"
                                                         :class="passwordError ? 'p-invalid' : ''"
-                                                        @input="passwordError = ''"
+                                                        @input="clearPasswordError"
                                                     />
                                                     <i
                                                         :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
@@ -714,7 +873,7 @@ onMounted(() => {
                                                         placeholder="Confirma tu contraseña"
                                                         class="w-full compact-input pr-12"
                                                         :class="confirmPasswordError ? 'p-invalid' : ''"
-                                                        @input="confirmPasswordError = ''"
+                                                        @input="clearConfirmPasswordError"
                                                     />
                                                     <i
                                                         :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
@@ -728,14 +887,14 @@ onMounted(() => {
                                     </div>
 
                                     <!-- Sección de Dirección -->
-                                    <div class="bg-gray-50 p-3 rounded-lg border">
+                                    <div class="bg-gray-50 p-2 rounded-lg border">
                                         <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
                                             <i class="pi pi-map-marker mr-2 text-blue-600"></i>
                                             Dirección de Entrega
                                         </h3>
 
                                         <!-- Dirección completa -->
-                                        <div class="mb-3">
+                                        <div class="mb-2">
                                             <label for="addressFull" class="block text-sm font-semibold text-gray-800 mb-1">Dirección Completa *</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-home" />
@@ -747,14 +906,14 @@ onMounted(() => {
                                                     class="w-full compact-input"
                                                     :class="addressFullError ? 'p-invalid' : ''"
                                                     fluid
-                                                    @input="addressFullError = ''"
+                                                    @input="clearAddressFullError"
                                                 />
                                             </IconField>
                                             <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-1 block">{{ addressFullError }}</small>
                                         </div>
 
                                         <!-- Ubicación en 3 columnas -->
-                                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+                                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-2">
                                             <div>
                                                 <label for="department" class="block text-sm font-semibold text-gray-800 mb-1">Departamento *</label>
                                                 <AutoComplete
@@ -813,12 +972,12 @@ onMounted(() => {
                                         </div>
 
                                         <!-- Código postal y referencia en 2 columnas -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                                             <div>
                                                 <label for="postalCode" class="block text-sm font-semibold text-gray-800 mb-1">Código Postal</label>
                                                 <IconField>
                                                     <InputIcon class="pi pi-hashtag" />
-                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" fluid @input="postalCodeError = ''" />
+                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" fluid @input="clearPostalCodeError" />
                                                 </IconField>
                                                 <small v-if="postalCodeError" class="p-error text-red-600 text-xs mt-1 block">{{ postalCodeError }}</small>
                                             </div>
@@ -835,7 +994,7 @@ onMounted(() => {
                                                         class="w-full compact-input"
                                                         :class="referenceError ? 'p-invalid' : ''"
                                                         fluid
-                                                        @input="referenceError = ''"
+                                                        @input="clearReferenceError"
                                                     />
                                                 </IconField>
                                                 <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
@@ -858,7 +1017,7 @@ onMounted(() => {
                             </div>
 
                             <!-- Botones fijos en la parte inferior -->
-                            <div class="border-t pt-3 mt-3 space-y-2">
+                            <div class="border-t pt-2 mt-2 space-y-1">
                                 <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" @click="register" />
 
                                 <div class="text-center">
