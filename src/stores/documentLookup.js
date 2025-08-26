@@ -31,16 +31,33 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
                 console.log('Response.data (document data):', response.data);
 
                 if (response && response.success) {
-                    this.documentData = response.data;
-                    this.lastLookupType = type;
-                    this.lastLookupDocument = document;
+                    // Verificar si los datos están vacíos o son un array vacío
+                    const hasValidData = response.data && 
+                        (typeof response.data === 'object' && !Array.isArray(response.data) && Object.keys(response.data).length > 0) ||
+                        (Array.isArray(response.data) && response.data.length > 0);
 
-                    console.log('Document data set in store:', this.documentData);
-                    return {
-                        success: true,
-                        data: response.data,
-                        message: response.message
-                    };
+                    if (hasValidData) {
+                        this.documentData = response.data;
+                        this.lastLookupType = type;
+                        this.lastLookupDocument = document;
+
+                        console.log('Document data set in store:', this.documentData);
+                        return {
+                            success: true,
+                            data: response.data,
+                            message: response.message
+                        };
+                    } else {
+                        // Datos vacíos - DNI/RUC no encontrado
+                        const documentTypeLabel = type.toUpperCase();
+                        const notFoundMessage = `${documentTypeLabel} no encontrado en los registros oficiales`;
+                        this.error = notFoundMessage;
+                        return {
+                            success: false,
+                            message: notFoundMessage,
+                            errors: {}
+                        };
+                    }
                 } else {
                     this.error = response?.message || 'Error al consultar el documento';
                     return {
@@ -52,12 +69,51 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
             } catch (error) {
                 let errorMessage = 'Error interno del servidor al consultar el documento';
 
-                if (error.response && error.response.data) {
-                    errorMessage = error.response.data.message || errorMessage;
+                if (error.response) {
+                    // Manejo específico para diferentes códigos de estado HTTP
+                    switch (error.response.status) {
+                        case 404:
+                            // Si es 404, verificar si hay datos en la respuesta
+                            if (error.response.data && error.response.data.success) {
+                                const documentTypeLabel = type.toUpperCase();
+                                errorMessage = `${documentTypeLabel} no encontrado en los registros oficiales`;
+                            } else {
+                                errorMessage = error.response.data?.message || `${type.toUpperCase()} no encontrado`;
+                            }
+                            break;
+                        case 400:
+                            errorMessage = error.response.data?.message || `Formato de ${type.toUpperCase()} inválido`;
+                            break;
+                        case 422:
+                            errorMessage = error.response.data?.message || `Datos de ${type.toUpperCase()} inválidos`;
+                            break;
+                        case 429:
+                            errorMessage = 'Demasiadas consultas. Por favor intenta nuevamente en unos momentos';
+                            break;
+                        case 500:
+                        case 502:
+                        case 503:
+                        case 504:
+                            errorMessage = 'Servicio de consulta temporalmente no disponible. Intenta nuevamente';
+                            break;
+                        default:
+                            errorMessage = error.response.data?.message || errorMessage;
+                    }
+                    this.error = errorMessage;
+                } else if (error.request) {
+                    // Error de red/conectividad
+                    errorMessage = 'No se pudo conectar con el servicio de consulta. Verifica tu conexión';
                     this.error = errorMessage;
                 } else {
                     this.error = errorMessage;
                 }
+
+                console.error('Error en consulta de documento:', {
+                    type,
+                    document,
+                    status: error.response?.status,
+                    error: error.response?.data || error.message
+                });
 
                 return {
                     success: false,
