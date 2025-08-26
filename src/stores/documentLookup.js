@@ -24,15 +24,9 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
 
                 const response = await documentLookupApi.lookupDocument(payload);
 
-                console.log('Response from document lookup API:', response);
-
-                // Basándose en los logs, response ya es la respuesta completa
-                // y response.data son los datos del documento
-                console.log('Response.data (document data):', response.data);
-
                 if (response && response.success) {
                     // Verificar si los datos están vacíos o son un array vacío
-                    const hasValidData = response.data && 
+                    const hasValidData = response.data &&
                         (typeof response.data === 'object' && !Array.isArray(response.data) && Object.keys(response.data).length > 0) ||
                         (Array.isArray(response.data) && response.data.length > 0);
 
@@ -41,7 +35,6 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
                         this.lastLookupType = type;
                         this.lastLookupDocument = document;
 
-                        console.log('Document data set in store:', this.documentData);
                         return {
                             success: true,
                             data: response.data,
@@ -50,7 +43,7 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
                     } else {
                         // Datos vacíos - DNI/RUC no encontrado
                         const documentTypeLabel = type.toUpperCase();
-                        const notFoundMessage = `${documentTypeLabel} no encontrado en los registros oficiales`;
+                        const notFoundMessage = `${documentTypeLabel} no encontrado`;
                         this.error = notFoundMessage;
                         return {
                             success: false,
@@ -69,14 +62,16 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
             } catch (error) {
                 let errorMessage = 'Error interno del servidor al consultar el documento';
 
+
                 if (error.response) {
                     // Manejo específico para diferentes códigos de estado HTTP
-                    switch (error.response.status) {
+                    const status = error.response.status;
+                    switch (status) {
                         case 404:
                             // Si es 404, verificar si hay datos en la respuesta
                             if (error.response.data && error.response.data.success) {
                                 const documentTypeLabel = type.toUpperCase();
-                                errorMessage = `${documentTypeLabel} no encontrado en los registros oficiales`;
+                                errorMessage = `${documentTypeLabel} no encontrado`;
                             } else {
                                 errorMessage = error.response.data?.message || `${type.toUpperCase()} no encontrado`;
                             }
@@ -99,21 +94,12 @@ export const useDocumentLookupStore = defineStore('documentLookup', {
                         default:
                             errorMessage = error.response.data?.message || errorMessage;
                     }
-                    this.error = errorMessage;
                 } else if (error.request) {
                     // Error de red/conectividad
                     errorMessage = 'No se pudo conectar con el servicio de consulta. Verifica tu conexión';
-                    this.error = errorMessage;
-                } else {
-                    this.error = errorMessage;
                 }
 
-                console.error('Error en consulta de documento:', {
-                    type,
-                    document,
-                    status: error.response?.status,
-                    error: error.response?.data || error.message
-                });
+                this.error = errorMessage;
 
                 return {
                     success: false,

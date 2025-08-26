@@ -59,6 +59,11 @@ api.interceptors.response.use(
         return response.data;
     },
     function (error) {
+        // Para endpoints de document lookup, mantener la estructura original del error
+        if (error.config?.url?.includes('/document/lookup')) {
+            return Promise.reject(error);
+        }
+
         // Si el backend responde, intenta adaptar la estructura al estándar
         let backendData = error.response && error.response.data;
         let errResponse = {
