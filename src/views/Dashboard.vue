@@ -10,6 +10,8 @@ const toast = useToast();
 
 const selectedPeriod = ref(30);
 const refreshing = ref(false);
+const showLowStockModal = ref(false);
+const selectedAlert = ref(null);
 
 const periodOptions = [
     { label: '7 días', value: 7 },
@@ -38,13 +40,19 @@ const alerts = computed(() => {
         title: alert.type === 'warning' ? 'Stock Bajo' : 'Órdenes Pendientes',
         message: alert.message,
         created_at: new Date().toISOString(),
-        action: alert.action
+        details: alert.details || null,
+        action: alert.details
             ? {
                   label: 'Ver detalles',
-                  route: alert.action,
                   severity: alert.priority === 'high' ? 'warning' : 'info'
               }
-            : null
+            : alert.action
+              ? {
+                    label: 'Ver detalles',
+                    route: alert.action,
+                    severity: alert.priority === 'high' ? 'warning' : 'info'
+                }
+              : null
     }));
 });
 
@@ -106,10 +114,26 @@ async function handlePeriodChange(newPeriod) {
 }
 
 function handleAlertAction(alert) {
-    if (alert.action && alert.action.route) {
-        // Navegar a la ruta especificada
+    if (alert.details && alert.details.length > 0) {
+        // Mostrar modal con detalles de productos con stock bajo
+        selectedAlert.value = alert;
+        showLowStockModal.value = true;
+    } else if (alert.action && alert.action.route) {
+        // Navegar a la ruta especificada para otros tipos de alertas
+        console.log('Navegando a:', alert.action.route);
         window.location.href = alert.action.route;
     }
+}
+
+function closeLowStockModal() {
+    showLowStockModal.value = false;
+    selectedAlert.value = null;
+}
+
+function getStockStatusSeverity(currentStock, minStock) {
+    if (currentStock === 0) return 'danger';
+    if (currentStock < minStock) return 'warning';
+    return 'success';
 }
 </script>
 
@@ -373,6 +397,72 @@ function handleAlertAction(alert) {
                 </div>
             </section>
         </div>
+
+        <!-- Modal de Detalles de Stock Bajo -->
+        <Dialog v-model:visible="showLowStockModal" modal :header="selectedAlert?.title || 'Productos con Stock Bajo'" :style="{ width: '50rem' }" :breakpoints="{ '1199px': '75vw', '575px': '90vw' }">
+            <div v-if="selectedAlert?.details" class="space-y-4">
+                <div class="text-surface-700 mb-4">
+                    {{ selectedAlert.message }}
+                </div>
+
+                <DataTable :value="selectedAlert.details" class="p-datatable-sm" :paginator="selectedAlert.details.length > 10" :rows="10" responsiveLayout="scroll">
+                    <Column field="name" header="Producto" :sortable="true">
+                        <template #body="{ data }">
+                            <div>
+                                <div class="font-medium text-surface-900">{{ data.name }}</div>
+                                <div class="text-sm text-surface-600">{{ data.sku }}</div>
+                            </div>
+                        </template>
+                    </Column>
+
+                    <Column field="category" header="Categoría" :sortable="true">
+                        <template #body="{ data }">
+                            <Tag :value="data.category" severity="info" />
+                        </template>
+                    </Column>
+
+                    <Column field="current_stock" header="Stock Actual" :sortable="true">
+                        <template #body="{ data }">
+                            <Tag :value="data.current_stock" :severity="getStockStatusSeverity(data.current_stock, data.min_stock)" />
+                        </template>
+                    </Column>
+
+                    <Column field="min_stock" header="Stock Mínimo" :sortable="true">
+                        <template #body="{ data }">
+                            <span class="text-surface-600">{{ data.min_stock }}</span>
+                        </template>
+                    </Column>
+
+                    <Column header="Estado">
+                        <template #body="{ data }">
+                            <div class="flex items-center gap-2">
+                                <i :class="['pi', data.current_stock === 0 ? 'pi-times-circle text-red-500' : data.current_stock < data.min_stock ? 'pi-exclamation-triangle text-orange-500' : 'pi-check-circle text-green-500']"></i>
+                                <span class="text-sm">
+                                    {{ data.current_stock === 0 ? 'Sin Stock' : data.current_stock < data.min_stock ? 'Stock Bajo' : 'Stock OK' }}
+                                </span>
+                            </div>
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-end gap-2">
+                    <Button label="Cerrar" icon="pi pi-times" @click="closeLowStockModal" class="p-button-text" />
+                    <Button
+                        label="Ir a Inventario"
+                        icon="pi pi-external-link"
+                        @click="
+                            () => {
+                                closeLowStockModal();
+                                $router.push('/stock');
+                            }
+                        "
+                        severity="primary"
+                    />
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>
 

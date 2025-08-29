@@ -1,7 +1,7 @@
 import { dashboardApi } from '@/api/index';
 import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
-import { defineStore } from 'pinia';
 import cache from '@/utils/cache';
+import { defineStore } from 'pinia';
 
 export const useDashboardStore = defineStore('dashboardStore', {
     state: () => ({
@@ -188,6 +188,8 @@ export const useDashboardStore = defineStore('dashboardStore', {
 
             try {
                 const response = await dashboardApi.getOverview(finalParams);
+
+                console.log('Respuesta de getOverview:', response);
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {

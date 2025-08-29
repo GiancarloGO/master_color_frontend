@@ -93,6 +93,7 @@ function formatTime(dateString) {
 }
 
 function handleAlertAction(alert) {
+    console.log('Acción de alerta:', alert);
     emit('alert-action', alert);
 }
 </script>
