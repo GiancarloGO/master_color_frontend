@@ -453,6 +453,12 @@ const validateForm = () => {
         isValid = false;
     }
 
+    // Validar referencia (requerida)
+    if (!reference.value.trim()) {
+        referenceError.value = 'La referencia de dirección es requerida';
+        isValid = false;
+    }
+
     return isValid;
 };
 
@@ -485,7 +491,7 @@ const register = async () => {
         province: typeof selectedProvince.value === 'object' ? selectedProvince.value.value : selectedProvince.value,
         department: typeof selectedDepartment.value === 'object' ? selectedDepartment.value.value : selectedDepartment.value,
         postal_code: postalCode.value.trim() || null,
-        reference: reference.value.trim() || null
+        reference: reference.value.trim() || ''
     };
 
     await authStore.register(payload, 'client');
@@ -674,7 +680,7 @@ const getPasswordStrengthColor = (index) => {
 // Función para obtener el texto de fortaleza
 const getPasswordStrengthText = () => {
     const strength = getPasswordStrength();
-    
+
     switch (strength) {
         case 0:
         case 1:
@@ -695,7 +701,7 @@ const getPasswordStrengthText = () => {
 // Función para obtener el color del texto de fortaleza
 const getPasswordStrengthTextColor = () => {
     const strength = getPasswordStrength();
-    
+
     switch (strength) {
         case 0:
         case 1:
@@ -883,7 +889,7 @@ onMounted(() => {
                                             <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-phone" />
-                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="15" />
+                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="9" />
                                             </IconField>
                                             <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
                                         </div>
@@ -1099,7 +1105,7 @@ onMounted(() => {
                                             </div>
 
                                             <div>
-                                                <label for="reference" class="block text-sm font-semibold text-gray-800 mb-1">Referencia</label>
+                                                <label for="reference" class="block text-sm font-semibold text-gray-800 mb-1">Referencia *</label>
                                                 <IconField>
                                                     <InputIcon class="pi pi-info-circle" />
                                                     <InputText

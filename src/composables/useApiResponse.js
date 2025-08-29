@@ -1,5 +1,43 @@
 const isDev = import.meta.env.MODE === 'development';
 
+/**
+ * Filtra mensajes de error que contienen información sensible de base de datos
+ * @param {string} message - Mensaje de error original
+ * @returns {string} - Mensaje filtrado y amigable
+ */
+function filterDatabaseError(message) {
+    if (!message || typeof message !== 'string') {
+        return 'Ha ocurrido un error inesperado';
+    }
+
+    const msg = message.toLowerCase();
+    
+    // Detectar errores de base de datos comunes
+    if (msg.includes('sqlstate') || msg.includes('not null violation') || msg.includes('connection: pgsql')) {
+        // Extraer información útil sin exponer detalles técnicos
+        if (msg.includes('reference') && msg.includes('not null')) {
+            return 'La referencia de dirección es requerida';
+        }
+        if (msg.includes('not null violation')) {
+            return 'Faltan campos requeridos en el formulario';
+        }
+        if (msg.includes('duplicate key') || msg.includes('unique constraint')) {
+            return 'Ya existe un registro con esta información';
+        }
+        if (msg.includes('foreign key constraint')) {
+            return 'Error de integridad de datos';
+        }
+        return 'Error al procesar la información. Por favor intenta nuevamente';
+    }
+    
+    // Detectar errores de validación largos y técnicos
+    if (message.length > 200 && (msg.includes('error:') || msg.includes('detail:'))) {
+        return 'Error de validación. Por favor revisa los datos ingresados';
+    }
+    
+    return message;
+}
+
 export function processResponse(response) {
     let validationErrors = [];
 
@@ -35,11 +73,11 @@ export function processResponse(response) {
 
     return {
         success: response.success,
-        message: response.message,
+        message: filterDatabaseError(response.message),
         data: response.data,
         status: response.status,
         details: response.details,
-        validationErrors
+        validationErrors: validationErrors.map(err => filterDatabaseError(err))
     };
 }
 

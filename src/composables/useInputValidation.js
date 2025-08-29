@@ -45,7 +45,8 @@ export function useInputValidation(inputType = 'text', options = {}) {
             case 'search':
                 return sanitizeInput(inputValue, { maxLength, isTextarea: false });
             case 'phone':
-                return sanitizeNumber(inputValue, false); // Solo números enteros
+                // Para teléfonos: solo números positivos, máximo 9 dígitos
+                return inputValue.replace(/[^0-9]/g, '').substring(0, 9);
             case 'dni':
                 return sanitizeNumber(inputValue, false).substring(0, 8);
             case 'address':
@@ -89,11 +90,14 @@ export function useInputValidation(inputType = 'text', options = {}) {
                 break;
 
             case 'phone':
-                if (inputValue.length < 9) {
-                    validationErrors.push('Mínimo 9 dígitos');
+                if (inputValue.length !== 9) {
+                    validationErrors.push('Debe tener exactamente 9 dígitos');
                 }
                 if (!/^[0-9]+$/.test(inputValue)) {
                     validationErrors.push('Solo números');
+                }
+                if (inputValue.length > 0 && !inputValue.startsWith('9')) {
+                    validationErrors.push('Debe empezar con 9');
                 }
                 break;
 
@@ -282,7 +286,8 @@ export function useNameValidation(options = {}) {
 export function usePhoneValidation(options = {}) {
     return useInputValidation('phone', {
         required: false,
-        maxLength: 15,
+        maxLength: 9,
+        realTimeValidation: true,
         ...options
     });
 }

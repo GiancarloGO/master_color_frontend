@@ -281,10 +281,10 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
                 pendiente_pago: 'warning',
                 pendiente: 'info',
                 confirmado: 'success',
-                procesando: 'info',
-                enviado: 'primary',
+                procesando: 'primary',
+                enviado: 'info',
                 entregado: 'success',
-                cancelado: 'secondary',
+                cancelado: 'danger',
                 pago_fallido: 'danger'
             };
             return statusMap[status] || 'secondary';
