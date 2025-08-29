@@ -53,6 +53,12 @@ const menuConfig = ref([
                 roles: [ROLES.ADMIN]
             },
             {
+                label: 'Clientes',
+                icon: 'pi pi-fw pi-user-plus',
+                to: '/clients',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+            },
+            {
                 label: 'Productos',
                 icon: 'pi pi-fw pi-box',
                 to: '/products',

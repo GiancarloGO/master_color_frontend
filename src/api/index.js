@@ -249,6 +249,54 @@ export const reportsApi = {
         })
 };
 
+// Funciones para gestión de clientes por staff (administradores/empleados)
+export const clientsApi = {
+    // Listar todos los clientes con filtros
+    getClients: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/clients${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Obtener detalle de un cliente específico (incluye direcciones e historial de órdenes)
+    getClientById: (id) => axios.get(`/clients/${id}`),
+
+    // Crear un nuevo cliente
+    createClient: (payload) => axios.post('/clients', payload),
+
+    // Actualizar un cliente existente
+    updateClient: (id, payload) => axios.put(`/clients/${id}`, payload),
+
+    // Eliminar cliente (soft delete)
+    deleteClient: (id) => axios.delete(`/clients/${id}`),
+
+    // Listar clientes eliminados
+    getDeletedClients: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/clients-deleted${queryString ? '?' + queryString : ''}`);
+    },
+
+    // Restaurar cliente eliminado
+    restoreClient: (id) => axios.patch(`/clients/${id}/restore`),
+
+    // Eliminar permanentemente (force delete)
+    forceDeleteClient: (id) => axios.delete(`/clients/${id}/force`),
+
+    // Cambiar estado de verificación de email
+    toggleVerification: (id) => axios.patch(`/clients/${id}/toggle-verification`)
+};
+
 export const dashboardApi = {
     // Vista general del dashboard
     getOverview: (params = {}) => {
