@@ -194,10 +194,16 @@ const exportCSV = () => {
             </Column>
 
             <!-- Estado de la orden -->
-            <Column field="status" header="Estado" :sortable="true" style="width: 130px">
+            <Column field="status" header="Estado" :sortable="true" style="width: 140px">
                 <template #body="{ data }">
                     <div class="order-status">
-                        <Tag :value="getStatusLabel(data.status)" :severity="getStatusSeverity(data.status)" :icon="getStatusIcon(data.status)" class="status-tag" />
+                        <Tag 
+                            :value="getStatusLabel(data.status)" 
+                            :severity="getStatusSeverity(data.status)" 
+                            :icon="getStatusIcon(data.status)" 
+                            class="status-tag" 
+                            :data-status="data.status"
+                        />
                     </div>
                 </template>
             </Column>
@@ -415,8 +421,14 @@ const exportCSV = () => {
 }
 
 .status-tag {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.625rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: all 0.2s ease;
 }
 
 /* Order Date */
@@ -533,6 +545,7 @@ const exportCSV = () => {
     background: var(--primary-900);
     color: var(--primary-100);
 }
+
 
 /* Responsive */
 @media (max-width: 768px) {

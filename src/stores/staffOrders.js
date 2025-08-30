@@ -278,14 +278,14 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
 
         getOrderStatusSeverity(status) {
             const statusMap = {
-                pendiente_pago: 'warning',
-                pendiente: 'info',
-                confirmado: 'success',
-                procesando: 'primary',
-                enviado: 'info',
-                entregado: 'success',
-                cancelado: 'danger',
-                pago_fallido: 'danger'
+                pendiente_pago: 'warning',     // Amarillo - esperando pago
+                pendiente: 'secondary',        // Gris - orden nueva
+                confirmado: 'info',           // Azul - confirmada pero no iniciada
+                procesando: 'primary',        // Morado - en proceso activo
+                enviado: 'warning',          // Naranja - en tránsito
+                entregado: 'success',        // Verde - completada
+                cancelado: 'danger',         // Rojo - cancelada
+                pago_fallido: 'danger'       // Rojo - error de pago
             };
             return statusMap[status] || 'secondary';
         },
