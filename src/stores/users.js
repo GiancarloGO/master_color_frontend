@@ -146,6 +146,28 @@ export const useUsersStore = defineStore('usersStore', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        async resetUserPassword(id) {
+            this.loading = true;
+            this.error = null;
+            try {
+                const response = await usersApi.resetPassword(id);
+                const processed = handleProcessSuccess(response, this);
+                this.success = true;
+                this.message = processed.message || 'Contraseña restablecida exitosamente';
+                
+                return {
+                    newPassword: processed.data.new_password,
+                    message: this.message
+                };
+            } catch (error) {
+                this.error = error;
+                handleProcessError(error, this);
+                throw error;
+            } finally {
+                this.loading = false;
+            }
         }
     }
 });

@@ -51,7 +51,8 @@ export const usersApi = {
     getUserById: (id) => axios.get(`/users/${id}`),
     createUser: (payload) => axios.post('/users', payload),
     updateUser: (id, payload) => axios.put(`/users/${id}`, payload),
-    deleteUser: (id) => axios.delete(`/users/${id}`)
+    deleteUser: (id) => axios.delete(`/users/${id}`),
+    resetPassword: (id) => axios.post(`/users/${id}/reset-password`)
 };
 
 // Funciones para roles

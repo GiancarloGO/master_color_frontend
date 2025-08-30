@@ -1,9 +1,17 @@
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import { useRolesStore } from '@/stores/roles';
+import { useUsersStore } from '@/stores/users';
 import { FilterMatchMode } from '@primevue/core/api';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { ref } from 'vue';
 
 const rolesStore = useRolesStore();
+const usersStore = useUsersStore();
+const authStore = useAuthStore();
+const confirm = useConfirm();
+const toast = useToast();
 
 const props = defineProps({
     users: {
@@ -19,6 +27,11 @@ const props = defineProps({
 const emit = defineEmits(['edit', 'delete', 'view', 'refresh']);
 
 const dt = ref();
+const showPasswordDialog = ref(false);
+const resetPasswordData = ref({
+    newPassword: '',
+    userName: ''
+});
 
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS }
@@ -132,6 +145,88 @@ const refreshData = () => {
 const exportCSV = () => {
     dt.value.exportCSV();
 };
+
+const resetUserPassword = (user) => {
+    confirm.require({
+        message: `¿Estás seguro de que quieres resetear la contraseña de ${user.name}?`,
+        header: 'Confirmar Reseteo de Contraseña',
+        icon: 'pi pi-exclamation-triangle',
+        rejectLabel: 'Cancelar',
+        rejectProps: {
+            label: 'Cancelar',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptLabel: 'Resetear',
+        acceptProps: {
+            label: 'Resetear',
+            severity: 'danger'
+        },
+        accept: async () => {
+            try {
+                const result = await usersStore.resetUserPassword(user.id);
+
+                resetPasswordData.value = {
+                    newPassword: result.newPassword,
+                    userName: user.name
+                };
+                showPasswordDialog.value = true;
+
+                toast.add({
+                    severity: 'success',
+                    summary: 'Contraseña Reseteada',
+                    detail: `La contraseña de ${user.name} ha sido reseteada exitosamente`,
+                    life: 5000
+                });
+            } catch (error) {
+                console.error('Error al resetear contraseña:', error);
+                toast.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: usersStore.message || 'No se pudo resetear la contraseña',
+                    life: 5000
+                });
+            }
+        }
+    });
+};
+
+const copyToClipboard = async (text) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast.add({
+            severity: 'info',
+            summary: 'Copiado',
+            detail: 'Contraseña copiada al portapapeles',
+            life: 3000
+        });
+    } catch (error) {
+        console.error('Error al copiar:', error);
+        toast.add({
+            severity: 'warn',
+            summary: 'Error al copiar',
+            detail: 'No se pudo copiar la contraseña al portapapeles',
+            life: 3000
+        });
+    }
+};
+
+const copyAndClose = async () => {
+    await copyToClipboard(resetPasswordData.value.newPassword);
+    closePasswordDialog();
+};
+
+const isCurrentUser = (user) => {
+    return authStore.currentUser && authStore.currentUser.id === user.id;
+};
+
+const closePasswordDialog = () => {
+    showPasswordDialog.value = false;
+    resetPasswordData.value = {
+        newPassword: '',
+        userName: ''
+    };
+};
 </script>
 
 <template>
@@ -232,15 +327,70 @@ const exportCSV = () => {
                 </template>
             </Column>
 
-            <Column header="Acciones" style="min-width: 10rem">
+            <Column header="Acciones" style="min-width: 12rem">
                 <template #body="{ data }">
                     <div class="flex gap-2">
                         <Button v-tooltip.top="'Editar'" icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning" @click="editUser(data)" />
-                        <Button v-tooltip.top="'Eliminar'" icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" @click="deleteUser(data)" />
+                        <Button
+                            v-tooltip.top="isCurrentUser(data) ? 'No puedes resetear tu propia contraseña' : 'Resetear Contraseña'"
+                            icon="pi pi-key"
+                            class="p-button-rounded p-button-text p-button-info"
+                            :disabled="isCurrentUser(data)"
+                            @click="resetUserPassword(data)"
+                        />
+                        <Button
+                            v-tooltip.top="isCurrentUser(data) ? 'No puedes eliminar tu propia cuenta' : 'Eliminar'"
+                            icon="pi pi-trash"
+                            class="p-button-rounded p-button-text p-button-danger"
+                            :disabled="isCurrentUser(data)"
+                            @click="deleteUser(data)"
+                        />
                     </div>
                 </template>
             </Column>
         </DataTable>
+
+        <!-- Dialog para mostrar nueva contraseña -->
+        <Dialog v-model:visible="showPasswordDialog" header="Contraseña Generada" :modal="true" :closable="false" class="password-reset-dialog" style="width: 560px; max-width: 95vw">
+            <div class="password-reset-content">
+                <!-- Header section con animación -->
+                <div class="success-header">
+                    <div class="success-icon-container">
+                        <i class="pi pi-check-circle success-icon"></i>
+                        <div class="success-pulse"></div>
+                    </div>
+                    <h3 class="success-title">¡Contraseña Generada!</h3>
+                    <p class="success-subtitle">
+                        Se ha generado una nueva contraseña para <strong>{{ resetPasswordData.userName }}</strong>
+                    </p>
+                </div>
+
+                <!-- Password display section -->
+                <div class="password-section">
+                    <div class="password-container">
+                        <div class="password-display">
+                            <span class="password-text">{{ resetPasswordData.newPassword }}</span>
+                            <Button icon="pi pi-copy" class="copy-btn p-button-text p-button-rounded" v-tooltip.top="'Copiar contraseña'" @click="copyToClipboard(resetPasswordData.newPassword)" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning section -->
+                <div class="security-warning">
+                    <div class="warning-content">
+                        <i class="pi pi-shield warning-icon"></i>
+                        <div class="warning-text"><strong>Importante:</strong> Esta contraseña solo se mostrará una vez por seguridad. Cópiala y compártela de forma segura con el usuario.</div>
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="dialog-footer">
+                    <Button label="Copiar y Cerrar" icon="pi pi-copy" class="p-button-success primary-action" @click="copyAndClose" />
+                    <Button label="Solo Cerrar" icon="pi pi-times" class="p-button-outlined secondary-action" @click="closePasswordDialog" />
+                </div>
+            </template>
+        </Dialog>
     </div>
 </template>
 
@@ -343,6 +493,20 @@ const exportCSV = () => {
     color: #ef4444;
 }
 
+:deep(.p-button:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+:deep(.p-button.p-button-text:disabled) {
+    background: transparent;
+    color: var(--text-color-secondary);
+}
+
+:deep(.p-button.p-button-text:disabled:hover) {
+    background: transparent;
+}
+
 :deep(.p-inputtext) {
     border-radius: 8px;
     font-size: 1rem;
@@ -434,6 +598,305 @@ const exportCSV = () => {
 /* Dark mode support for empty state */
 [data-theme='dark'] .empty-icon {
     background: var(--surface-ground);
+}
+
+/* Password reset dialog styles */
+.password-reset-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.password-reset-dialog :deep(.p-dialog-header) {
+    background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+    border-bottom: 1px solid var(--primary-200);
+    padding: 1.5rem 2rem 1rem;
+}
+
+.password-reset-dialog :deep(.p-dialog-content) {
+    padding: 0;
+}
+
+.password-reset-content {
+    padding: 2rem;
+}
+
+/* Success header styles */
+.success-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.success-icon-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #10b981;
+    position: relative;
+    z-index: 2;
+    animation: bounceIn 0.6s ease-out;
+}
+
+.success-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: rgba(16, 185, 129, 0.2);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.success-title {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.025em;
+}
+
+.success-subtitle {
+    color: var(--text-color-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Password section styles */
+.password-section {
+    background: var(--surface-50);
+    border: 2px solid var(--primary-100);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.password-label {
+    display: flex;
+    align-items: center;
+    color: var(--primary-600);
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.password-container {
+    position: relative;
+}
+
+.password-display {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid var(--primary-200);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.password-display:hover {
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 4px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.password-text {
+    flex: 1;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--primary-700);
+    background: transparent;
+    border: none;
+    outline: none;
+    user-select: all;
+}
+
+.copy-btn {
+    margin-left: 0.5rem;
+    color: var(--primary-600) !important;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    background: var(--primary-50) !important;
+    color: var(--primary-700) !important;
+}
+
+/* Instructions section */
+.instructions-section {
+    background: var(--blue-50);
+    border-left: 4px solid var(--blue-400);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.instruction-item:last-child {
+    margin-bottom: 0;
+}
+
+.instruction-icon {
+    color: var(--blue-600);
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+/* Security warning section */
+.security-warning {
+    background: linear-gradient(135deg, var(--orange-50) 0%, var(--yellow-50) 100%);
+    border: 1px solid var(--orange-200);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.warning-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.warning-icon {
+    color: var(--orange-600);
+    font-size: 1.1rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+}
+
+.warning-text {
+    color: var(--orange-800);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Dialog footer */
+.dialog-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 1.5rem 2rem;
+    background: var(--surface-50);
+    border-top: 1px solid var(--surface-border);
+}
+
+.primary-action {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+}
+
+.secondary-action {
+    padding: 0.75rem 1.5rem;
+}
+
+/* Animations */
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale3d(0.3, 0.3, 0.3);
+    }
+    20% {
+        transform: scale3d(1.1, 1.1, 1.1);
+    }
+    40% {
+        transform: scale3d(0.9, 0.9, 0.9);
+    }
+    60% {
+        opacity: 1;
+        transform: scale3d(1.03, 1.03, 1.03);
+    }
+    80% {
+        transform: scale3d(0.97, 0.97, 0.97);
+    }
+    100% {
+        opacity: 1;
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0.3;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.6);
+        opacity: 0;
+    }
+}
+
+/* Dark mode support */
+[data-theme='dark'] .password-section {
+    background: var(--surface-100);
+    border-color: var(--surface-border);
+}
+
+[data-theme='dark'] .password-display {
+    background: var(--surface-card);
+    border-color: var(--surface-border);
+}
+
+[data-theme='dark'] .password-text {
+    color: var(--text-color);
+}
+
+[data-theme='dark'] .instructions-section {
+    background: rgba(59, 130, 246, 0.1);
+    border-left-color: var(--blue-400);
+}
+
+[data-theme='dark'] .security-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--orange-400);
+}
+
+[data-theme='dark'] .warning-text {
+    color: var(--orange-300);
+}
+
+[data-theme='dark'] .dialog-footer {
+    background: var(--surface-100);
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    .password-reset-dialog {
+        margin: 1rem;
+    }
+
+    .password-reset-content {
+        padding: 1.5rem;
+    }
+
+    .success-title {
+        font-size: 1.25rem;
+    }
+
+    .dialog-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .dialog-footer .p-button {
+        width: 100%;
+    }
 }
 
 /* Table header filters */
