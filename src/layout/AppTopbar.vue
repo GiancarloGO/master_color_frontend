@@ -37,17 +37,16 @@ const logout = async () => {
     logoutDialog.value = false; // Cerrar el diálogo inmediatamente
 
     try {
+        let userType = authStore.getUserType; // Guardar el tipo de usuario antes del logout
+
         await authStore.logout();
 
         // Redirigir según el tipo de usuario
-        if (authStore.getUserType === 'client') {
+        if (userType === 'client') {
             router.push('/'); // Página principal de la tienda
         } else {
-            router.push('/login'); // Página de login para empleados
+            router.push('/auth/employee-login'); // Página de login para empleados
         }
-
-        // Opcional: mostrar mensaje de confirmación
-        console.log('✅ Sesión cerrada exitosamente');
     } catch (error) {
         console.error('Error durante el logout:', error);
         // Aún así redirigir porque el logout local se completó

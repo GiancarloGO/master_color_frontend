@@ -228,7 +228,7 @@ const validateForm = () => {
         const doc = identityDocument.value.trim();
         const requiredLength = getDocumentLength();
         
-        if (doc.length !== requiredLength || !/^\\d+$/.test(doc)) {
+        if (doc.length !== requiredLength || !/^\d+$/.test(doc)) {
             errors.identityDocument = `El ${documentType.value} debe tener ${requiredLength} dígitos`;
             isValid = false;
         }
