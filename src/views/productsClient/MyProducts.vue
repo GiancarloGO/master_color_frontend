@@ -120,7 +120,7 @@ onMounted(() => {
             <!-- Cantidad -->
             <Column field="quantity" header="Cantidad" sortable style="width: 6rem; text-align: center">
                 <template #body="{ data }">
-                    <Tag :value="data.quantity" severity="info" />
+                    <Tag :value="data.quantity" severity="info" class="standard-tag" />
                 </template>
             </Column>
 
@@ -134,7 +134,7 @@ onMounted(() => {
             <!-- Estado de la orden -->
             <Column field="order_status" header="Estado" sortable style="width: 12rem; text-align: center">
                 <template #body="{ data }">
-                    <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)" class="status-tag" />
+                    <Tag :value="getStatusLabel(data.order_status)" :severity="getStatusSeverity(data.order_status)" class="standard-tag" />
                 </template>
             </Column>
         </DataTable>
@@ -207,6 +207,18 @@ onMounted(() => {
     align-items: center;
     gap: 1rem;
 }
+/* Standard tag styling to match StockMovements */
+.standard-tag {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 0.25rem 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    transition: all 0.2s ease !important;
+}
+
 /* ------------------ Modern Enhancements ------------------ */
 .purchases-page {
     padding: 1rem 2rem;

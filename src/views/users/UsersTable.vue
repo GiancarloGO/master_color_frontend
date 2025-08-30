@@ -317,13 +317,13 @@ const closePasswordDialog = () => {
 
             <Column field="role" header="Rol" :sortable="true" style="min-width: 8rem">
                 <template #body="{ data }">
-                    <Tag :value="getRoleDisplayName(data)" :severity="getRoleSeverity(data)" class="text-sm" />
+                    <Tag :value="getRoleDisplayName(data)" :severity="getRoleSeverity(data)" class="standard-tag" />
                 </template>
             </Column>
 
             <Column field="is_active" header="Estado" :sortable="true" style="min-width: 8rem">
                 <template #body="{ data }">
-                    <Tag :value="getStatusLabel(data.is_active)" :severity="getStatusSeverity(data.is_active)" class="text-sm" />
+                    <Tag :value="getStatusLabel(data.is_active)" :severity="getStatusSeverity(data.is_active)" class="standard-tag" />
                 </template>
             </Column>
 
@@ -463,6 +463,18 @@ const closePasswordDialog = () => {
     font-size: 0.92rem;
     padding: 0.2rem 0.8rem;
     font-weight: 500;
+}
+
+/* Standard tag styling to match StockMovements */
+.standard-tag {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 0.25rem 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    transition: all 0.2s ease !important;
 }
 
 :deep(.p-badge) {

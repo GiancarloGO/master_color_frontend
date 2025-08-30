@@ -124,7 +124,7 @@ function viewMovements(product) {
                             <span v-if="data.brand" class="brand">| {{ data.brand }}</span>
                         </div>
                         <div v-if="data.category" class="product-category">
-                            <Tag :value="data.category" severity="info" class="category-tag" />
+                            <Tag :value="data.category" severity="info" class="standard-tag" />
                         </div>
                     </div>
                 </template>
@@ -403,6 +403,18 @@ function viewMovements(product) {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+}
+
+/* Standard tag styling to match StockMovements */
+.standard-tag {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 0.25rem 0.5rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    transition: all 0.2s ease !important;
 }
 
 /* Custom stock tags with proper colors */
