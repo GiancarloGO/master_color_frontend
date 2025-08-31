@@ -16,7 +16,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['update:visible', 'retry-payment', 'cancel-order']);
+const emit = defineEmits(['update:visible', 'retry-payment', 'cancel-order', 'print-receipt']);
 
 const ordersStore = useOrdersStore();
 const confirm = useConfirm();
@@ -60,6 +60,12 @@ const canCancelOrder = computed(() => {
     // Estados permitidos para cancelar
     const cancellableStatuses = ['pendiente_pago', 'pendiente', 'confirmado', 'procesando'];
     return cancellableStatuses.includes(order.value.status);
+});
+
+const canPrintReceipt = computed(() => {
+    if (!order.value) return false;
+    const printableStatuses = ['pendiente', 'confirmado', 'procesando', 'enviado', 'entregado'];
+    return printableStatuses.includes(order.value.status);
 });
 
 const orderItems = computed(() => {
@@ -259,6 +265,12 @@ const debugRefresh = async () => {
     }
 };
 
+const printReceipt = () => {
+    if (order.value) {
+        emit('print-receipt', order.value);
+    }
+};
+
 // Cargar detalles de la orden cuando se abra el modal
 watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
     if (visible && orderId) {
@@ -439,6 +451,7 @@ watch([isVisible, () => props.orderId], async ([visible, orderId]) => {
         <template #footer>
             <div class="modal-actions">
                 <Button label="Cerrar" icon="pi pi-times" class="p-button-outlined" @click="closeModal" />
+                <Button v-if="canPrintReceipt" label="Imprimir Comprobante" icon="pi pi-print" class="p-button-outlined p-button-success" @click="printReceipt" />
                 <Button v-if="canCancelOrder" label="Cancelar Orden" icon="pi pi-ban" class="p-button-outlined p-button-danger" @click="cancelOrder" />
                 <Button v-if="canRetryPayment" label="Pagar Ahora" icon="pi pi-credit-card" class="payment-button" @click="retryPayment" />
             </div>

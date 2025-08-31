@@ -8,6 +8,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import OrderDetailsModal from './OrderDetailsModal.vue';
 import PaymentModal from './PaymentModal.vue';
+import SalesReceipt from '@/components/SalesReceipt.vue';
 
 const router = useRouter();
 const toast = useToast();
@@ -27,8 +28,10 @@ const showNewAddressForm = ref(false);
 // Modal states
 const showPaymentModal = ref(false);
 const showOrderDetailsModal = ref(false);
+const showSalesReceiptModal = ref(false);
 const selectedOrderForPayment = ref(null);
 const selectedOrderId = ref(null);
+const selectedOrderForReceipt = ref(null);
 
 // Order form data
 const orderForm = reactive({
@@ -586,6 +589,16 @@ const getOrderProducts = (order) => {
     }));
 };
 
+const openSalesReceipt = (order) => {
+    selectedOrderForReceipt.value = order;
+    showSalesReceiptModal.value = true;
+};
+
+const canPrintReceipt = (order) => {
+    const printableStatuses = ['pendiente', 'confirmado', 'procesando', 'enviado', 'entregado'];
+    return printableStatuses.includes(order.status);
+};
+
 // Lifecycle
 onMounted(async () => {
     loadCheckoutCart();
@@ -811,7 +824,7 @@ onBeforeUnmount(() => {
                         </template>
                     </Column>
 
-                    <Column header="Acciones" style="min-width: 150px">
+                    <Column header="Acciones" style="min-width: 180px">
                         <template #body="slotProps">
                             <div class="order-actions">
                                 <Button
@@ -820,6 +833,13 @@ onBeforeUnmount(() => {
                                     icon="pi pi-credit-card"
                                     class="p-button-rounded p-button-sm"
                                     @click="retryPayment(slotProps.data.id)"
+                                />
+                                <Button
+                                    v-if="canPrintReceipt(slotProps.data)"
+                                    v-tooltip="'Imprimir comprobante'"
+                                    icon="pi pi-print"
+                                    class="p-button-rounded p-button-outlined p-button-sm p-button-success"
+                                    @click="openSalesReceipt(slotProps.data)"
                                 />
                                 <Button v-tooltip="'Ver detalles'" icon="pi pi-eye" class="p-button-rounded p-button-outlined p-button-sm" @click="viewOrderDetails(slotProps.data)" />
                             </div>
@@ -896,7 +916,10 @@ onBeforeUnmount(() => {
         <PaymentModal v-model:visible="showPaymentModal" :order="selectedOrderForPayment" @payment-success="handlePaymentSuccess" @payment-failed="handlePaymentFailed" />
 
         <!-- Order Details Modal -->
-        <OrderDetailsModal v-model:visible="showOrderDetailsModal" :order-id="selectedOrderId" @retry-payment="handleRetryPaymentFromDetails" @cancel-order="handleCancelOrderFromDetails" />
+        <OrderDetailsModal v-model:visible="showOrderDetailsModal" :order-id="selectedOrderId" @retry-payment="handleRetryPaymentFromDetails" @cancel-order="handleCancelOrderFromDetails" @print-receipt="openSalesReceipt" />
+
+        <!-- Sales Receipt Modal -->
+        <SalesReceipt v-model:visible="showSalesReceiptModal" :order="selectedOrderForReceipt" />
     </div>
 </template>
 
