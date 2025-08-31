@@ -32,6 +32,8 @@ const currentDate = ref(
 const orderItems = computed(() => {
     if (!props.order) return [];
 
+    console.log('Order data for receipt:', props.order);
+
     let items = [];
 
     if (props.order.items && props.order.items.length > 0) {
@@ -47,6 +49,7 @@ const orderItems = computed(() => {
             subtotal: detail.subtotal || (detail.unit_price || detail.price || 0) * (detail.quantity || 1)
         }));
     } else {
+        // Fallback: usar la función getOrderProducts del store
         const products = props.order.items || props.order.products || props.order.order_details || [];
         items = products.map((product) => ({
             name: product.name || product.product_name || product.product?.name || 'Producto sin nombre',
@@ -57,6 +60,7 @@ const orderItems = computed(() => {
         }));
     }
 
+    console.log('Processed items for receipt:', items);
     return items;
 });
 
@@ -65,26 +69,23 @@ const deliveryAddress = computed(() => {
 });
 
 const orderSubtotal = computed(() => {
-    const subtotal = orderItems.value.reduce((total, item) => {
-        const itemPrice = parseFloat(item.unit_price || item.price || 0);
-        const itemQuantity = parseInt(item.quantity || 1);
-        const itemSubtotal = itemPrice * itemQuantity;
-        console.log(`Item: ${item.name}, Price: ${itemPrice}, Quantity: ${itemQuantity}, Subtotal: ${itemSubtotal}`);
-        return total + itemSubtotal;
+    return orderItems.value.reduce((total, item) => {
+        return total + (item.subtotal || (item.unit_price || item.price || 0) * (item.quantity || 1));
     }, 0);
-    console.log('Total Subtotal:', subtotal);
-    return subtotal;
 });
 
-const totalAmount = computed(() => {
-    const total = orderSubtotal.value + shippingCost.value - (props.order?.discount || 0);
-    console.log('Total Amount:', total, '(Subtotal:', orderSubtotal.value, '+ Shipping:', shippingCost.value, '- Discount:', props.order?.discount || 0, ')');
-    return total;
+const igvAmount = computed(() => {
+    return orderSubtotal.value * 0.18;
+});
+
+const totalWithIgv = computed(() => {
+    return orderSubtotal.value + igvAmount.value;
 });
 
 const shippingCost = computed(() => {
     return props.order?.shipping_cost || (orderSubtotal.value >= 100 ? 0 : 15);
 });
+
 
 const formatCurrency = (amount) => {
     const numericAmount = parseFloat(amount) || 0;
@@ -103,283 +104,307 @@ const formatDate = (dateString) => {
 };
 
 const printReceipt = () => {
-    // Asegurar que todos los cálculos estén actualizados antes de imprimir
-    console.log('Printing receipt with items:', orderItems.value);
-    console.log('Subtotal:', orderSubtotal.value);
-    console.log('Total:', totalAmount.value);
-    console.log('Amount in words:', convertToWords(totalAmount.value));
-
-    // Crear una nueva ventana solo para imprimir
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    const receiptContent = document.querySelector('.receipt-preview').cloneNode(true);
-    
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Comprobante de Venta</title>
-            <style>
-                @page {
-                    margin: 0.3in;
-                    size: A4 portrait;
+    // Usar el método de impresión del navegador directamente
+    window.print();
+};
+                
+                .logo-image {
+                    width: 50px;
+                    height: 50px;
+                    object-fit: contain;
                 }
-                * {
-                    box-sizing: border-box !important;
-                    -webkit-print-color-adjust: exact !important;
+                
+                .company-info {
+                    text-align: center;
                 }
-                body {
+                
+                .company-name {
+                    font-size: 16pt;
+                    font-weight: bold;
+                    color: #333;
+                    margin: 0 0 3px 0;
+                    text-transform: uppercase;
+                }
+                
+                .company-tagline {
+                    font-size: 10pt;
+                    color: #666;
+                    margin: 0 0 8px 0;
+                    font-style: italic;
+                }
+                
+                .company-details p {
+                    font-size: 9pt;
+                    color: #666;
+                    margin: 1px 0;
+                }
+                
+                .receipt-header {
+                    text-align: center;
+                    margin-bottom: 12px;
+                }
+                
+                .receipt-type-box {
+                    display: inline-block;
+                    border: 2px solid #333;
+                    padding: 8px;
+                    background: #f0f0f0;
+                    text-align: center;
+                }
+                
+                .ruc-info {
+                    font-size: 8pt;
+                    font-weight: bold;
+                    color: #333;
+                    margin-bottom: 2px;
+                }
+                
+                .receipt-number {
+                    font-size: 12pt;
+                    font-weight: bold;
+                    color: #333;
+                    margin: 2px 0;
+                }
+                
+                .receipt-type {
+                    font-size: 10pt;
+                    font-weight: bold;
+                    color: #333;
+                    text-transform: uppercase;
+                }
+                
+                .client-info {
+                    margin: 8px 0;
+                    padding: 6px;
+                    background: #f9f9f9;
+                    border: 1px solid #ddd;
+                }
+                
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 1px 0;
+                    font-size: 8pt;
+                }
+                
+                .info-label {
+                    font-weight: bold;
+                    color: #333;
+                    min-width: 80px;
+                }
+                
+                .info-value {
+                    color: #666;
+                    text-align: right;
+                }
+                
+                .amount-in-words {
+                    margin: 8px 0;
+                    padding: 6px;
+                    background: #f9f9f9;
+                    border: 1px solid #ddd;
+                    text-align: center;
+                }
+                
+                .amount-in-words p {
+                    font-size: 9pt;
+                    font-weight: bold;
+                    color: #333;
                     margin: 0;
-                    padding: 15px;
-                    font-family: Arial, sans-serif;
-                    font-size: 11pt;
-                    line-height: 1.3;
-                    color: black;
-                    background: white;
                 }
-                ${getComputedPrintStyles()}
+                
+                .observations-row {
+                    display: flex;
+                    padding: 4px 0;
+                    font-size: 8pt;
+                }
+                
+                .obs-label {
+                    font-weight: bold;
+                    color: #333;
+                    min-width: 80px;
+                }
+                
+                .obs-value {
+                    color: #666;
+                }
+                
+                .status-value {
+                    background: #e8f5e8;
+                    color: #2d5a2d;
+                    padding: 2px 6px;
+                    border: 1px solid #4a7c4a;
+                    font-weight: bold;
+                    font-size: 8pt;
+                }
+                
+                .delivery-section {
+                    margin: 12px 0;
+                    padding: 8px;
+                    background: #f9f9f9;
+                    border: 1px solid #ddd;
+                }
+                
+                .delivery-section h3,
+                .products-section h3,
+                .observations-section h3 {
+                    font-size: 11pt;
+                    font-weight: bold;
+                    color: #333;
+                    margin: 0 0 8px 0;
+                    text-transform: uppercase;
+                }
+                
+                .address-line {
+                    color: #333;
+                    margin: 1px 0;
+                    font-size: 9pt;
+                }
+                
+                .products-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 8px 0;
+                    border: 1px solid #333;
+                }
+                
+                .products-table th {
+                    background: #f0f0f0;
+                    color: #333;
+                    font-weight: bold;
+                    padding: 6px 4px;
+                    border: 1px solid #333;
+                    text-align: center;
+                    font-size: 8pt;
+                    text-transform: uppercase;
+                }
+                
+                .products-table td {
+                    padding: 4px;
+                    border: 1px solid #333;
+                    color: #333;
+                    font-size: 9pt;
+                    vertical-align: top;
+                }
+                
+                .product-name-cell {
+                    text-align: left;
+                }
+                
+                .quantity-cell,
+                .price-cell,
+                .total-cell {
+                    text-align: center;
+                    font-weight: bold;
+                }
+                
+                .product-title {
+                    font-weight: bold;
+                    display: block;
+                    margin-bottom: 1px;
+                }
+                
+                .product-sku {
+                    font-size: 7pt;
+                    color: #666;
+                }
+                
+                .totals-section {
+                    margin: 12px 0;
+                }
+                
+                .totals-table {
+                    width: 250px;
+                    margin-left: auto;
+                    border: 1px solid #333;
+                    padding: 8px;
+                    background: #f9f9f9;
+                }
+                
+                .totals-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 2px 0;
+                    font-size: 9pt;
+                    color: #333;
+                }
+                
+                .totals-row.total {
+                    border-top: 2px solid #333;
+                    margin-top: 4px;
+                    padding-top: 6px;
+                    font-size: 11pt;
+                    font-weight: bold;
+                }
+                
+                .totals-label {
+                    font-weight: bold;
+                }
+                
+                .observations-section {
+                    margin: 12px 0;
+                    padding: 8px;
+                    background: #f9f9f9;
+                    border: 1px solid #ddd;
+                }
+                
+                .observations-text {
+                    color: #333;
+                    font-size: 9pt;
+                    margin: 0;
+                }
+                
+                .receipt-footer {
+                    border-top: 2px solid #333;
+                    padding-top: 12px;
+                    margin-top: 12px;
+                }
+                
+                .footer-note {
+                    text-align: center;
+                    margin-bottom: 8px;
+                }
+                
+                .footer-note p {
+                    color: #666;
+                    font-size: 9pt;
+                    margin: 2px 0;
+                }
+                
+                .footer-note p:first-child {
+                    font-weight: bold;
+                    color: #333;
+                    font-size: 10pt;
+                }
+                
+                .footer-signature {
+                    text-align: center;
+                    border-top: 1px solid #ddd;
+                    padding-top: 8px;
+                    margin-top: 8px;
+                }
+                
+                .footer-signature p {
+                    color: #999;
+                    font-size: 7pt;
+                    margin: 1px 0;
+                }
             </style>
         </head>
         <body>
-            ${receiptContent.outerHTML}
+            ${receiptContent.innerHTML}
         </body>
         </html>
-    `);
-    
+    `;
+
+    printWindow.document.write(printContent);
     printWindow.document.close();
-    printWindow.focus();
-    
-    setTimeout(() => {
+
+    printWindow.onload = () => {
+        printWindow.focus();
         printWindow.print();
         printWindow.close();
-    }, 500);
-};
-
-const getComputedPrintStyles = () => {
-    return `
-        .company-receipt-header {
-            width: 100%;
-            padding: 10px 0;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #333;
-            overflow: hidden;
-            clear: both;
-        }
-        .company-section {
-            float: left;
-            width: 65%;
-            display: block;
-            padding-right: 10px;
-        }
-        .company-logo {
-            float: left;
-            margin-right: 8px;
-        }
-        .logo-image {
-            width: 45px;
-            height: 45px;
-            object-fit: contain;
-            display: block;
-        }
-        .company-info {
-            overflow: hidden;
-        }
-        .company-name {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #333;
-            margin: 0 0 6px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .company-details {
-            font-size: 8pt;
-            color: #666;
-            line-height: 1.2;
-        }
-        .company-details p {
-            margin: 1px 0;
-        }
-        .company-details strong {
-            color: #333;
-            font-weight: bold;
-        }
-        .receipt-type-section {
-            float: right;
-            width: 30%;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-        .receipt-type-box {
-            display: inline-block;
-            border: 2px solid #333;
-            padding: 12px 8px;
-            background: #f8f8f8;
-            text-align: center;
-            min-width: 120px;
-        }
-        .ruc-info {
-            font-size: 9pt;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 4px;
-        }
-        .receipt-number {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #333;
-            margin: 4px 0;
-        }
-        .receipt-type {
-            font-size: 10pt;
-            font-weight: bold;
-            color: #333;
-            text-transform: uppercase;
-        }
-        .receipt-info {
-            clear: both;
-            margin-bottom: 15px;
-        }
-        .client-info {
-            margin: 8px 0;
-            padding: 8px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            font-size: 9pt;
-        }
-        .info-label {
-            font-weight: bold;
-            color: #333;
-            min-width: 80px;
-        }
-        .info-value {
-            color: #666;
-            text-align: right;
-        }
-        .products-section {
-            margin: 15px 0;
-            clear: both;
-        }
-        .products-section h3 {
-            font-size: 12pt;
-            font-weight: bold;
-            color: #333;
-            margin: 0 0 8px 0;
-            text-transform: uppercase;
-        }
-        .products-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9pt;
-            margin: 0;
-            border: 1px solid #333;
-        }
-        .products-table th {
-            background: #f0f0f0;
-            color: #333;
-            font-weight: bold;
-            padding: 6px 4px;
-            border: 1px solid #333;
-            text-align: center;
-            font-size: 9pt;
-            text-transform: uppercase;
-        }
-        .products-table td {
-            padding: 5px 3px;
-            border: 1px solid #333;
-            color: #333;
-            font-size: 9pt;
-            vertical-align: top;
-        }
-        .totals-section {
-            margin: 15px 0;
-            clear: both;
-        }
-        .totals-table {
-            width: 250px;
-            margin-left: auto;
-            border: 1px solid #333;
-            padding: 8px;
-            background: #f9f9f9;
-        }
-        .totals-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            font-size: 10pt;
-            color: #333;
-            margin: 0;
-        }
-        .totals-row.total {
-            border-top: 2px solid #333;
-            margin-top: 6px;
-            padding-top: 6px;
-            font-size: 12pt;
-            font-weight: bold;
-        }
-        .amount-in-words {
-            margin: 12px 0;
-            padding: 8px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            text-align: center;
-            clear: both;
-        }
-        .amount-in-words p {
-            font-size: 10pt;
-            font-weight: bold;
-            color: #333;
-            margin: 0;
-        }
-        .observations-section {
-            margin: 12px 0;
-            padding: 8px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            clear: both;
-        }
-        .observations-row {
-            display: flex;
-            padding: 4px 0;
-            font-size: 9pt;
-        }
-        .receipt-footer {
-            border-top: 2px solid #333;
-            padding-top: 12px;
-            margin-top: 15px;
-            clear: both;
-        }
-        .footer-note {
-            text-align: center;
-            margin-bottom: 4px;
-        }
-        .footer-note p {
-            color: #666;
-            font-size: 9pt;
-            margin: 2px 0;
-        }
-        .footer-note p:first-child {
-            font-weight: bold;
-            color: #333;
-            font-size: 11pt;
-        }
-        .product-name-cell {
-            text-align: left;
-        }
-        .quantity-cell,
-        .unit-cell,
-        .price-cell,
-        .total-cell {
-            text-align: center;
-            font-weight: bold;
-        }
-    `;
+    };
 };
 
 const canPrintReceipt = computed(() => {
@@ -403,26 +428,26 @@ const convertToWords = (amount) => {
     const numericAmount = parseFloat(amount) || 0;
     let integerPart = Math.floor(numericAmount);
     const decimalPart = Math.round((numericAmount - integerPart) * 100);
-
+    
     const units = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     const tens = ['', '', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
     const teens = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISÉIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
     const hundreds = ['', 'CIENTO', 'DOSCIENTOS', 'TRESCIENTOS', 'CUATROCIENTOS', 'QUINIENTOS', 'SEISCIENTOS', 'SETECIENTOS', 'OCHOCIENTOS', 'NOVECIENTOS'];
-
+    
     if (integerPart === 0) return `CERO CON ${decimalPart.toString().padStart(2, '0')}/100`;
-
+    
     const convertHundreds = (num) => {
         if (num === 0) return '';
         if (num === 100) return 'CIEN';
-
+        
         let result = '';
-
+        
         if (num >= 100) {
             const hundredsDigit = Math.floor(num / 100);
             result += hundreds[hundredsDigit] + ' ';
             num %= 100;
         }
-
+        
         if (num >= 20) {
             const tensDigit = Math.floor(num / 10);
             const unitsDigit = num % 10;
@@ -435,12 +460,12 @@ const convertToWords = (amount) => {
         } else if (num > 0) {
             result += units[num];
         }
-
+        
         return result.trim();
     };
-
+    
     let result = '';
-
+    
     // Miles
     if (integerPart >= 1000) {
         const thousands = Math.floor(integerPart / 1000);
@@ -451,10 +476,10 @@ const convertToWords = (amount) => {
         }
         integerPart %= 1000;
     }
-
+    
     // Centenas, decenas y unidades
     result += convertHundreds(integerPart);
-
+    
     return `${result.trim()} CON ${decimalPart.toString().padStart(2, '0')}/100`;
 };
 </script>
@@ -483,7 +508,7 @@ const convertToWords = (amount) => {
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- Información del comprobante -->
                     <div class="receipt-type-section">
                         <div class="receipt-type-box">
@@ -493,30 +518,31 @@ const convertToWords = (amount) => {
                         </div>
                     </div>
                 </div>
-                <div style="clear: both"></div>
+                <div style="clear: both;"></div>
 
                 <!-- Información del cliente -->
                 <div class="receipt-info">
                     <div class="client-info">
-                        <div class="info-row">
-                            <span class="info-label">Cliente:</span>
-                            <span class="info-value">{{ order.user?.name || order.customer_name || 'Cliente' }}</span>
-                        </div>
-                        <div class="info-row" v-if="deliveryAddress">
-                            <span class="info-label">Dirección:</span>
-                            <span class="info-value">{{ deliveryAddress.address_full }}, {{ deliveryAddress.district }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Fecha de Emisión:</span>
-                            <span class="info-value">{{ formatDate(order.created_at) }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Moneda:</span>
-                            <span class="info-value">SOL</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Estado:</span>
-                            <span class="info-value status-value">{{ getStatusLabel(order.status) }}</span>
+                            <div class="info-row">
+                                <span class="info-label">Cliente:</span>
+                                <span class="info-value">{{ order.user?.name || order.customer_name || 'Cliente' }}</span>
+                            </div>
+                            <div class="info-row" v-if="deliveryAddress">
+                                <span class="info-label">Dirección:</span>
+                                <span class="info-value">{{ deliveryAddress.address_full }}, {{ deliveryAddress.district }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Fecha de Emisión:</span>
+                                <span class="info-value">{{ formatDate(order.created_at) }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Moneda:</span>
+                                <span class="info-value">SOL</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Estado:</span>
+                                <span class="info-value status-value">{{ getStatusLabel(order.status) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -531,6 +557,15 @@ const convertToWords = (amount) => {
                         <p v-if="deliveryAddress.postal_code" class="address-line">CP: {{ deliveryAddress.postal_code }}</p>
                         <p v-if="deliveryAddress.reference" class="address-line">Ref: {{ deliveryAddress.reference }}</p>
                     </div>
+                </div>
+
+                <!-- Debug info para desarrollo -->
+                <div v-if="orderItems.length === 0" class="debug-section" style="background: #fff3cd; padding: 1rem; margin: 1rem 0; border-radius: 8px">
+                    <p><strong>Debug - No se encontraron productos:</strong></p>
+                    <p>Order keys: {{ order ? Object.keys(order).join(', ') : 'No order' }}</p>
+                    <p>Items: {{ order?.items?.length || 0 }}</p>
+                    <p>Products: {{ order?.products?.length || 0 }}</p>
+                    <p>Order Details: {{ order?.order_details?.length || 0 }}</p>
                 </div>
 
                 <!-- Detalle de productos -->
@@ -574,8 +609,12 @@ const convertToWords = (amount) => {
                 <div class="totals-section">
                     <div class="totals-table">
                         <div class="totals-row">
-                            <span class="totals-label">Subtotal:</span>
+                            <span class="totals-label">Total Valor de Venta - Operaciones Gravadas:</span>
                             <span class="totals-value">{{ formatCurrency(orderSubtotal) }}</span>
+                        </div>
+                        <div class="totals-row">
+                            <span class="totals-label">IGV:</span>
+                            <span class="totals-value">{{ formatCurrency(igvAmount) }}</span>
                         </div>
                         <div v-if="shippingCost > 0" class="totals-row">
                             <span class="totals-label">Costo de Envío:</span>
@@ -587,14 +626,14 @@ const convertToWords = (amount) => {
                         </div>
                         <div class="totals-row total">
                             <span class="totals-label">Importe Total:</span>
-                            <span class="totals-value">{{ formatCurrency(totalAmount) }}</span>
+                            <span class="totals-value">{{ formatCurrency(totalWithIgv + shippingCost - (order.discount || 0)) }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Monto en letras -->
                 <div class="amount-in-words">
-                    <p><strong>SON:</strong> {{ convertToWords(totalAmount) }} SOLES</p>
+                    <p><strong>SON:</strong> {{ convertToWords(totalWithIgv + shippingCost - (order.discount || 0)) }} SOLES</p>
                 </div>
 
                 <!-- Observaciones -->
@@ -1132,27 +1171,12 @@ const convertToWords = (amount) => {
     background: linear-gradient(135deg, #059669, #047857);
 }
 
-.no-products-message {
-    text-align: center;
-    padding: 2rem;
-    color: #64748b;
-    font-style: italic;
-}
-
 /* Estilos para impresión */
 @media print {
     /* Configuración de página */
     @page {
-        margin: 0.3in;
-        size: A4 portrait;
-    }
-
-    @page :first {
-        margin: 0.3in;
-    }
-
-    * {
-        box-sizing: border-box !important;
+        margin: 0.5in;
+        size: A4;
     }
 
     /* Resetear estilos del modal */
@@ -1170,90 +1194,30 @@ const convertToWords = (amount) => {
         overflow: visible !important;
     }
 
-    /* Ocultar todo excepto el recibo */
     body * {
         visibility: hidden !important;
     }
 
-    /* Solo mostrar UN contenedor del recibo */
-    .receipt-container:first-of-type {
+    #receipt-content,
+    #receipt-content * {
         visibility: visible !important;
-        position: static !important;
-        display: block !important;
-    }
-
-    .receipt-container:first-of-type * {
-        visibility: visible !important;
-        position: static !important;
-    }
-
-    /* Ocultar contenedores adicionales */
-    .receipt-container:not(:first-of-type) {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    .receipt-container .totals-row,
-    .receipt-container .info-row,
-    .receipt-container .observations-row {
-        display: flex !important;
-        visibility: visible !important;
-    }
-
-    .receipt-container div,
-    .receipt-container section,
-    .receipt-container p,
-    .receipt-container table,
-    .receipt-container tr,
-    .receipt-container td,
-    .receipt-container th {
-        display: block !important;
-        visibility: visible !important;
-    }
-
-    .receipt-container table,
-    .receipt-container .products-table {
-        display: table !important;
-    }
-
-    .receipt-container tr {
-        display: table-row !important;
-    }
-
-    .receipt-container td,
-    .receipt-container th {
-        display: table-cell !important;
-    }
-
-    /* Forzar visibilidad de secciones críticas */
-    .totals-section,
-    .amount-in-words,
-    .observations-section,
-    .receipt-footer {
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-        height: auto !important;
-        overflow: visible !important;
-        page-break-inside: avoid !important;
-        -webkit-print-color-adjust: exact !important;
-        color-adjust: exact !important;
-        print-color-adjust: exact !important;
     }
 
     .receipt-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
         width: 100% !important;
-        max-width: none !important;
+        height: 100% !important;
         background: white !important;
         padding: 0 !important;
         margin: 0 !important;
         overflow: visible !important;
         max-height: none !important;
-        position: static !important;
-        display: block !important;
     }
 
-    .receipt-preview {
+    #receipt-content {
+        position: relative !important;
         width: 100% !important;
         background: white !important;
         color: black !important;
@@ -1262,28 +1226,22 @@ const convertToWords = (amount) => {
         margin: 0 !important;
         padding: 15px !important;
         box-shadow: none !important;
-        border-radius: 0 !important;
-        position: static !important;
-        display: block !important;
-        overflow: visible !important;
-        height: auto !important;
-        max-height: none !important;
+        page-break-inside: auto !important;
     }
+
     .company-receipt-header {
         width: 100% !important;
-        padding: 10px 0 !important;
-        margin-bottom: 12px !important;
+        padding: 8px 0 !important;
+        margin-bottom: 10px !important;
         border-bottom: 2px solid #333 !important;
         page-break-inside: avoid !important;
         overflow: hidden !important;
-        clear: both !important;
     }
 
     .company-section {
         float: left !important;
-        width: 65% !important;
+        width: 70% !important;
         display: block !important;
-        padding-right: 10px !important;
     }
 
     .company-logo {
@@ -1303,16 +1261,16 @@ const convertToWords = (amount) => {
     }
 
     .company-name {
-        font-size: 14pt !important;
+        font-size: 12pt !important;
         font-weight: bold !important;
         color: #333 !important;
-        margin: 0 0 6px 0 !important;
+        margin: 0 0 4px 0 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.5px !important;
     }
 
     .company-details {
-        font-size: 8pt !important;
+        font-size: 7pt !important;
         color: #666 !important;
         line-height: 1.2 !important;
     }
@@ -1328,72 +1286,103 @@ const convertToWords = (amount) => {
 
     .receipt-type-section {
         float: right !important;
-        width: 30% !important;
+        width: 25% !important;
         text-align: center !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: flex-start !important;
-    }
-
-    .receipt-type-box {
-        display: inline-block !important;
-        border: 2px solid #333 !important;
-        padding: 12px 8px !important;
-        background: #f8f8f8 !important;
-        text-align: center !important;
-        min-width: 120px !important;
-    }
-
-    .ruc-info {
-        font-size: 9pt !important;
-        font-weight: bold !important;
-        color: #333 !important;
-        margin-bottom: 4px !important;
-    }
-
-    .receipt-number {
-        font-size: 14pt !important;
-        font-weight: bold !important;
-        color: #333 !important;
-        margin: 4px 0 !important;
-    }
-
-    .receipt-type {
-        font-size: 10pt !important;
-        font-weight: bold !important;
-        color: #333 !important;
-        text-transform: uppercase !important;
     }
 
     .receipt-info {
         clear: both !important;
-        margin-bottom: 15px !important;
+        margin-bottom: 12px !important;
         page-break-inside: avoid !important;
     }
 
-    .client-info {
+    .products-section {
+        margin: 12px 0 !important;
+        page-break-inside: avoid !important;
+        clear: both !important;
+    }
+
+    .totals-section {
+        margin: 12px 0 !important;
+        page-break-inside: avoid !important;
+        clear: both !important;
+    }
+
+    .amount-in-words {
         margin: 8px 0 !important;
-        padding: 8px !important;
+        padding: 6px !important;
         background: #f9f9f9 !important;
         border: 1px solid #ddd !important;
+        text-align: center !important;
+        clear: both !important;
     }
 
-    .info-row {
-        display: flex !important;
-        justify-content: space-between !important;
-        padding: 3px 0 !important;
+    .amount-in-words p {
         font-size: 9pt !important;
-    }
-
-    .info-label {
         font-weight: bold !important;
         color: #333 !important;
-        min-width: 80px !important;
+        margin: 0 !important;
     }
 
-    .info-value {
+    .observations-section {
+        margin: 8px 0 !important;
+        padding: 6px !important;
+        background: #f9f9f9 !important;
+        border: 1px solid #ddd !important;
+        clear: both !important;
+    }
+
+    .receipt-footer {
+        border-top: 2px solid #333 !important;
+        padding-top: 12px !important;
+        margin-top: 12px !important;
+        page-break-inside: avoid !important;
+        clear: both !important;
+    }
+
+    .receipt-header {
+        text-align: center !important;
+        margin-bottom: 8px !important;
+    }
+
+    .receipt-header h2 {
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        color: #333 !important;
+        margin: 8px 0 !important;
+        text-transform: uppercase !important;
+    }
+
+    .receipt-number {
+        font-size: 12pt !important;
+        font-weight: bold !important;
+        color: #333 !important;
+        background: #f0f0f0 !important;
+        padding: 4px 8px !important;
+        border: 1px solid #333 !important;
+        display: inline-block !important;
+    }
+
+    .receipt-dates {
+        display: block !important;
+        margin-top: 8px !important;
+    }
+
+    .date-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        padding: 2px 0 !important;
+        font-size: 9pt !important;
+        margin: 0 !important;
+    }
+
+    .date-label {
+        font-weight: bold !important;
+        color: #333 !important;
+    }
+
+    .date-value {
         color: #666 !important;
-        text-align: right !important;
     }
 
     .status-value {
@@ -1403,213 +1392,6 @@ const convertToWords = (amount) => {
         border: 1px solid #4a7c4a !important;
         font-weight: bold !important;
         font-size: 8pt !important;
-    }
-
-    .products-section {
-        margin: 15px 0 !important;
-        page-break-inside: avoid !important;
-        clear: both !important;
-    }
-
-    .products-section h3 {
-        font-size: 12pt !important;
-        font-weight: bold !important;
-        color: #333 !important;
-        margin: 0 0 8px 0 !important;
-        text-transform: uppercase !important;
-    }
-
-    .products-table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        font-size: 9pt !important;
-        margin: 0 !important;
-        border: 1px solid #333 !important;
-    }
-
-    .products-table th {
-        background: #f0f0f0 !important;
-        color: #333 !important;
-        font-weight: bold !important;
-        padding: 6px 4px !important;
-        border: 1px solid #333 !important;
-        text-align: center !important;
-        font-size: 9pt !important;
-        text-transform: uppercase !important;
-    }
-
-    .products-table td {
-        padding: 5px 3px !important;
-        border: 1px solid #333 !important;
-        color: #333 !important;
-        font-size: 9pt !important;
-        vertical-align: top !important;
-    }
-
-    .product-name-cell {
-        text-align: left !important;
-    }
-
-    .quantity-cell,
-    .unit-cell,
-    .price-cell,
-    .total-cell {
-        text-align: center !important;
-        font-weight: bold !important;
-    }
-
-    .product-info {
-        display: block !important;
-    }
-
-    .product-title {
-        font-weight: bold !important;
-        color: #333 !important;
-        margin: 0 !important;
-        line-height: 1.2 !important;
-    }
-
-    .product-sku {
-        font-size: 7pt !important;
-        color: #666 !important;
-        margin: 1px 0 0 0 !important;
-    }
-
-    .totals-section {
-        margin: 15px 0 !important;
-        page-break-inside: avoid !important;
-        clear: both !important;
-        visibility: visible !important;
-        display: block !important;
-        position: static !important;
-        overflow: visible !important;
-    }
-
-    .totals-table {
-        width: 250px !important;
-        margin-left: auto !important;
-        border: 1px solid #333 !important;
-        padding: 8px !important;
-        background: #f9f9f9 !important;
-        visibility: visible !important;
-        display: block !important;
-        position: static !important;
-    }
-
-    .totals-row {
-        display: flex !important;
-        justify-content: space-between !important;
-        padding: 3px 0 !important;
-        font-size: 10pt !important;
-        color: #333 !important;
-        margin: 0 !important;
-    }
-
-    .totals-row.total {
-        border-top: 2px solid #333 !important;
-        margin-top: 6px !important;
-        padding-top: 6px !important;
-        font-size: 12pt !important;
-        font-weight: bold !important;
-    }
-
-    .totals-label {
-        font-weight: bold !important;
-        color: #333 !important;
-    }
-
-    .totals-value {
-        color: #333 !important;
-    }
-
-    .amount-in-words {
-        margin: 12px 0 !important;
-        padding: 8px !important;
-        background: #f9f9f9 !important;
-        border: 1px solid #ddd !important;
-        text-align: center !important;
-        clear: both !important;
-        visibility: visible !important;
-        display: block !important;
-        position: static !important;
-        page-break-inside: avoid !important;
-    }
-
-    .amount-in-words p {
-        font-size: 10pt !important;
-        font-weight: bold !important;
-        color: #333 !important;
-        margin: 0 !important;
-    }
-
-    .observations-section {
-        margin: 12px 0 !important;
-        padding: 8px !important;
-        background: #f9f9f9 !important;
-        border: 1px solid #ddd !important;
-        clear: both !important;
-        visibility: visible !important;
-        display: block !important;
-        position: static !important;
-        page-break-inside: avoid !important;
-    }
-
-    .observations-row {
-        display: flex !important;
-        padding: 4px 0 !important;
-        font-size: 9pt !important;
-    }
-
-    .obs-label {
-        font-weight: bold !important;
-        color: #333 !important;
-        min-width: 80px !important;
-    }
-
-    .obs-value {
-        color: #666 !important;
-    }
-
-    .receipt-footer {
-        border-top: 2px solid #333 !important;
-        padding-top: 12px !important;
-        margin-top: 15px !important;
-        page-break-inside: avoid !important;
-        clear: both !important;
-        visibility: visible !important;
-        display: block !important;
-        position: static !important;
-        overflow: visible !important;
-    }
-
-    .footer-note {
-        text-align: center !important;
-        margin-bottom: 4px !important;
-    }
-
-    .footer-note p {
-        color: #666 !important;
-        font-size: 9pt !important;
-        margin: 2px 0 !important;
-    }
-
-    .footer-note p:first-child {
-        font-weight: bold !important;
-        color: #333 !important;
-        font-size: 11pt !important;
-    }
-
-    .footer-signature {
-        text-align: center !important;
-        border-top: 1px solid #ddd !important;
-        padding-top: 4px !important;
-        margin-top: 4px !important;
-    }
-
-    .footer-signature p {
-        color: #999 !important;
-        font-size: 7pt !important;
-        margin: 1px 0 !important;
     }
 
     .delivery-section {
@@ -1638,6 +1420,173 @@ const convertToWords = (amount) => {
         margin: 1px 0 !important;
     }
 
+    .products-section {
+        margin: 12px 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .products-section h3 {
+        font-size: 11pt !important;
+        font-weight: bold !important;
+        color: #333 !important;
+        margin: 0 0 8px 0 !important;
+        text-transform: uppercase !important;
+    }
+
+    .products-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+        margin: 0 !important;
+        border: 1px solid #333 !important;
+    }
+
+    .products-table th {
+        background: #f0f0f0 !important;
+        color: #333 !important;
+        font-weight: bold !important;
+        padding: 6px 4px !important;
+        border: 1px solid #333 !important;
+        text-align: center !important;
+        font-size: 8pt !important;
+        text-transform: uppercase !important;
+    }
+
+    .products-table td {
+        padding: 4px !important;
+        border: 1px solid #333 !important;
+        color: #333 !important;
+        font-size: 9pt !important;
+        vertical-align: top !important;
+    }
+
+    .product-name-cell {
+        text-align: left !important;
+    }
+
+    .quantity-cell,
+    .price-cell,
+    .total-cell {
+        text-align: center !important;
+        font-weight: bold !important;
+    }
+
+    .product-info {
+        display: block !important;
+    }
+
+    .product-title {
+        font-weight: bold !important;
+        color: #333 !important;
+        margin: 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    .product-sku {
+        font-size: 7pt !important;
+        color: #666 !important;
+        margin: 1px 0 0 0 !important;
+    }
+
+    .totals-section {
+        margin: 12px 0 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .totals-table {
+        width: 250px !important;
+        margin-left: auto !important;
+        border: 1px solid #333 !important;
+        padding: 8px !important;
+        background: #f9f9f9 !important;
+    }
+
+    .totals-row {
+        display: flex !important;
+        justify-content: space-between !important;
+        padding: 2px 0 !important;
+        font-size: 9pt !important;
+        color: #333 !important;
+        margin: 0 !important;
+    }
+
+    .totals-row.total {
+        border-top: 2px solid #333 !important;
+        margin-top: 4px !important;
+        padding-top: 6px !important;
+        font-size: 11pt !important;
+        font-weight: bold !important;
+    }
+
+    .totals-label {
+        font-weight: bold !important;
+        color: #333 !important;
+    }
+
+    .totals-value {
+        color: #333 !important;
+    }
+
+    .observations-section {
+        margin: 12px 0 !important;
+        padding: 8px !important;
+        background: #f9f9f9 !important;
+        border: 1px solid #ddd !important;
+        page-break-inside: avoid !important;
+    }
+
+    .observations-section h3 {
+        font-size: 11pt !important;
+        font-weight: bold !important;
+        color: #333 !important;
+        margin: 0 0 6px 0 !important;
+        text-transform: uppercase !important;
+    }
+
+    .observations-text {
+        color: #333 !important;
+        font-size: 9pt !important;
+        line-height: 1.3 !important;
+        margin: 0 !important;
+    }
+
+    .receipt-footer {
+        border-top: 2px solid #333 !important;
+        padding-top: 12px !important;
+        margin-top: 12px !important;
+        page-break-inside: avoid !important;
+    }
+
+    .footer-note {
+        text-align: center !important;
+        margin-bottom: 8px !important;
+    }
+
+    .footer-note p {
+        color: #666 !important;
+        font-size: 9pt !important;
+        margin: 2px 0 !important;
+    }
+
+    .footer-note p:first-child {
+        font-weight: bold !important;
+        color: #333 !important;
+        font-size: 10pt !important;
+    }
+
+    .footer-signature {
+        text-align: center !important;
+        border-top: 1px solid #ddd !important;
+        padding-top: 8px !important;
+        margin-top: 8px !important;
+    }
+
+    .footer-signature p {
+        color: #999 !important;
+        font-size: 7pt !important;
+        margin: 1px 0 !important;
+    }
+
     /* Ocultar elementos del modal y navegador */
     .modal-actions,
     .p-dialog,
@@ -1646,34 +1595,38 @@ const convertToWords = (amount) => {
     .p-component,
     nav,
     header,
-    .sales-receipt-modal .p-dialog-content,
-    .sales-receipt-modal {
+    .sales-receipt-modal .p-dialog-content {
         display: none !important;
         visibility: hidden !important;
     }
+}
 
-    /* Asegurar que solo se imprima una vez */
-    .receipt-preview:not(:first-of-type),
-    .receipt-container:not(:first-of-type),
-    .p-dialog:not(:first-of-type),
-    [id*='receipt']:not(:first-of-type) {
+/* Debug section */
+.debug-section {
+    background: #fff3cd !important;
+    border: 1px solid #ffeaa7 !important;
+    padding: 1rem !important;
+    margin: 1rem 0 !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
+}
+
+.debug-section p {
+    margin: 0.25rem 0 !important;
+    color: #856404 !important;
+}
+
+.no-products-message {
+    text-align: center;
+    padding: 2rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Ocultar debug en impresión */
+@media print {
+    .debug-section {
         display: none !important;
-        visibility: hidden !important;
-    }
-
-    /* Prevenir páginas adicionales */
-    .receipt-container:first-of-type {
-        page-break-after: avoid !important;
-    }
-
-    /* Evitar saltos de página innecesarios */
-    * {
-        page-break-before: avoid !important;
-        page-break-after: avoid !important;
-    }
-
-    .receipt-footer {
-        page-break-after: avoid !important;
     }
 }
 
