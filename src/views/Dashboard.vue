@@ -135,6 +135,75 @@ function getStockStatusSeverity(currentStock, minStock) {
     if (currentStock < minStock) return 'warning';
     return 'success';
 }
+
+// Helper para sanitizar y formatear estados de órdenes
+function sanitizeOrderStatus(status) {
+    const statusMap = {
+        pendiente: 'Pendiente',
+        pendiente_pago: 'Pendiente Pago',
+        pagado: 'Pagado',
+        en_proceso: 'En Proceso',
+        completado: 'Completado',
+        cancelado: 'Cancelado',
+        entregado: 'Entregado'
+    };
+    return statusMap[status?.toLowerCase()] || status;
+}
+
+// Helper para obtener severidad según el estado
+function getOrderStatusSeverity(status) {
+    const severityMap = {
+        pendiente: 'warning',
+        pendiente_pago: 'warning',
+        pagado: 'success',
+        en_proceso: 'info',
+        completado: 'success',
+        cancelado: 'danger',
+        entregado: 'success'
+    };
+    return severityMap[status?.toLowerCase()] || 'info';
+}
+
+// Helper para formatear fechas de forma amigable
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+
+    if (diffDays === 0 && diffHours === 0) {
+        return 'Hace un momento';
+    } else if (diffDays === 0) {
+        return `Hace ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
+    } else if (diffDays === 1) {
+        return 'Ayer';
+    } else if (diffDays < 7) {
+        return `Hace ${diffDays} días`;
+    } else {
+        return date.toLocaleDateString('es-PE', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+}
+
+// Helper para formatear números con separadores de miles
+function formatNumber(value) {
+    if (!value && value !== 0) return '0';
+    return new Intl.NumberFormat('es-PE').format(value);
+}
+
+// Helper para formatear moneda
+function formatCurrency(value) {
+    if (!value && value !== 0) return 'S/ 0.00';
+    return `S/ ${new Intl.NumberFormat('es-PE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(value)}`;
+}
 </script>
 
 <template>
@@ -192,14 +261,22 @@ function getStockStatusSeverity(currentStock, minStock) {
                         </template>
                         <template #content>
                             <div v-if="overviewData?.recent_activity?.recent_orders?.length" class="space-y-3">
-                                <div v-for="order in overviewData.recent_activity.recent_orders.slice(0, 5)" :key="order.id" class="flex justify-between items-center p-3 bg-surface-50 rounded-lg">
-                                    <div>
+                                <div v-for="order in overviewData.recent_activity.recent_orders.slice(0, 5)" :key="order.id" class="flex justify-between items-center p-3 bg-surface-50 rounded-lg hover:bg-surface-100 transition-colors">
+                                    <div class="flex-1">
                                         <div class="font-medium text-surface-900">{{ order.client_name }}</div>
-                                        <div class="text-sm text-surface-600">{{ order.items_count }} productos</div>
+                                        <div class="text-sm text-surface-600">
+                                            {{ order.items_count }} {{ order.items_count === 1 ? 'producto' : 'productos' }}
+                                            <span v-if="order.created_at" class="mx-2">•</span>
+                                            <span v-if="order.created_at" class="text-surface-500">{{ formatDate(order.created_at) }}</span>
+                                        </div>
                                     </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-primary-600">S/ {{ parseFloat(order.total).toFixed(2) }}</div>
-                                        <Tag :value="order.status" severity="info" size="small" />
+                                    <div class="text-right flex flex-col items-end gap-1">
+                                        <div class="font-bold text-primary-600">{{ formatCurrency(order.total) }}</div>
+                                        <Tag
+                                            :value="sanitizeOrderStatus(order.status)"
+                                            :severity="getOrderStatusSeverity(order.status)"
+                                            size="small"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -225,17 +302,26 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #title>Niveles de Stock</template>
                         <template #content>
                             <div v-if="inventoryData.stock_levels" class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span>En Stock</span>
-                                    <Tag :value="inventoryData.stock_levels.in_stock" severity="success" />
+                                <div class="flex justify-between items-center p-3 bg-success-50 rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <i class="pi pi-check-circle text-success-600"></i>
+                                        <span class="font-medium text-surface-900">En Stock</span>
+                                    </div>
+                                    <Tag :value="formatNumber(inventoryData.stock_levels.in_stock)" severity="success" />
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Stock Bajo</span>
-                                    <Tag :value="inventoryData.stock_levels.low_stock" severity="warning" />
+                                <div class="flex justify-between items-center p-3 bg-warning-50 rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <i class="pi pi-exclamation-triangle text-warning-600"></i>
+                                        <span class="font-medium text-surface-900">Stock Bajo</span>
+                                    </div>
+                                    <Tag :value="formatNumber(inventoryData.stock_levels.low_stock)" severity="warning" />
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Sin Stock</span>
-                                    <Tag :value="inventoryData.stock_levels.out_of_stock" severity="danger" />
+                                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <i class="pi pi-times-circle text-red-600"></i>
+                                        <span class="font-medium text-surface-900">Sin Stock</span>
+                                    </div>
+                                    <Tag :value="formatNumber(inventoryData.stock_levels.out_of_stock)" severity="danger" />
                                 </div>
                             </div>
                         </template>
@@ -261,12 +347,12 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #content>
                             <div v-if="inventoryData.inventory_value" class="space-y-3">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-primary-600">S/ {{ parseFloat(inventoryData.inventory_value.total_sale_value || 0).toFixed(2) }}</div>
+                                    <div class="text-2xl font-bold text-primary-600">{{ formatCurrency(inventoryData.inventory_value.total_sale_value || 0) }}</div>
                                     <div class="text-sm text-surface-600">Valor total de venta</div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-lg font-semibold text-surface-700">
-                                        {{ inventoryData.inventory_value.total_quantity || 0 }}
+                                        {{ formatNumber(inventoryData.inventory_value.total_quantity || 0) }}
                                     </div>
                                     <div class="text-sm text-surface-600">Productos en stock</div>
                                 </div>
@@ -295,7 +381,7 @@ function getStockStatusSeverity(currentStock, minStock) {
                                         <div class="text-sm text-surface-600">{{ customer.total_orders }} órdenes</div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="font-bold text-success-600">S/ {{ parseFloat(customer.total_spent).toFixed(2) }}</div>
+                                        <div class="font-bold text-success-600">{{ formatCurrency(customer.total_spent) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -310,7 +396,7 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #content>
                             <div v-if="customersData.customer_lifetime_value" class="space-y-4">
                                 <div class="text-center">
-                                    <div class="text-xl font-bold text-primary-600">S/ {{ parseFloat(customersData.customer_lifetime_value.avg_ltv || 0).toFixed(2) }}</div>
+                                    <div class="text-xl font-bold text-primary-600">{{ formatCurrency(customersData.customer_lifetime_value.avg_ltv || 0) }}</div>
                                     <div class="text-sm text-surface-600">Valor promedio por cliente</div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 text-center">
@@ -321,7 +407,7 @@ function getStockStatusSeverity(currentStock, minStock) {
                                         <div class="text-sm text-surface-600">Órdenes promedio</div>
                                     </div>
                                     <div>
-                                        <div class="text-lg font-semibold text-surface-700">S/ {{ parseFloat(customersData.customer_lifetime_value.avg_order_value || 0).toFixed(2) }}</div>
+                                        <div class="text-lg font-semibold text-surface-700">{{ formatCurrency(customersData.customer_lifetime_value.avg_order_value || 0) }}</div>
                                         <div class="text-sm text-surface-600">Valor promedio orden</div>
                                     </div>
                                 </div>
@@ -344,11 +430,17 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #title>Estado de Pagos</template>
                         <template #content>
                             <div v-if="financialData.payment_status?.length" class="space-y-3">
-                                <div v-for="status in financialData.payment_status" :key="status.status" class="flex justify-between items-center">
-                                    <span class="capitalize">{{ status.status }}</span>
+                                <div v-for="status in financialData.payment_status" :key="status.status" class="flex justify-between items-center p-3 bg-surface-50 rounded-lg">
+                                    <div class="flex items-center gap-2">
+                                        <Tag
+                                            :value="sanitizeOrderStatus(status.status)"
+                                            :severity="getOrderStatusSeverity(status.status)"
+                                            size="small"
+                                        />
+                                    </div>
                                     <div class="text-right">
-                                        <div class="font-semibold">{{ status.count }}</div>
-                                        <div class="text-sm text-surface-600">S/ {{ parseFloat(status.total).toFixed(2) }}</div>
+                                        <div class="font-semibold text-surface-900">{{ status.count }} {{ status.count === 1 ? 'orden' : 'órdenes' }}</div>
+                                        <div class="text-sm font-medium text-primary-600">{{ formatCurrency(status.total) }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -359,17 +451,17 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #title>Resumen Financiero</template>
                         <template #content>
                             <div v-if="financialData.financial_summary" class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span>Ingresos Brutos</span>
-                                    <span class="font-semibold text-success-600"> S/ {{ parseFloat(financialData.financial_summary.gross_revenue || 0).toFixed(2) }} </span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Ingresos Brutos</span>
+                                    <span class="font-semibold text-success-600">{{ formatCurrency(financialData.financial_summary.gross_revenue || 0) }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Ingresos Netos</span>
-                                    <span class="font-semibold text-primary-600"> S/ {{ parseFloat(financialData.financial_summary.net_revenue || 0).toFixed(2) }} </span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Ingresos Netos</span>
+                                    <span class="font-semibold text-primary-600">{{ formatCurrency(financialData.financial_summary.net_revenue || 0) }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Pagos Pendientes</span>
-                                    <span class="font-semibold text-warning-600"> S/ {{ parseFloat(financialData.financial_summary.pending_payments || 0).toFixed(2) }} </span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Pagos Pendientes</span>
+                                    <span class="font-semibold text-warning-600">{{ formatCurrency(financialData.financial_summary.pending_payments || 0) }}</span>
                                 </div>
                             </div>
                         </template>
@@ -379,16 +471,16 @@ function getStockStatusSeverity(currentStock, minStock) {
                         <template #title>Métricas de Rendimiento</template>
                         <template #content>
                             <div v-if="performanceData?.kpis" class="space-y-3">
-                                <div class="flex justify-between items-center">
-                                    <span>Tasa de Conversión</span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Tasa de Conversión</span>
                                     <Tag :value="`${parseFloat(performanceData.kpis.conversion_rate || 0).toFixed(1)}%`" severity="success" />
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Valor Promedio Orden</span>
-                                    <span class="font-semibold">S/ {{ parseFloat(performanceData.kpis.average_order_value || 0).toFixed(2) }}</span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Valor Promedio Orden</span>
+                                    <span class="font-semibold text-primary-600">{{ formatCurrency(performanceData.kpis.average_order_value || 0) }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
-                                    <span>Tasa de Cumplimiento</span>
+                                <div class="flex justify-between items-center p-2 rounded hover:bg-surface-50">
+                                    <span class="text-surface-700">Tasa de Cumplimiento</span>
                                     <Tag :value="`${parseFloat(performanceData.kpis.order_fulfillment_rate || 0).toFixed(1)}%`" severity="info" />
                                 </div>
                             </div>
