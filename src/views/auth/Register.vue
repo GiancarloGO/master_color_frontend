@@ -17,7 +17,7 @@ const toast = useToast();
 const nameValidation = useNameValidation({ required: true });
 const emailValidation = useEmailValidation({ required: true });
 const passwordValidation = usePasswordValidation({ required: true });
-const phoneValidation = usePhoneValidation({ required: false });
+const phoneValidation = usePhoneValidation({ required: true });
 
 // Destructuring para compatibilidad
 const { value: name, firstError: nameError, inputClasses: nameClasses } = nameValidation;
@@ -133,6 +133,25 @@ const clearPostalCodeError = () => {
 
 const clearReferenceError = () => {
     referenceError.value = '';
+};
+
+// Función para prevenir caracteres no numéricos en el teléfono
+const onPhoneKeypress = (event) => {
+    // Permitir solo números (0-9)
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+        event.preventDefault();
+    }
+};
+
+// Función para limpiar y limitar teléfono (por si pegan texto)
+const onPhoneInput = () => {
+    // Remover cualquier carácter que no sea dígito
+    phone.value = phone.value.replace(/\D/g, '');
+    // Limitar a 9 dígitos
+    if (phone.value.length > 9) {
+        phone.value = phone.value.slice(0, 9);
+    }
 };
 
 // Función para consultar documento
@@ -886,10 +905,10 @@ onMounted(() => {
                                         </div>
 
                                         <div>
-                                            <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono</label>
+                                            <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono *</label>
                                             <IconField>
                                                 <InputIcon class="pi pi-phone" />
-                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="9" />
+                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="9" @keypress="onPhoneKeypress" @input="onPhoneInput" />
                                             </IconField>
                                             <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
                                         </div>
