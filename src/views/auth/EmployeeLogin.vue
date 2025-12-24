@@ -195,92 +195,110 @@ const submitForgotPassword = async () => {
         </div>
     </Dialog>
 
-    <div class="min-h-screen bg-gray-100 flex items-center justify-center p-1 sm:p-2 md:p-4 py-4 sm:py-6 md:py-8">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 py-6">
         <div class="w-full max-w-6xl">
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-                <div class="flex flex-col lg:flex-row min-h-[450px] sm:min-h-[500px] md:min-h-[600px] max-h-none lg:max-h-screen">
+                <div class="flex flex-col lg:flex-row min-h-[500px]">
                     <!-- Panel lateral izquierdo -->
-                    <div class="lg:w-1/2 bg-blue-700 p-4 sm:p-6 md:p-8 lg:p-12 text-white relative overflow-hidden min-h-[350px] sm:min-h-[380px] md:min-h-[400px] lg:min-h-0">
+                    <div class="lg:w-1/2 bg-gradient-to-br from-blue-700 to-blue-900 p-8 lg:p-12 text-white relative overflow-hidden hidden lg:block">
                         <!-- Elementos decorativos de fondo -->
-                        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 opacity-20 rounded-full -translate-y-32 translate-x-32"></div>
-                        <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-900 opacity-20 rounded-full translate-y-24 -translate-x-24"></div>
-                        <div class="relative z-10 h-full flex flex-col justify-center py-2">
+                        <div class="absolute top-0 right-0 w-72 h-72 bg-blue-600 opacity-20 rounded-full -translate-y-32 translate-x-32"></div>
+                        <div class="absolute bottom-0 left-0 w-56 h-56 bg-blue-950 opacity-20 rounded-full translate-y-24 -translate-x-24"></div>
+                        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-500 opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+
+                        <div class="relative z-10 h-full flex flex-col justify-between py-4">
                             <!-- Logo y título -->
-                            <div class="text-center lg:text-left mb-8">
-                                <div class="flex items-center justify-center lg:justify-start mb-6">
-                                    <div class="w-20 h-20 bg-white rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-16 h-16 object-contain" />
+                            <div class="text-left">
+                                <div class="flex items-center mb-6">
+                                    <div class="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-xl">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-14 h-14 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 md:mb-4 text-white drop-shadow-sm">Acceso Empleados</h1>
-                                <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-blue-50 font-light leading-relaxed">Solo personal autorizado</p>
+                                <h1 class="text-4xl font-bold mb-3 text-white">Acceso Empleados</h1>
+                                <p class="text-xl text-blue-100 font-light">Panel administrativo - Solo personal autorizado</p>
                             </div>
                             <!-- Características -->
-                            <div class="space-y-3 sm:space-y-4 md:space-y-6 mt-3 sm:mt-4 md:mt-6">
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-users text-blue-700 text-lg font-bold"></i>
+                            <div class="space-y-5 my-6">
+                                <div class="flex items-start space-x-4 group">
+                                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                                        <i class="pi pi-users text-white text-lg"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-semibold text-lg text-white">Acceso Interno</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Solo empleados de Master Color</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-id-card text-blue-700 text-lg font-bold"></i>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-semibold text-lg text-white">Identificación Segura</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Tus datos están protegidos</p>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-lg text-white mb-1">Acceso Interno</h3>
+                                        <p class="text-blue-100 text-sm">Solo empleados de Master Color</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-4">
-                                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                                        <i class="pi pi-cog text-blue-700 text-lg font-bold"></i>
+
+                                <div class="flex items-start space-x-4 group">
+                                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                                        <i class="pi pi-shield text-white text-lg"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-semibold text-lg text-white">Herramientas de Gestión</h3>
-                                        <p class="text-blue-100 text-sm font-medium">Acceso al dashboard administrativo</p>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-lg text-white mb-1">Identificación Segura</h3>
+                                        <p class="text-blue-100 text-sm">Tus datos están protegidos</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start space-x-4 group">
+                                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300">
+                                        <i class="pi pi-chart-line text-white text-lg"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-lg text-white mb-1">Panel de Control</h3>
+                                        <p class="text-blue-100 text-sm">Herramientas administrativas completas</p>
                                     </div>
                                 </div>
                             </div>
+
                             <!-- Call to action -->
-                            <div class="mt-3 sm:mt-4 p-2 sm:p-3 md:p-4">
+                            <div class="mt-6">
                                 <Button
-                                    label="Volver a Login Cliente"
+                                    label="Login de Clientes"
                                     icon="pi pi-user"
-                                    class="w-full p-button-filled bg-gray-200 border-gray-200 text-blue-900 font-bold text-lg hover:bg-gray-100 hover:border-gray-300 hover:text-blue-800 transition-all duration-300 shadow-lg"
+                                    class="w-full bg-white text-blue-700 border-white font-bold text-base py-3 hover:bg-blue-50 hover:border-blue-50 transition-all duration-300 shadow-lg"
                                     @click="goToClientLogin"
                                 />
                             </div>
                         </div>
                     </div>
                     <!-- Panel de login -->
-                    <div class="lg:w-1/2 p-4 sm:p-6 md:p-8 lg:p-12 bg-white overflow-y-auto max-h-[70vh] sm:max-h-[75vh] md:max-h-[80vh] lg:max-h-screen">
-                        <div class="max-w-md mx-auto">
-                            <!-- Header del formulario -->
-                            <div class="text-center mb-4 sm:mb-6 md:mb-8">
-                                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">Bienvenido, Empleado</h2>
-                                <p class="text-gray-700 text-base sm:text-lg font-medium">Accede con tus credenciales internas</p>
+                    <div class="lg:w-1/2 w-full p-6 sm:p-8 lg:p-12 bg-white flex items-center">
+                        <div class="w-full max-w-md mx-auto">
+                            <!-- Logo móvil -->
+                            <div class="lg:hidden text-center mb-8">
+                                <div class="inline-flex items-center justify-center mb-4">
+                                    <div class="w-14 h-14 bg-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-12 h-12 object-contain" />
+                                    </div>
+                                </div>
+                                <h1 class="text-2xl font-bold text-gray-900 mb-1">Acceso Empleados</h1>
+                                <p class="text-sm text-gray-600">Panel Administrativo</p>
                             </div>
-                            <form class="space-y-4 sm:space-y-5 md:space-y-6" @submit.prevent="login">
+
+                            <!-- Header del formulario -->
+                            <div class="text-center mb-8">
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido, Empleado</h2>
+                                <p class="text-gray-600 text-base">Accede con tus credenciales internas</p>
+                            </div>
+
+                            <form class="space-y-5" @submit.prevent="login">
                                 <!-- Campo de email -->
                                 <div>
-                                    <label for="email" class="block text-sm font-bold text-gray-800 mb-3">Correo Electrónico</label>
+                                    <label for="email" class="block text-sm font-semibold text-gray-800 mb-2">Correo Electrónico</label>
                                     <div class="relative">
                                         <IconField>
                                             <InputIcon class="pi pi-envelope" />
-                                            <InputText id="email" v-model="email" type="email" placeholder="empleado@email.com" class="w-full text-gray-900 font-medium" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
+                                            <InputText id="email" v-model="email" type="email" placeholder="empleado@mastercolor.com" class="w-full" :class="emailError ? 'p-invalid' : ''" @input="emailError = ''" />
                                         </IconField>
                                     </div>
-                                    <small v-if="emailError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
+                                    <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">
                                         {{ emailError }}
                                     </small>
                                 </div>
+
                                 <!-- Campo de contraseña -->
                                 <div>
-                                    <label for="password" class="block text-sm font-bold text-gray-800 mb-3">Contraseña</label>
+                                    <label for="password" class="block text-sm font-semibold text-gray-800 mb-2">Contraseña</label>
                                     <div class="relative">
                                         <IconField>
                                             <InputIcon class="pi pi-lock" />
@@ -289,31 +307,33 @@ const submitForgotPassword = async () => {
                                                 v-model="password"
                                                 :type="showPassword ? 'text' : 'password'"
                                                 placeholder="Tu contraseña"
-                                                class="w-full text-gray-900 font-medium"
+                                                class="w-full pr-12"
                                                 :class="passwordError ? 'p-invalid' : ''"
                                                 @input="passwordError = ''"
                                             />
                                             <i
                                                 :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors text-lg"
+                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 transition-colors z-10"
                                                 @click="togglePasswordVisibility"
                                             ></i>
                                         </IconField>
                                     </div>
-                                    <small v-if="passwordError" class="p-error text-red-700 text-sm mt-2 block font-semibold">
+                                    <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">
                                         {{ passwordError }}
                                     </small>
                                 </div>
-                                <!-- Checkbox recordarme -->
-                                <div class="flex items-center justify-between mt-2 mb-1">
-                                    <a href="#" class="text-sm text-blue-700 hover:text-blue-800 font-semibold" @click.prevent="openForgotPasswordDialog">¿Olvidaste tu contraseña?</a>
+
+                                <!-- Olvidaste contraseña -->
+                                <div class="flex items-center justify-end">
+                                    <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors" @click.prevent="openForgotPasswordDialog">¿Olvidaste tu contraseña?</a>
                                 </div>
+
                                 <!-- Botón de login -->
                                 <Button
                                     type="submit"
-                                    label="Iniciar Sesión"
+                                    label="Acceder al Sistema"
                                     icon="pi pi-sign-in"
-                                    class="w-full p-3 text-lg font-bold bg-blue-700 border-blue-700 hover:bg-blue-800 hover:border-blue-800 transition-all duration-300 shadow-lg"
+                                    class="w-full py-3 text-base font-semibold bg-blue-700 border-blue-700 hover:bg-blue-800 hover:border-blue-800 transition-all duration-300 shadow-md"
                                     :loading="loading"
                                 />
                             </form>
@@ -374,14 +394,10 @@ const submitForgotPassword = async () => {
     }
 }
 
-@media (max-width: 400px) {
-    .min-h-screen {
-        padding: 0.25rem 0.125rem;
-    }
-
+/* Estilos responsivos para móviles */
+@media (max-width: 640px) {
     :deep(.p-inputtext) {
-        padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
+        padding: 0.75rem 0.875rem;
         font-size: 0.875rem;
     }
 
@@ -391,92 +407,79 @@ const submitForgotPassword = async () => {
     }
 
     :deep(.p-input-icon-left > .p-inputtext) {
-        padding-left: 2.75rem;
+        padding-left: 2.5rem;
     }
 
     :deep(.p-button) {
-        padding: 0.75rem 1rem;
         font-size: 0.875rem;
-        border-radius: 0.5rem;
-    }
-}
-
-@media (min-width: 401px) and (max-width: 640px) {
-    :deep(.p-inputtext) {
-        padding: 0.875rem 1rem;
-        border-radius: 0.625rem;
-        font-size: 0.9375rem;
-    }
-
-    :deep(.p-button) {
-        padding: 0.875rem 1.25rem;
-        font-size: 0.9375rem;
     }
 }
 
 :deep(.p-inputtext) {
-    padding: 1rem 1.25rem;
-    border-radius: 0.75rem;
-    border: 2px solid #d1d5db;
-    font-size: 1rem;
-    font-weight: 500;
+    padding: 0.875rem 1rem;
+    border-radius: 0.625rem;
+    border: 1.5px solid #e5e7eb;
+    font-size: 0.9375rem;
+    font-weight: 400;
     color: #111827;
     background-color: #ffffff;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 :deep(.p-inputtext:focus) {
-    border-color: #1d4ed8;
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     background-color: #ffffff;
+    outline: none;
 }
 
 :deep(.p-inputtext.p-invalid) {
     border-color: #dc2626;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
     background-color: #fef2f2;
 }
 
 :deep(.p-input-icon-left > i:first-of-type) {
-    left: 1.25rem;
-    color: #6b7280;
-    font-weight: bold;
+    left: 1rem;
+    color: #9ca3af;
+    font-size: 0.9rem;
 }
 
 :deep(.p-input-icon-left > .p-inputtext) {
-    padding-left: 3.5rem;
+    padding-left: 2.75rem;
 }
 
 :deep(.p-input-icon-right > .p-inputtext) {
-    padding-right: 3.5rem;
+    padding-right: 3rem;
 }
 
 :deep(.p-button) {
-    border-radius: 0.75rem;
-    font-weight: 700;
-    padding: 1rem 1.5rem;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    border-width: 2px;
+    border-radius: 0.625rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-width: 1.5px;
 }
 
 :deep(.p-button:not(.p-button-outlined):not(.p-button-text)) {
     background: #1d4ed8;
     border-color: #1d4ed8;
     color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 :deep(.p-button:not(.p-button-outlined):not(.p-button-text):hover) {
-    background: #1e40af;
-    border-color: #1e40af;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(29, 78, 216, 0.4);
+    background: #1e3a8a;
+    border-color: #1e3a8a;
+    box-shadow: 0 4px 12px rgba(29, 78, 216, 0.3);
 }
 
 :deep(.p-button-outlined) {
     background: transparent;
-    border-width: 2px;
+    border-width: 1.5px;
+}
+
+:deep(.p-button-outlined:hover) {
+    background: rgba(29, 78, 216, 0.05);
 }
 
 :deep(.p-checkbox) {
@@ -495,61 +498,16 @@ const submitForgotPassword = async () => {
 }
 
 :deep(.p-toast .p-toast-message) {
-    border-radius: 0.75rem;
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.15),
-        0 10px 10px -5px rgba(0, 0, 0, 0.08);
-    border-width: 1px;
-}
-
-:deep(.p-toast .p-toast-message-success) {
-    background-color: #dcfce7;
-    border-color: #16a34a;
-}
-
-:deep(.p-toast .p-toast-message-error) {
-    background-color: #fef2f2;
-    border-color: #dc2626;
-}
-
-@media (hover: none) and (pointer: coarse) {
-    .overflow-y-auto::-webkit-scrollbar {
-        width: 0;
-    }
-
-    .overflow-y-auto {
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-
-    :deep(.p-button:hover) {
-        transform: none;
-        box-shadow: none;
-    }
-}
-
-.p-button {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.p-inputtext {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-:deep(.p-button-outlined:hover) {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 0.625rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.p-inputtext::placeholder) {
     color: #9ca3af;
-    font-weight: 500;
+    font-weight: 400;
 }
 
-:deep(.p-button:hover) {
-    font-weight: 700;
-}
-
+/* Toast responsivo */
 @media (max-width: 480px) {
     :deep(.p-toast .p-toast-message) {
         margin: 0.25rem;
@@ -564,11 +522,9 @@ const submitForgotPassword = async () => {
     }
 }
 
+/* Estados de focus mejorados */
 :deep(.p-button:focus) {
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
-}
-
-:deep(.p-checkbox:focus .p-checkbox-box) {
-    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.2);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+    outline: none;
 }
 </style>

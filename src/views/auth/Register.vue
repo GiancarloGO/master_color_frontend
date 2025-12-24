@@ -59,6 +59,9 @@ const verificationSent = ref(false);
 const resendLoading = ref(false);
 const verificationToken = ref('');
 
+// Estado para tabs
+
+
 // Errores
 const confirmPasswordError = ref('');
 const identityDocumentError = ref('');
@@ -152,6 +155,33 @@ const onPhoneInput = () => {
     if (phone.value.length > 9) {
         phone.value = phone.value.slice(0, 9);
     }
+};
+
+// Validaciones de entrada para documentos
+const onDocumentKeypress = (event) => {
+    if (['dni', 'ruc'].includes(documentType.value)) {
+        // Permitir solo números (0-9)
+        const charCode = event.which ? event.which : event.keyCode;
+        if (charCode < 48 || charCode > 57) {
+            event.preventDefault();
+        }
+    }
+};
+
+const onDocumentInput = () => {
+    // 1. Validación numérica para DNI/RUC
+    if (['dni', 'ruc'].includes(documentType.value)) {
+        identityDocument.value = identityDocument.value.replace(/\D/g, '');
+    }
+
+    // 2. Validación de longitud
+    const maxLen = documentType.value === 'dni' ? 8 : (documentType.value === 'ruc' ? 11 : 15);
+    if (identityDocument.value.length > maxLen) {
+        identityDocument.value = identityDocument.value.slice(0, maxLen);
+    }
+
+    // 3. Limpiar errores
+    clearDocumentError();
 };
 
 // Función para consultar documento
@@ -773,57 +803,58 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2">
-        <div class="w-full max-w-6xl h-[calc(100vh-1rem)]">
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 h-full">
-                <div class="flex flex-col xl:flex-row h-full">
-                    <!-- Panel lateral izquierdo - Más compacto -->
-                    <div class="xl:w-1/3 bg-gradient-to-br from-blue-700 to-blue-800 p-3 xl:p-4 text-white relative overflow-hidden xl:min-h-0 hidden xl:block">
+    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 py-4 xl:py-2">
+        <div class="w-full max-w-7xl">
+            <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+                <div class="flex flex-col xl:flex-row xl:h-[calc(100vh-4rem)] xl:max-h-[720px]">
+                    <!-- Panel lateral izquierdo -->
+                    <div class="xl:w-1/3 bg-gradient-to-br from-blue-700 to-blue-800 p-5 xl:p-6 text-white relative overflow-hidden hidden xl:block">
                         <!-- Elementos decorativos de fondo -->
-                        <div class="absolute top-0 right-0 w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 bg-blue-600 opacity-20 rounded-full -translate-y-16 sm:-translate-y-32 translate-x-16 sm:translate-x-32"></div>
-                        <div class="absolute bottom-0 left-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-48 lg:h-48 bg-blue-900 opacity-20 rounded-full translate-y-12 sm:translate-y-24 -translate-x-12 sm:-translate-x-24"></div>
+                        <div class="absolute top-0 right-0 w-72 h-72 bg-blue-600 opacity-20 rounded-full -translate-y-32 translate-x-32"></div>
+                        <div class="absolute bottom-0 left-0 w-56 h-56 bg-blue-900 opacity-20 rounded-full translate-y-24 -translate-x-24"></div>
+                        <div class="absolute top-1/2 left-1/2 w-64 h-64 bg-blue-500 opacity-10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
 
-                        <div class="relative z-10 h-full flex flex-col justify-between">
+                        <div class="relative z-10 h-full flex flex-col justify-between py-1">
                             <!-- Logo y título -->
                             <div class="text-left">
-                                <div class="flex items-center mb-1">
-                                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                                        <img src="/mc.png" alt="Master Color Logo" class="w-8 h-8 object-contain" />
+                                <div class="flex items-center mb-3">
+                                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-xl">
+                                        <img src="/mc.png" alt="Master Color Logo" class="w-10 h-10 object-contain" />
                                     </div>
                                 </div>
-                                <h1 class="text-xl font-bold mb-1 text-white">Master Color</h1>
-                                <p class="text-blue-50 font-light text-sm">Únete a nuestra comunidad</p>
+                                <h1 class="text-2xl font-bold mb-1 text-white">Master Color</h1>
+                                <p class="text-base text-blue-100 font-light">Únete a nuestra comunidad</p>
                             </div>
 
-                            <!-- Beneficios de registrarse - Más compacto -->
-                            <div class="space-y-2 my-3">
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-shopping-cart text-blue-700 text-xs"></i>
+                            <!-- Beneficios de registrarse -->
+                            <div class="space-y-2.5 my-3">
+                                <div class="flex items-start space-x-2.5 group">
+                                    <div class="w-9 h-9 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300 flex-shrink-0">
+                                        <i class="pi pi-shopping-cart text-white text-xs"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-semibold text-xs text-white">Compras Rápidas</h3>
-                                        <p class="text-blue-100 text-xs">Acceso exclusivo</p>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-sm text-white mb-0">Compras Rápidas</h3>
+                                        <p class="text-blue-100 text-xs">Acceso exclusivo a productos</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-tags text-blue-700 text-xs"></i>
+                                <div class="flex items-start space-x-2.5 group">
+                                    <div class="w-9 h-9 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300 flex-shrink-0">
+                                        <i class="pi pi-tags text-white text-xs"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-semibold text-xs text-white">Ofertas Especiales</h3>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-sm text-white mb-0">Ofertas Especiales</h3>
                                         <p class="text-blue-100 text-xs">Descuentos exclusivos</p>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-6 h-6 bg-white rounded flex items-center justify-center flex-shrink-0">
-                                        <i class="pi pi-truck text-blue-700 text-xs"></i>
+                                <div class="flex items-start space-x-2.5 group">
+                                    <div class="w-9 h-9 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center shadow-lg group-hover:bg-white/20 transition-all duration-300 flex-shrink-0">
+                                        <i class="pi pi-truck text-white text-xs"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-semibold text-xs text-white">Seguimiento</h3>
-                                        <p class="text-blue-100 text-xs">Rastrea compras</p>
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-sm text-white mb-0">Seguimiento de Órdenes</h3>
+                                        <p class="text-blue-100 text-xs">Rastrea tus compras en tiempo real</p>
                                     </div>
                                 </div>
                             </div>
@@ -833,17 +864,17 @@ onMounted(() => {
                                 <Button
                                     label="Explorar Tienda"
                                     icon="pi pi-shopping-cart"
-                                    class="w-full bg-yellow-500 border-yellow-500 text-blue-900 font-semibold text-sm py-2 hover:bg-yellow-400 hover:border-yellow-400 transition-all duration-300"
+                                    class="w-full bg-white text-blue-700 border-white font-bold text-sm py-2.5 hover:bg-blue-50 hover:border-blue-50 transition-all duration-300 shadow-lg"
                                     @click="goToStore"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel de registro - Más amplio -->
-                    <div class="xl:w-2/3 w-full p-3 xl:p-5 bg-white h-full overflow-y-auto">
+                    <!-- Panel de registro -->
+                    <div class="xl:w-2/3 w-full p-3 xl:p-3 bg-white overflow-y-auto max-h-[85vh] xl:max-h-full xl:overflow-hidden">
                         <!-- Pantalla de verificación de email después del registro -->
-                        <div v-if="registrationComplete" class="h-full flex flex-col justify-center items-center px-4 py-8 text-center space-y-6">
+                        <div v-if="registrationComplete" class="h-full flex flex-col justify-center items-center px-4 py-6 text-center space-y-4">
                             <div class="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center">
                                 <i class="pi pi-envelope text-blue-600 text-3xl sm:text-4xl"></i>
                             </div>
@@ -865,305 +896,324 @@ onMounted(() => {
                         </div>
 
                         <!-- Formulario de registro -->
-                        <div v-else class="h-full flex flex-col">
+                        <div v-else class="flex flex-col h-full">
                             <!-- Header del formulario -->
-                            <div class="text-center mb-2 xl:hidden">
-                                <div class="flex items-center justify-center mb-1">
-                                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
+                            <div class="xl:hidden text-center mb-2">
+                                <div class="inline-flex items-center justify-center mb-1">
+                                    <div class="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                                         <img src="/mc.png" alt="Master Color Logo" class="w-6 h-6 object-contain" />
                                     </div>
                                 </div>
-                                <h2 class="text-lg font-bold text-gray-900 mb-1">Crear Cuenta</h2>
+                                <h2 class="text-base font-bold text-gray-900 mb-0">Crear Cuenta</h2>
                                 <p class="text-gray-600 text-xs">Regístrate en Master Color</p>
                             </div>
 
-                            <div class="hidden xl:block text-center mb-2">
-                                <h2 class="text-xl font-bold text-gray-900 mb-1">Crear Cuenta</h2>
-                                <p class="text-gray-600 text-sm">Regístrate y únete a nosotros</p>
+                            <div class="hidden xl:block text-center mb-1">
+                                <h2 class="text-lg font-bold text-gray-900 mb-0">Crear Cuenta</h2>
+                                <p class="text-gray-600 text-xs">Regístrate y únete a nosotros</p>
                             </div>
 
-                            <div class="flex-1 overflow-y-auto">
-                                <form class="space-y-2" @submit.prevent="register">
-                                    <!-- Información personal en 3 columnas -->
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                                        <div>
-                                            <label for="name" class="block text-sm font-semibold text-gray-800 mb-1">Nombre Completo</label>
-                                            <IconField>
-                                                <InputIcon class="pi pi-user" />
-                                                <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameClasses" maxlength="100" />
-                                            </IconField>
-                                            <small v-if="nameError" class="p-error text-red-600 text-xs mt-1 block">{{ nameError }}</small>
-                                        </div>
-
-                                        <div>
-                                            <label for="email" class="block text-sm font-semibold text-gray-800 mb-1">Correo Electrónico</label>
-                                            <IconField>
-                                                <InputIcon class="pi pi-envelope" />
-                                                <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailClasses" maxlength="254" />
-                                            </IconField>
-                                            <small v-if="emailError" class="p-error text-red-600 text-xs mt-1 block">{{ emailError }}</small>
-                                        </div>
-
-                                        <div>
-                                            <label for="phone" class="block text-sm font-semibold text-gray-800 mb-1">Teléfono *</label>
-                                            <IconField>
-                                                <InputIcon class="pi pi-phone" />
-                                                <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="9" @keypress="onPhoneKeypress" @input="onPhoneInput" />
-                                            </IconField>
-                                            <small v-if="phoneError" class="p-error text-red-600 text-xs mt-1 block">{{ phoneError }}</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Documento y tipo de cliente en 3 columnas -->
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                                        <div>
-                                            <label for="clientType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Cliente</label>
-                                            <Select v-model="clientType" :options="clientTypeOptions" option-label="label" option-value="value" placeholder="Selecciona el tipo" class="w-full compact-select" @change="onClientTypeChange" />
-                                        </div>
-
-                                        <div>
-                                            <label for="documentType" class="block text-sm font-semibold text-gray-800 mb-1">Tipo de Documento</label>
-                                            <Select v-model="documentType" :options="documentTypeOptions" option-label="label" option-value="value" placeholder="Tipo de documento" class="w-full compact-select" />
-                                        </div>
-
-                                        <div>
-                                            <label for="identityDocument" class="block text-sm font-semibold text-gray-800 mb-1">Número de Documento</label>
-                                            <div class="flex gap-2">
-                                                <InputText
-                                                    id="identityDocument"
-                                                    v-model="identityDocument"
-                                                    type="text"
-                                                    :placeholder="documentType === 'dni' ? '12345678' : documentType === 'ruc' ? '12345678901' : 'Número de documento'"
-                                                    class="flex-1 compact-input"
-                                                    :class="identityDocumentError ? 'p-invalid' : ''"
-                                                    @input="clearDocumentError"
-                                                    @keyup.enter="lookupDocument"
-                                                />
-                                                <Button v-tooltip.top="'Buscar datos del documento'" icon="pi pi-search" class="p-button-outlined p-button-sm" :loading="isLookingUpDocument" :disabled="lookupButtonDisabled" @click="lookupDocument" />
-                                            </div>
-                                            <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-1 block">{{ identityDocumentError }}</small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Contraseñas en 2 columnas -->
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        <div>
-                                            <label for="password" class="block text-sm font-semibold text-gray-800 mb-1">Contraseña</label>
-                                            <div class="relative">
-                                                <IconField>
-                                                    <InputIcon class="pi pi-lock" />
-                                                    <InputText
-                                                        id="password"
-                                                        v-model="password"
-                                                        :type="showPassword ? 'text' : 'password'"
-                                                        placeholder="Tu contraseña"
-                                                        class="w-full compact-input pr-12"
-                                                        :class="passwordError ? 'p-invalid' : ''"
-                                                        @input="clearPasswordError"
-                                                    />
-                                                    <i
-                                                        :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
-                                                        @click="togglePasswordVisibility"
-                                                    ></i>
-                                                </IconField>
-                                            </div>
-                                            <small v-if="passwordError" class="p-error text-red-600 text-xs mt-1 block">{{ passwordError }}</small>
-                                            <!-- Indicador de fortaleza de contraseña -->
-                                            <div v-if="password" class="mt-2 bg-gray-50 p-3 rounded-lg border">
-                                                <div class="flex items-center justify-between mb-2">
-                                                    <span class="text-xs font-medium text-gray-700">Fortaleza de la contraseña</span>
-                                                    <span class="text-xs font-semibold" :class="getPasswordStrengthTextColor()">{{ getPasswordStrengthText() }}</span>
+                            <div class="flex-1 overflow-y-auto xl:overflow-y-auto">
+                                <form @submit.prevent="register" class="h-full flex flex-col">
+                                    <div class="space-y-2 p-0">
+                                        <!-- Sección: Identificación (Principal) -->
+                                        <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                    <i class="pi pi-id-card text-sm"></i>
                                                 </div>
-                                                <div class="flex space-x-1 mb-3">
-                                                    <div v-for="i in 4" :key="i" class="h-2 flex-1 rounded-full transition-colors duration-300" :class="getPasswordStrengthColor(i)"></div>
+                                                <h3 class="text-sm font-bold text-gray-800">Identificación</h3>
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                <div>
+                                                    <label for="clientType" class="block text-xs font-medium text-gray-700 mb-1">Tipo de Cliente</label>
+                                                    <Select v-model="clientType" :options="clientTypeOptions" option-label="label" option-value="value" class="w-full compact-select" appendTo="body" @change="onClientTypeChange" />
                                                 </div>
-                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="password.length >= 10 ? 'text-green-600' : 'text-gray-500'">
-                                                        <i :class="password.length >= 10 ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
-                                                        <span>Mínimo 10 caracteres</span>
+
+                                                <div>
+                                                    <label for="documentType" class="block text-xs font-medium text-gray-700 mb-1">Tipo de Documento</label>
+                                                    <Select v-model="documentType" :options="documentTypeOptions" option-label="label" option-value="value" class="w-full compact-select" appendTo="body" />
+                                                </div>
+
+                                                <div class="md:col-span-2 lg:col-span-1">
+                                                    <label for="identityDocument" class="block text-xs font-medium text-gray-700 mb-1">Número de Documento</label>
+                                                    <div class="flex gap-2">
+                                                        <InputText
+                                                            id="identityDocument"
+                                                            v-model="identityDocument"
+                                                            type="text"
+                                                            :placeholder="documentType === 'dni' ? 'DNI (8 dígitos)' : documentType === 'ruc' ? 'RUC (11 dígitos)' : 'Número'"
+                                                            class="flex-1 compact-input"
+                                                            :class="identityDocumentError ? 'p-invalid' : ''"
+                                                            :maxlength="documentType === 'dni' ? 8 : (documentType === 'ruc' ? 11 : 15)"
+                                                            @input="onDocumentInput"
+                                                            @keypress="onDocumentKeypress"
+                                                            @keyup.enter="lookupDocument"
+                                                        />
+                                                        <Button
+                                                            v-tooltip.top="'Buscar datos'"
+                                                            icon="pi pi-search"
+                                                            class="p-button-outlined p-button-secondary !border-gray-300"
+                                                            :loading="isLookingUpDocument"
+                                                            :disabled="lookupButtonDisabled"
+                                                            @click="lookupDocument"
+                                                        />
                                                     </div>
-                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[a-z]/.test(password) ? 'text-green-600' : 'text-gray-500'">
-                                                        <i :class="/[a-z]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
-                                                        <span>Una letra minúscula</span>
-                                                    </div>
-                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-500'">
-                                                        <i :class="/[A-Z]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
-                                                        <span>Una letra mayúscula</span>
-                                                    </div>
-                                                    <div class="flex items-center text-xs transition-colors duration-200" :class="/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-500'">
-                                                        <i :class="/[0-9]/.test(password) ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
-                                                        <span>Un número</span>
-                                                    </div>
-                                                    <div class="flex items-center text-xs transition-colors duration-200 sm:col-span-2" :class="hasSpecialChar ? 'text-green-600' : 'text-gray-500'">
-                                                        <i :class="hasSpecialChar ? 'pi pi-check-circle' : 'pi pi-times-circle'" class="mr-1.5 text-sm"></i>
-                                                        <span>Un carácter especial (!@#$%^&*)</span>
-                                                    </div>
+                                                    <small v-if="identityDocumentError" class="p-error text-red-600 text-xs mt-0.5 block">{{ identityDocumentError }}</small>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div>
-                                            <label for="confirmPassword" class="block text-sm font-semibold text-gray-800 mb-1">Confirmar Contraseña</label>
-                                            <div class="relative">
-                                                <IconField>
-                                                    <InputIcon class="pi pi-lock" />
-                                                    <InputText
-                                                        id="confirmPassword"
-                                                        v-model="confirmPassword"
-                                                        :type="showConfirmPassword ? 'text' : 'password'"
-                                                        placeholder="Confirma tu contraseña"
-                                                        class="w-full compact-input pr-12"
-                                                        :class="confirmPasswordError ? 'p-invalid' : ''"
-                                                        @input="clearConfirmPasswordError"
-                                                    />
-                                                    <i
-                                                        :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
-                                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
-                                                        @click="toggleConfirmPasswordVisibility"
-                                                    ></i>
-                                                </IconField>
+
+                                        <!-- Sección: Datos Personales -->
+                                        <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                    <i class="pi pi-user text-sm"></i>
+                                                </div>
+                                                <h3 class="text-sm font-bold text-gray-800">Datos Personales</h3>
                                             </div>
-                                            <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-1 block">{{ confirmPasswordError }}</small>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <div class="md:col-span-2">
+                                                    <label for="name" class="block text-xs font-medium text-gray-700 mb-1">Nombre Completo / Razón Social</label>
+                                                    <IconField>
+                                                        <InputIcon class="pi pi-user" />
+                                                        <InputText id="name" v-model="name" type="text" placeholder="Tu nombre completo" class="w-full compact-input" :class="nameClasses" maxlength="100" />
+                                                    </IconField>
+                                                    <small v-if="nameError" class="p-error text-red-600 text-xs mt-0.5 block">{{ nameError }}</small>
+                                                </div>
+
+                                                <div>
+                                                    <label for="email" class="block text-xs font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                                                    <IconField>
+                                                        <InputIcon class="pi pi-envelope" />
+                                                        <InputText id="email" v-model="email" type="email" placeholder="tu@email.com" class="w-full compact-input" :class="emailClasses" maxlength="254" />
+                                                    </IconField>
+                                                    <small v-if="emailError" class="p-error text-red-600 text-xs mt-0.5 block">{{ emailError }}</small>
+                                                </div>
+
+                                                <div>
+                                                    <label for="phone" class="block text-xs font-medium text-gray-700 mb-1">Teléfono Móvil</label>
+                                                    <IconField>
+                                                        <InputIcon class="pi pi-phone" />
+                                                        <InputText id="phone" v-model="phone" type="tel" placeholder="987654321" class="w-full compact-input" :class="phoneClasses" maxlength="9" @keypress="onPhoneKeypress" @input="onPhoneInput" />
+                                                    </IconField>
+                                                    <small v-if="phoneError" class="p-error text-red-600 text-xs mt-0.5 block">{{ phoneError }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sección: Seguridad -->
+                                        <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                    <i class="pi pi-lock text-sm"></i>
+                                                </div>
+                                                <h3 class="text-sm font-bold text-gray-800">Seguridad</h3>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <div>
+                                                    <label for="password" class="block text-xs font-medium text-gray-700 mb-1">Contraseña</label>
+                                                    <div class="relative">
+                                                        <IconField>
+                                                            <InputIcon class="pi pi-lock" />
+                                                            <InputText
+                                                                id="password"
+                                                                v-model="password"
+                                                                :type="showPassword ? 'text' : 'password'"
+                                                                placeholder="Contraseña segura"
+                                                                class="w-full compact-input pr-10"
+                                                                :class="passwordError ? 'p-invalid' : ''"
+                                                                @input="clearPasswordError"
+                                                            />
+                                                            <i
+                                                                :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
+                                                                @click="togglePasswordVisibility"
+                                                            ></i>
+                                                        </IconField>
+                                                    </div>
+                                                    <small v-if="passwordError" class="p-error text-red-600 text-xs mt-0.5 block">{{ passwordError }}</small>
+                                                    
+                                                    <!-- Indicador de fortaleza simplificado -->
+                                                    <div v-if="password" class="mt-2">
+                                                        <div class="flex space-x-1 h-1 mb-1">
+                                                            <div v-for="i in 4" :key="i" class="flex-1 rounded-full transition-colors duration-300" :class="getPasswordStrengthColor(i)"></div>
+                                                        </div>
+                                                        <span class="text-[10px] font-medium block text-right" :class="getPasswordStrengthTextColor()">{{ getPasswordStrengthText() }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label for="confirmPassword" class="block text-xs font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
+                                                    <div class="relative">
+                                                        <IconField>
+                                                            <InputIcon class="pi pi-lock" />
+                                                            <InputText
+                                                                id="confirmPassword"
+                                                                v-model="confirmPassword"
+                                                                :type="showConfirmPassword ? 'text' : 'password'"
+                                                                placeholder="Repite tu contraseña"
+                                                                class="w-full compact-input pr-10"
+                                                                :class="confirmPasswordError ? 'p-invalid' : ''"
+                                                                @input="clearConfirmPasswordError"
+                                                            />
+                                                            <i
+                                                                :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"
+                                                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer hover:text-gray-700 z-10"
+                                                                @click="toggleConfirmPasswordVisibility"
+                                                            ></i>
+                                                        </IconField>
+                                                    </div>
+                                                    <small v-if="confirmPasswordError" class="p-error text-red-600 text-xs mt-0.5 block">{{ confirmPasswordError }}</small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sección: Ubicación -->
+                                        <div class="bg-gray-50 p-2 rounded-xl border border-gray-100">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                                    <i class="pi pi-map-marker text-sm"></i>
+                                                </div>
+                                                <h3 class="text-sm font-bold text-gray-800">Dirección de Entrega</h3>
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                                    <div>
+                                                        <label for="department" class="block text-xs font-medium text-gray-700 mb-1">Departamento</label>
+                                                        <AutoComplete
+                                                            id="department"
+                                                            v-model="selectedDepartment"
+                                                            :suggestions="filteredDepartments"
+                                                            option-label="label"
+                                                            placeholder="Seleccionar"
+                                                            class="w-full compact-autocomplete"
+                                                            :class="departmentError ? 'p-invalid' : ''"
+                                                            force-selection
+                                                            dropdown
+                                                            appendTo="body"
+                                                            @complete="searchDepartments"
+                                                            @change="onDepartmentChange"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label for="province" class="block text-xs font-medium text-gray-700 mb-1">Provincia</label>
+                                                        <AutoComplete
+                                                            id="province"
+                                                            v-model="selectedProvince"
+                                                            :suggestions="filteredProvinces"
+                                                            option-label="label"
+                                                            placeholder="Seleccionar"
+                                                            class="w-full compact-autocomplete"
+                                                            :class="provinceError ? 'p-invalid' : ''"
+                                                            :disabled="!selectedDepartment"
+                                                            force-selection
+                                                            dropdown
+                                                            appendTo="body"
+                                                            @complete="searchProvinces"
+                                                            @change="onProvinceChange"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label for="district" class="block text-xs font-medium text-gray-700 mb-1">Distrito</label>
+                                                        <AutoComplete
+                                                            id="district"
+                                                            v-model="selectedDistrict"
+                                                            :suggestions="filteredDistricts"
+                                                            option-label="label"
+                                                            placeholder="Seleccionar"
+                                                            class="w-full compact-autocomplete"
+                                                            :class="districtError ? 'p-invalid' : ''"
+                                                            :disabled="!selectedProvince"
+                                                            force-selection
+                                                            dropdown
+                                                            appendTo="body"
+                                                            @complete="searchDistricts"
+                                                            @change="onDistrictChange"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label for="addressFull" class="block text-xs font-medium text-gray-700 mb-1">Dirección Exacta</label>
+                                                    <IconField>
+                                                        <InputIcon class="pi pi-home" />
+                                                        <InputText
+                                                            id="addressFull"
+                                                            v-model="addressFull"
+                                                            type="text"
+                                                            placeholder="Av/Calle/Jirón, Número, Mz, Lt"
+                                                            class="w-full compact-input"
+                                                            :class="addressFullError ? 'p-invalid' : ''"
+                                                            @input="clearAddressFullError"
+                                                        />
+                                                    </IconField>
+                                                    <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-0.5 block">{{ addressFullError }}</small>
+                                                </div>
+
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                    <div>
+                                                        <label for="reference" class="block text-xs font-medium text-gray-700 mb-1">Referencia</label>
+                                                        <InputText
+                                                            id="reference"
+                                                            v-model="reference"
+                                                            type="text"
+                                                            placeholder="Ej: Frente al parque..."
+                                                            class="w-full compact-input"
+                                                            :class="referenceError ? 'p-invalid' : ''"
+                                                            @input="clearReferenceError"
+                                                        />
+                                                        <small v-if="referenceError" class="p-error text-red-600 text-xs mt-0.5 block">{{ referenceError }}</small>
+                                                    </div>
+                                                    <div>
+                                                        <label for="postalCode" class="block text-xs font-medium text-gray-700 mb-1">Código Postal <span class="text-gray-400 font-normal">(Opcional)</span></label>
+                                                        <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15001" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" @input="clearPostalCodeError" />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <!-- Sección de Dirección -->
-                                    <div class="bg-gray-50 p-2 rounded-lg border">
-                                        <h3 class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
-                                            <i class="pi pi-map-marker mr-2 text-blue-600"></i>
-                                            Dirección de Entrega
-                                        </h3>
-
-                                        <!-- Dirección completa -->
-                                        <div class="mb-2">
-                                            <label for="addressFull" class="block text-sm font-semibold text-gray-800 mb-1">Dirección Completa *</label>
-                                            <IconField>
-                                                <InputIcon class="pi pi-home" />
-                                                <InputText
-                                                    id="addressFull"
-                                                    v-model="addressFull"
-                                                    type="text"
-                                                    placeholder="Ej: Av. Los Olivos 123, Mz A Lt 5"
-                                                    class="w-full compact-input"
-                                                    :class="addressFullError ? 'p-invalid' : ''"
-                                                    fluid
-                                                    @input="clearAddressFullError"
-                                                />
-                                            </IconField>
-                                            <small v-if="addressFullError" class="p-error text-red-600 text-xs mt-1 block">{{ addressFullError }}</small>
-                                        </div>
-
-                                        <!-- Ubicación en 3 columnas -->
-                                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-2">
-                                            <div>
-                                                <label for="department" class="block text-sm font-semibold text-gray-800 mb-1">Departamento *</label>
-                                                <AutoComplete
-                                                    id="department"
-                                                    v-model="selectedDepartment"
-                                                    :suggestions="filteredDepartments"
-                                                    option-label="label"
-                                                    placeholder="Busca departamento"
-                                                    class="w-full compact-autocomplete"
-                                                    :class="departmentError ? 'p-invalid' : ''"
-                                                    force-selection
-                                                    fluid
-                                                    @complete="searchDepartments"
-                                                    @change="onDepartmentChange"
-                                                />
-                                                <small v-if="departmentError" class="p-error text-red-600 text-xs mt-1 block">{{ departmentError }}</small>
-                                            </div>
-
-                                            <div>
-                                                <label for="province" class="block text-sm font-semibold text-gray-800 mb-1">Provincia *</label>
-                                                <AutoComplete
-                                                    id="province"
-                                                    v-model="selectedProvince"
-                                                    :suggestions="filteredProvinces"
-                                                    option-label="label"
-                                                    placeholder="Busca provincia"
-                                                    class="w-full compact-autocomplete"
-                                                    :class="provinceError ? 'p-invalid' : ''"
-                                                    :disabled="!selectedDepartment || provinces.length === 0"
-                                                    force-selection
-                                                    fluid
-                                                    @complete="searchProvinces"
-                                                    @change="onProvinceChange"
-                                                />
-                                                <small v-if="provinceError" class="p-error text-red-600 text-xs mt-1 block">{{ provinceError }}</small>
-                                            </div>
-
-                                            <div>
-                                                <label for="district" class="block text-sm font-semibold text-gray-800 mb-1">Distrito *</label>
-                                                <AutoComplete
-                                                    id="district"
-                                                    v-model="selectedDistrict"
-                                                    :suggestions="filteredDistricts"
-                                                    option-label="label"
-                                                    placeholder="Busca distrito"
-                                                    class="w-full compact-autocomplete"
-                                                    :class="districtError ? 'p-invalid' : ''"
-                                                    :disabled="!selectedProvince || districts.length === 0"
-                                                    force-selection
-                                                    fluid
-                                                    @complete="searchDistricts"
-                                                    @change="onDistrictChange"
-                                                />
-                                                <small v-if="districtError" class="p-error text-red-600 text-xs mt-1 block">{{ districtError }}</small>
-                                            </div>
-                                        </div>
-
-                                        <!-- Código postal y referencia en 2 columnas -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                            <div>
-                                                <label for="postalCode" class="block text-sm font-semibold text-gray-800 mb-1">Código Postal</label>
-                                                <IconField>
-                                                    <InputIcon class="pi pi-hashtag" />
-                                                    <InputText id="postalCode" v-model="postalCode" type="text" placeholder="Ej: 15434" class="w-full compact-input" :class="postalCodeError ? 'p-invalid' : ''" fluid @input="clearPostalCodeError" />
-                                                </IconField>
-                                                <small v-if="postalCodeError" class="p-error text-red-600 text-xs mt-1 block">{{ postalCodeError }}</small>
-                                            </div>
-
-                                            <div>
-                                                <label for="reference" class="block text-sm font-semibold text-gray-800 mb-1">Referencia *</label>
-                                                <IconField>
-                                                    <InputIcon class="pi pi-info-circle" />
-                                                    <InputText
-                                                        id="reference"
-                                                        v-model="reference"
-                                                        type="text"
-                                                        placeholder="Ej: Frente al parque, casa verde"
-                                                        class="w-full compact-input"
-                                                        :class="referenceError ? 'p-invalid' : ''"
-                                                        fluid
-                                                        @input="clearReferenceError"
-                                                    />
-                                                </IconField>
-                                                <small v-if="referenceError" class="p-error text-red-600 text-xs mt-1 block">{{ referenceError }}</small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Términos y condiciones -->
-                                    <div class="flex items-start space-x-2">
-                                        <Checkbox id="acceptTerms" v-model="acceptTerms" :binary="true" class="mt-1" />
-                                        <label for="acceptTerms" class="text-sm text-gray-700 cursor-pointer">
-                                            Acepto los
-                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos y condiciones</a>
-                                            y la
-                                            <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
-                                        </label>
-                                    </div>
-                                    <small v-if="termsError" class="p-error text-red-600 text-xs block">{{ termsError }}</small>
                                 </form>
                             </div>
 
-                            <!-- Botones fijos en la parte inferior -->
-                            <div class="border-t pt-2 mt-2 space-y-1">
-                                <Button type="submit" label="Crear Cuenta" icon="pi pi-user-plus" class="w-full compact-button bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700" :loading="loading" @click="register" />
+                            <!-- Términos y condiciones y Botones finales -->
+                            <!-- Términos y condiciones y Botones finales -->
+                            <div class="border-t border-gray-200 pt-2 mt-2">
+                                <!-- Términos y condiciones -->
+                                <div class="flex items-start space-x-2 mb-2">
+                                    <Checkbox id="acceptTerms" v-model="acceptTerms" :binary="true" class="mt-0.5" />
+                                    <label for="acceptTerms" class="text-xs text-gray-700 cursor-pointer">
+                                        Acepto los
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 underline">términos</a>
+                                        y
+                                        <a href="#" class="text-blue-600 hover:text-blue-800 underline">política de privacidad</a>
+                                    </label>
+                                </div>
+                                <small v-if="termsError" class="p-error text-red-600 text-xs block -mt-2 mb-2 ml-6">{{ termsError }}</small>
 
-                                <div class="text-center">
-                                    <span class="text-sm text-gray-600">¿Ya tienes una cuenta? </span>
-                                    <Button type="button" label="Iniciar Sesión" class="p-button-link text-blue-600 hover:text-blue-800 p-0 h-auto text-sm" @click="goToLogin" />
+                                <!-- Botones lado a lado -->
+                                <div class="flex gap-2">
+                                    <Button 
+                                        type="submit" 
+                                        label="Crear Cuenta" 
+                                        icon="pi pi-user-plus" 
+                                        class="flex-1 py-2 text-sm font-semibold bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700 transition-all duration-300 shadow-md" 
+                                        :loading="loading" 
+                                        @click="register" 
+                                    />
+                                    
+                                    <Button 
+                                        type="button" 
+                                        label="Iniciar Sesión" 
+                                        icon="pi pi-sign-in" 
+                                        class="flex-1 py-2 text-sm font-semibold p-button-outlined border-2 text-blue-600 border-blue-600 hover:bg-blue-50 transition-all duration-300" 
+                                        v-tooltip.top="'¿Ya tienes cuenta?'"
+                                        @click="goToLogin" 
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1187,57 +1237,72 @@ onMounted(() => {
     .compact-input :deep(.p-inputtext),
     .compact-select :deep(.p-select .p-select-label),
     .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
-        padding: 0.375rem 0.625rem;
-        font-size: 0.6875rem;
+        padding: 0.375rem 0.5rem;
+        font-size: 0.75rem;
     }
 
     :deep(.p-input-icon-left > i:first-of-type) {
-        left: 0.625rem;
-        font-size: 0.6875rem;
+        left: 0.5rem;
+        font-size: 0.75rem;
     }
 
     :deep(.p-input-icon-left > .p-inputtext) {
-        padding-left: 2rem;
+        padding-left: 1.875rem;
     }
 }
-/* Estilos compactos para mejor uso del espacio */
+/* Estilos para inputs */
 .compact-input :deep(.p-inputtext) {
-    padding: 0.625rem 0.875rem;
+    padding: 0.5rem 0.625rem;
     border-radius: 0.5rem;
-    border: 1.5px solid #d1d5db;
+    border: 1.5px solid #e5e7eb;
     font-size: 0.875rem;
     transition: all 0.2s ease;
+}
+
+@media (min-width: 1280px) {
+    .compact-input :deep(.p-inputtext) {
+        padding: 0.375rem 0.625rem;
+    }
 }
 
 .compact-input :deep(.p-inputtext:focus) {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
 }
 
 .compact-input :deep(.p-inputtext.p-invalid) {
     border-color: #dc2626;
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    background-color: #fef2f2;
 }
 
 .compact-select :deep(.p-select) {
     border-radius: 0.5rem;
-    border: 1.5px solid #d1d5db;
+    border: 1.5px solid #e5e7eb;
     transition: all 0.2s ease;
 }
 
 .compact-select :deep(.p-select:not(.p-disabled).p-focus) {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    outline: none;
 }
 
 .compact-select :deep(.p-select .p-select-label) {
-    padding: 0.625rem 0.875rem;
+    padding: 0.5rem 0.625rem;
     font-size: 0.875rem;
+}
+
+@media (min-width: 1280px) {
+    .compact-select :deep(.p-select .p-select-label) {
+        padding: 0.375rem 0.625rem;
+    }
 }
 
 .compact-autocomplete :deep(.p-autocomplete) {
     border-radius: 0.5rem;
-    border: 1.5px solid #d1d5db;
+    border: 1.5px solid #e5e7eb;
     transition: all 0.2s ease;
 }
 
@@ -1249,14 +1314,21 @@ onMounted(() => {
 .compact-autocomplete :deep(.p-autocomplete.p-invalid) {
     border-color: #dc2626;
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    background-color: #fef2f2;
 }
 
 .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
-    padding: 0.625rem 0.875rem;
+    padding: 0.5rem 0.625rem;
     border: none;
     border-radius: 0.5rem;
     font-size: 0.875rem;
     background: transparent;
+}
+
+@media (min-width: 1280px) {
+    .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
+        padding: 0.375rem 0.625rem;
+    }
 }
 
 .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input:focus) {
@@ -1264,22 +1336,19 @@ onMounted(() => {
     box-shadow: none;
 }
 
-.compact-button :deep(.p-button) {
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-}
-
 :deep(.p-input-icon-left > i:first-of-type) {
-    left: 0.875rem;
-    color: #6b7280;
+    left: 0.75rem;
+    color: #9ca3af;
     font-size: 0.875rem;
 }
 
 :deep(.p-input-icon-left > .p-inputtext) {
-    padding-left: 2.5rem;
+    padding-left: 2.25rem;
+}
+
+:deep(.p-inputtext::placeholder) {
+    color: #9ca3af;
+    font-weight: 400;
 }
 
 :deep(.p-checkbox) {
@@ -1289,7 +1358,7 @@ onMounted(() => {
 
 :deep(.p-checkbox .p-checkbox-box) {
     border-width: 1.5px;
-    border-color: #6b7280;
+    border-color: #9ca3af;
     border-radius: 0.25rem;
 }
 
@@ -1298,80 +1367,85 @@ onMounted(() => {
     border-color: #2563eb;
 }
 
+:deep(.p-button) {
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border-width: 1.5px;
+}
+
+:deep(.p-button:not(.p-button-outlined):not(.p-button-text)) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.p-button:not(.p-button-outlined):not(.p-button-text):hover) {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+:deep(.p-button-outlined) {
+    background: transparent;
+    border-width: 1.5px;
+}
+
+:deep(.p-button-outlined:hover) {
+    background: rgba(37, 99, 235, 0.05);
+}
+
+:deep(.p-button:focus) {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    outline: none;
+}
+
 /* Responsive adjustments */
-@media (min-width: 401px) and (max-width: 768px) {
-    .compact-input :deep(.p-inputtext) {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.8125rem;
-    }
-
-    .compact-select :deep(.p-select .p-select-label) {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.8125rem;
-    }
-
+@media (max-width: 768px) {
+    .compact-input :deep(.p-inputtext),
+    .compact-select :deep(.p-select .p-select-label),
     .compact-autocomplete :deep(.p-autocomplete .p-autocomplete-input) {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.8125rem;
-    }
-
-    .compact-button :deep(.p-button) {
-        padding: 0.625rem 1rem;
-        font-size: 0.8125rem;
+        padding: 0.375rem 0.5rem;
+        font-size: 0.875rem;
     }
 }
 
-/* Ajustes para dispositivos táctiles */
-@media (hover: none) and (pointer: coarse) {
-    .overflow-y-auto::-webkit-scrollbar {
-        width: 0;
-    }
-
-    .overflow-y-auto {
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-    }
-}
-
-/* Scrollbar personalizado para el panel de registro */
+/* Scrollbar personalizado */
 .overflow-y-auto::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #f3f4f6;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 2px;
+    background: #d1d5db;
+    border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #9ca3af;
 }
 
-/* Ajustes para Toast en móviles */
+/* Toast responsivo */
 @media (max-width: 480px) {
     :deep(.toast-responsive .p-toast-message) {
-        margin: 0.25rem;
-        padding: 0.5rem;
+        margin: 0.5rem;
+        padding: 0.75rem;
         width: calc(100vw - 2rem);
         max-width: 100%;
+        border-radius: 0.625rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
     :deep(.toast-responsive .p-toast-message-content) {
         padding: 0.5rem;
         align-items: flex-start;
     }
-
-    :deep(.toast-responsive .p-toast-message-text) {
-        margin-left: 0.5rem;
-    }
-
-    :deep(.toast-responsive .p-toast-detail) {
-        margin-top: 0.25rem;
-        font-size: 0.75rem;
-    }
 }
+
+/* Estilos para TabView - Eliminados */
+
 </style>
