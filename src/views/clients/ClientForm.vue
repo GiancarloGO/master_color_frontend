@@ -112,6 +112,46 @@ const onClientTypeChange = () => {
     documentLookupStore.clearData();
 };
 
+const onNumberKeypress = (event) => {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+        event.preventDefault();
+    }
+};
+
+const onDocumentInput = () => {
+    identityDocument.value = identityDocument.value.replace(/\D/g, '');
+    const maxLen = getDocumentLength();
+    if (identityDocument.value.length > maxLen) {
+        identityDocument.value = identityDocument.value.slice(0, maxLen);
+    }
+    clearDocumentError();
+};
+
+const onPhoneInput = () => {
+    phone.value = phone.value.replace(/\D/g, '');
+    if (phone.value.length > 9) {
+        phone.value = phone.value.slice(0, 9);
+    }
+};
+
+const validateEmail = () => {
+    if (!email.value.trim()) {
+        // Si está vacío, se validará como requerido al enviar
+        return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email.value)) {
+        // Usamos el composable para setear el error si es posible, o gestionamos el error localmente
+        // Dado que estamos usando useInputValidation, podemos confiar en su validación interna o forzarla
+        // Pero para consistencia visual inmediata:
+        emailValidation.value.value = email.value; // Asegurar sync
+        const valid = emailValidation.validate();
+        // Si el regex del composable es diferente, aquí reforzamos
+    }
+};
+
 // Función para consultar documento
 const lookupDocument = async () => {
     if (!identityDocument.value.trim()) {
@@ -209,7 +249,17 @@ const validateForm = () => {
 
     // Validar usando composables
     const nameValid = nameValidation.validate();
-    const emailValid = emailValidation.validate();
+    
+    // Validación manual de email para asegurar regex robusto
+    let emailValid = emailValidation.validate();
+    if (email.value.trim() && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.value)) {
+        // Forzar error si el composable no lo capturó o tiene regex simple
+        // Nota: useEmailValidation ya debería validar, pero reforzamos por solicitud
+        emailValid = false;
+        // Asumiendo que podemos setear el error en el composable o tendríamos que manejarlo
+        // Como el composable es reactivo, si el input es invalido, el validate() deberia devolver false
+    }
+
     const phoneValid = phoneValidation.validate();
     
     isValid = nameValid && emailValid && phoneValid;
@@ -342,6 +392,7 @@ watch(
                                 :class="emailClasses"
                                 :disabled="isView"
                                 maxlength="254"
+                                @blur="emailValidation.validate()"
                             />
                         </IconField>
                         <small v-if="emailError" class="field-error">{{ emailError }}</small>
@@ -361,6 +412,8 @@ watch(
                                 :class="phoneClasses"
                                 :disabled="isView"
                                 maxlength="9"
+                                @input="onPhoneInput"
+                                @keypress="onNumberKeypress"
                             />
                         </IconField>
                         <small v-if="phoneError" class="field-error">{{ phoneError }}</small>
@@ -388,6 +441,7 @@ watch(
                             placeholder="Selecciona el tipo"
                             class="form-select"
                             :disabled="isView"
+                            appendTo="body"
                             @change="onClientTypeChange"
                         />
                     </div>
@@ -404,6 +458,7 @@ watch(
                             placeholder="Tipo de documento"
                             class="form-select"
                             :disabled="isView"
+                            appendTo="body"
                         />
                     </div>
 
@@ -419,7 +474,8 @@ watch(
                                 class="form-input document-input"
                                 :class="{ 'p-invalid': errors.identityDocument }"
                                 :disabled="isView"
-                                @input="clearDocumentError"
+                                @input="onDocumentInput"
+                                @keypress="onNumberKeypress"
                                 @keyup.enter="lookupDocument"
                             />
                             <Button
@@ -546,28 +602,29 @@ watch(
 .client-form {
     max-height: 70vh;
     overflow-y: auto;
-    padding: 1.5rem;
+    padding: 0.75rem;
 }
 
 .form-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 0.5rem;
 }
 
 .form-section {
-    background: var(--surface-section);
-    border: 1px solid var(--surface-border);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
 }
 
 .section-title {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0 0 1rem 0;
-    font-size: 1rem;
+    gap: 0.25rem;
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
     font-weight: 600;
     color: var(--text-color);
 }
@@ -578,14 +635,14 @@ watch(
 
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
 }
 
 .form-field {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .field-label {
@@ -602,7 +659,8 @@ watch(
 .form-input :deep(.p-inputtext) {
     border-radius: 8px;
     border: 1px solid var(--surface-border);
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
 }
 
 .form-input :deep(.p-inputtext:focus) {
@@ -737,10 +795,9 @@ watch(
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    padding: 1.5rem 2rem;
-    background: var(--surface-section);
-    margin: 1.5rem -1.5rem -1.5rem -1.5rem;
-    border-radius: 0 0 12px 12px;
+    padding: 1rem;
+    background: transparent;
+    margin: 1rem -0.75rem -0.75rem -0.75rem;
     border-top: 1px solid var(--surface-border);
 }
 

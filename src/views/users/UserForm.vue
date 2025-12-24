@@ -1,8 +1,8 @@
 <script setup>
-import { computed, reactive, watch, onMounted, ref } from 'vue';
-import { useRolesStore } from '@/stores/roles';
 import { useDocumentLookupStore } from '@/stores/documentLookup';
+import { useRolesStore } from '@/stores/roles';
 import { useToast } from 'primevue/usetoast';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 const rolesStore = useRolesStore();
 const documentLookupStore = useDocumentLookupStore();
@@ -58,8 +58,41 @@ const clearErrors = () => {
     });
 };
 
-const formatDNI = (event) => {
-    formData.dni = event.target.value.replace(/\D/g, '');
+const onNumberKeypress = (event) => {
+    const charCode = event.which ? event.which : event.keyCode;
+    if (charCode < 48 || charCode > 57) {
+        event.preventDefault();
+    }
+};
+
+const onDniInput = () => {
+    formData.dni = formData.dni.replace(/\D/g, '');
+    /* Las validaciones de longitud máxima ya están en el maxlength del template, 
+       pero agregamos seguridad adicional */
+    if (formData.dni.length > 8) {
+        formData.dni = formData.dni.slice(0, 8);
+    }
+};
+
+const onPhoneInput = () => {
+    formData.phone = formData.phone.replace(/\D/g, '');
+    if (formData.phone.length > 9) {
+        formData.phone = formData.phone.slice(0, 9);
+    }
+};
+
+const validateEmail = () => {
+    if (!formData.email.trim()) {
+        errors.email = '';
+        return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(formData.email)) {
+        errors.email = 'El formato del email no es válido';
+    } else {
+        errors.email = '';
+    }
 };
 
 // Estados para búsqueda de documentos
@@ -213,7 +246,7 @@ const validateForm = () => {
     if (!formData.email.trim()) {
         errors.email = 'El email es requerido';
         isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
         errors.email = 'El formato del email no es válido';
         isValid = false;
     }
@@ -268,7 +301,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="form-field">
                         <label for="email" class="field-label">Email *</label>
-                        <InputText id="email" v-model="formData.email" :class="{ 'p-invalid': errors.email }" placeholder="correo@ejemplo.com" type="email" class="compact-input" />
+                        <InputText id="email" v-model="formData.email" :class="{ 'p-invalid': errors.email }" placeholder="correo@ejemplo.com" type="email" class="compact-input" @blur="validateEmail" />
                         <small v-if="errors.email" class="p-error">{{ errors.email }}</small>
                     </div>
                 </div>
@@ -278,14 +311,14 @@ const handleSubmit = () => {
                     <div class="form-field">
                         <label for="dni" class="field-label">DNI *</label>
                         <div class="flex gap-2">
-                            <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="flex-1 compact-input" @input="formatDNI" @keyup.enter="lookupDNI" />
+                            <InputText id="dni" v-model="formData.dni" :class="{ 'p-invalid': errors.dni }" placeholder="12345678" maxlength="8" class="flex-1 compact-input" @input="onDniInput" @keypress="onNumberKeypress" @keyup.enter="lookupDNI" />
                             <Button v-tooltip.top="'Buscar datos del DNI'" icon="pi pi-search" class="p-button-outlined p-button-sm" :loading="isLookingUpDocument" :disabled="lookupButtonDisabled" @click="lookupDNI" />
                         </div>
                         <small v-if="errors.dni" class="p-error">{{ errors.dni }}</small>
                     </div>
                     <div class="form-field">
                         <label for="phone" class="field-label">Teléfono</label>
-                        <InputText id="phone" v-model="formData.phone" placeholder="912345678" class="compact-input" />
+                        <InputText id="phone" v-model="formData.phone" placeholder="912345678" maxlength="9" class="compact-input" @input="onPhoneInput" @keypress="onNumberKeypress" />
                     </div>
                 </div>
 
@@ -307,6 +340,7 @@ const handleSubmit = () => {
                             :class="{ 'p-invalid': errors.role_name }"
                             placeholder="Seleccionar rol"
                             class="compact-input"
+                            appendTo="body"
                             @change="onRoleChange"
                         />
                         <small v-if="errors.role_name" class="p-error">{{ errors.role_name }}</small>
