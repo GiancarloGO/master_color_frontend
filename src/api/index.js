@@ -6,6 +6,8 @@ export const register = (payload) => axios.post('/auth/register', payload);
 export const logout = () => axios.post('/auth/logout');
 export const refresh = () => axios.post('/auth/refresh');
 export const me = () => axios.post('/auth/me');
+export const forgotPasswordEmployee = (payload) => axios.post('/auth/forgot-password', payload);
+export const resetPasswordEmployee = (payload) => axios.post('/auth/reset-password', payload);
 
 // Auth para clientes (compradores)
 export const loginClient = (payload) => axios.post('/client/auth/login', payload);
@@ -30,8 +32,8 @@ export const authApi = {
     me: (type = 'user') => (type === 'client' ? meClient() : me()),
     verifyEmail: (payload) => verifyEmail(payload), // Solo disponible para clientes
     resendVerificationEmail: (payload) => resendVerificationEmail(payload), // Solo disponible para clientes
-    forgotPassword: (payload) => forgotPassword(payload), // Solo disponible para clientes
-    resetPassword: (payload) => resetPassword(payload), // Solo disponible para clientes
+    forgotPassword: (payload, type = 'client') => (type === 'client' ? forgotPassword(payload) : forgotPasswordEmployee(payload)),
+    resetPassword: (payload, type = 'client') => (type === 'client' ? resetPassword(payload) : resetPasswordEmployee(payload)),
     changePassword: (payload) => changePassword(payload) // Disponible para usuarios autenticados
 };
 

@@ -130,7 +130,7 @@ const submitForgotPassword = async () => {
     forgotPasswordLoading.value = true;
 
     try {
-        const result = await authStore.forgotPassword({ email: forgotPasswordEmail.value });
+        const result = await authStore.forgotPassword({ email: forgotPasswordEmail.value }, 'user');
 
         if (result.success) {
             forgotPasswordSuccess.value = true;

@@ -127,6 +127,12 @@ const router = createRouter({
             meta: { public: true } // Ruta pública
         },
         {
+            path: '/employee-reset-password',
+            name: 'employeeResetPassword',
+            component: () => import('@/views/auth/EmployeeResetPassword.vue'),
+            meta: { public: true } // Ruta pública
+        },
+        {
             path: '/orders',
             name: 'client-orders',
             component: () => import('@/views/orders/Orders.vue'),

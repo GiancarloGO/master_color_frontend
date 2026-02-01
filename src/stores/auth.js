@@ -319,12 +319,15 @@ export const useAuthStore = defineStore('authStore', {
         /**
          * Solicita un enlace para restablecer la contraseña
          * @param {Object} payload - Contiene el email del usuario
+         * @param {String} type - Tipo de usuario: 'client' o 'user' (empleado)
          * @returns {Promise<Object>} - Resultado de la operación
          */
-        async forgotPassword(payload) {
+        async forgotPassword(payload, type = null) {
             this.resetState();
             try {
-                const response = await authApi.forgotPassword(payload);
+                // Usar el tipo almacenado si no se proporciona uno
+                const userType = type || this.userType || 'client';
+                const response = await authApi.forgotPassword(payload, userType);
                 return handleProcessSuccess(response, this);
             } catch (error) {
                 handleProcessError(error, this);
@@ -337,12 +340,15 @@ export const useAuthStore = defineStore('authStore', {
         /**
          * Restablece la contraseña del usuario utilizando el token
          * @param {Object} payload - Contiene email, token, password y password_confirmation
+         * @param {String} type - Tipo de usuario: 'client' o 'user' (empleado)
          * @returns {Promise<Object>} - Resultado de la operación
          */
-        async resetPassword(payload) {
+        async resetPassword(payload, type = null) {
             this.resetState();
             try {
-                const response = await authApi.resetPassword(payload);
+                // Usar el tipo almacenado si no se proporciona uno
+                const userType = type || this.userType || 'client';
+                const response = await authApi.resetPassword(payload, userType);
                 return handleProcessSuccess(response, this);
             } catch (error) {
                 handleProcessError(error, this);
