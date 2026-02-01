@@ -277,7 +277,7 @@ const submitForgotPassword = async () => {
 
                             <!-- Header del formulario -->
                             <div class="text-center mb-8">
-                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido, Empleado</h2>
+                                <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido, Empleados</h2>
                                 <p class="text-gray-600 text-base">Accede con tus credenciales internas</p>
                             </div>
 
