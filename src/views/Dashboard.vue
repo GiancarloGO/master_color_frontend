@@ -70,7 +70,7 @@ async function loadDashboardData() {
         if (result.success) {
             toast.add({
                 severity: 'success',
-                summary: result.fromCache ? 'Cargado desde caché' : 'Cargado',
+                summary: result.fromCache ? 'Dashboard cargado correctamente' : 'Cargado',
                 detail: result.message || 'Dashboard cargado correctamente',
                 life: 3000
             });
