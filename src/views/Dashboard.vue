@@ -157,7 +157,7 @@ function getOrderStatusSeverity(status) {
         pendiente: 'warning',
         pendiente_pago: 'warning',
         pagado: 'success',
-        pago_fallido: 'danger',
+        pago_fallido: 'contrast',
         en_proceso: 'info',
         completado: 'success',
         cancelado: 'danger',
