@@ -231,10 +231,21 @@ const exportCSV = () => {
             <Column field="payment_status" header="Pago" :sortable="false" style="width: 110px">
                 <template #body="{ data }">
                     <div class="payment-status">
-                        <div v-if="data.payments && data.payments.length > 0">
-                            <Tag v-for="payment in data.payments" :key="payment.id" :value="getPaymentStatusLabel(payment.status)" :severity="getPaymentStatusSeverity(payment.status)" class="payment-tag" />
+                        <!-- Si tiene código de pago (pago completado) -->
+                        <div v-if="data.codigo_payment">
+                            <i 
+                                v-tooltip.top="'Pago completado - Código: ' + data.codigo_payment" 
+                                class="pi pi-check-circle payment-icon payment-approved"
+                            ></i>
                         </div>
-                        <Tag v-else-if="data.status === 'pendiente_pago' || data.status === 'pago_fallido'" value="Pendiente" severity="warning" class="payment-tag" />
+                        <!-- Si está pendiente de pago o pago fallido -->
+                        <div v-else-if="data.status === 'pendiente_pago' || data.status === 'pago_fallido'">
+                            <i 
+                                v-tooltip.top="data.status === 'pago_fallido' ? 'Pago fallido - Pendiente de pago' : 'Pendiente de pago'" 
+                                class="pi pi-times-circle payment-icon payment-pending"
+                            ></i>
+                        </div>
+                        <!-- Sin información de pago -->
                         <span v-else class="no-payment">-</span>
                     </div>
                 </template>
@@ -472,6 +483,24 @@ const exportCSV = () => {
 .payment-status {
     display: flex;
     justify-content: center;
+}
+
+.payment-icon {
+    font-size: 1.5rem;
+    cursor: help;
+    transition: transform 0.2s ease;
+}
+
+.payment-icon:hover {
+    transform: scale(1.1);
+}
+
+.payment-approved {
+    color: #22c55e !important;
+}
+
+.payment-pending {
+    color: #ef4444 !important;
 }
 
 .payment-tag {
