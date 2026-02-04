@@ -101,8 +101,44 @@ const onClientTypeChange = () => {
     } else {
         documentType.value = 'ruc';
     }
+    
+    // Limpiar todos los campos del formulario
     identityDocument.value = '';
+    name.value = '';
+    email.value = '';
+    password.value = '';
+    confirmPassword.value = '';
+    phone.value = '';
+    
+    // Limpiar campos de dirección
+    addressFull.value = '';
+    selectedDepartment.value = null;
+    selectedProvince.value = null;
+    selectedDistrict.value = null;
+    postalCode.value = '';
+    reference.value = '';
+    
+    // Limpiar listas de ubigeo dependientes
+    provinces.value = [];
+    districts.value = [];
+    filteredProvinces.value = [];
+    filteredDistricts.value = [];
+    
+    // Limpiar todos los errores
     identityDocumentError.value = '';
+    nameValidation.clearError();
+    emailValidation.clearError();
+    passwordValidation.clearError();
+    phoneValidation.clearError();
+    confirmPasswordError.value = '';
+    addressFullError.value = '';
+    departmentError.value = '';
+    provinceError.value = '';
+    districtError.value = '';
+    postalCodeError.value = '';
+    referenceError.value = '';
+    termsError.value = '';
+    
     // Limpiar datos de consulta anterior
     documentLookupStore.clearData();
 };
