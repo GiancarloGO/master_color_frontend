@@ -405,7 +405,7 @@ export const useDashboardStore = defineStore('dashboardStore', {
 
                 return {
                     success: true,
-                    message: fromCache ? 'Dashboard cargado (algunos datos desde caché)' : 'Dashboard cargado correctamente',
+                    message: fromCache ? 'Dashboard cargado' : 'Dashboard cargado correctamente',
                     fromCache
                 };
             } catch (error) {
