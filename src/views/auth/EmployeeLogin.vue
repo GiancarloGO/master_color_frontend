@@ -16,12 +16,7 @@ const showPassword = ref(false);
 const emailError = ref('');
 const passwordError = ref('');
 
-// Estado para recuperación de contraseña
-const showForgotPasswordDialog = ref(false);
-const forgotPasswordEmail = ref('');
-const forgotPasswordLoading = ref(false);
-const forgotPasswordEmailError = ref('');
-const forgotPasswordSuccess = ref(false);
+
 
 // Métodos
 const validateForm = () => {
@@ -96,105 +91,10 @@ const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
 
-// Métodos para recuperación de contraseña
-const openForgotPasswordDialog = () => {
-    forgotPasswordEmail.value = email.value; // Pre-llenar con el email del login si existe
-    forgotPasswordEmailError.value = '';
-    forgotPasswordSuccess.value = false;
-    showForgotPasswordDialog.value = true;
-};
 
-const closeForgotPasswordDialog = () => {
-    showForgotPasswordDialog.value = false;
-};
-
-const validateForgotPasswordEmail = () => {
-    forgotPasswordEmailError.value = '';
-
-    if (!forgotPasswordEmail.value) {
-        forgotPasswordEmailError.value = 'El correo electrónico es requerido';
-        return false;
-    } else if (!/^\S+@\S+\.\S+$/.test(forgotPasswordEmail.value)) {
-        forgotPasswordEmailError.value = 'Ingrese un correo electrónico válido';
-        return false;
-    }
-
-    return true;
-};
-
-const submitForgotPassword = async () => {
-    if (!validateForgotPasswordEmail()) {
-        return;
-    }
-
-    forgotPasswordLoading.value = true;
-
-    try {
-        const result = await authStore.forgotPassword({ email: forgotPasswordEmail.value }, 'user');
-
-        if (result.success) {
-            forgotPasswordSuccess.value = true;
-            toast.add({
-                severity: 'success',
-                summary: 'Correo enviado',
-                detail: 'Hemos enviado un enlace de recuperación a tu correo electrónico.',
-                life: 5000
-            });
-        } else {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: result.message || 'No se pudo enviar el correo de recuperación.',
-                life: 5000
-            });
-        }
-    } catch (error) {
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Ocurrió un error al procesar tu solicitud.',
-            life: 5000
-        });
-    } finally {
-        forgotPasswordLoading.value = false;
-    }
-};
 </script>
 
 <template>
-    <!-- Diálogo de recuperación de contraseña (idéntico) -->
-    <Dialog v-model:visible="showForgotPasswordDialog" modal header="Recuperar contraseña" :style="{ width: '450px' }" :closable="!forgotPasswordLoading">
-        <div class="password-recovery-dialog">
-            <div v-if="!forgotPasswordSuccess" class="p-2">
-                <p class="text-gray-700 mb-4">Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.</p>
-                <div class="mb-4">
-                    <label for="forgotPasswordEmail" class="block text-sm font-bold text-gray-800 mb-2">Correo electrónico</label>
-                    <span class="p-input-icon-left w-full">
-                        <IconField>
-                            <InputIcon class="pi pi-envelope" />
-                            <InputText id="forgotPasswordEmail" v-model="forgotPasswordEmail" type="email" class="w-full" placeholder="correo@ejemplo.com" :disabled="forgotPasswordLoading" :class="{ 'p-invalid': forgotPasswordEmailError }" />
-                        </IconField>
-                    </span>
-                    <small v-if="forgotPasswordEmailError" class="p-error block mt-1">
-                        {{ forgotPasswordEmailError }}
-                    </small>
-                </div>
-            </div>
-            <div v-else class="p-2 text-center">
-                <div class="mb-4 success-animation">
-                    <i class="pi pi-check-circle text-green-500 text-5xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">¡Correo enviado!</h3>
-                <p class="text-gray-700 mb-4">Hemos enviado un enlace de recuperación a tu correo electrónico. Por favor revisa tu bandeja de entrada y sigue las instrucciones.</p>
-            </div>
-            <div class="flex justify-end pt-4">
-                <Button v-if="!forgotPasswordSuccess" label="Cancelar" icon="pi pi-times" class="p-button-outlined p-button-secondary mr-2" :disabled="forgotPasswordLoading" @click="closeForgotPasswordDialog" />
-                <Button v-if="!forgotPasswordSuccess" label="Enviar enlace" icon="pi pi-envelope" class="p-button-primary" :loading="forgotPasswordLoading" @click="submitForgotPassword" />
-                <Button v-else label="Cerrar" icon="pi pi-check" class="p-button-primary" @click="closeForgotPasswordDialog" />
-            </div>
-        </div>
-    </Dialog>
-
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 py-6">
         <div class="w-full max-w-6xl">
             <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
@@ -323,9 +223,9 @@ const submitForgotPassword = async () => {
                                     </small>
                                 </div>
 
-                                <!-- Olvidaste contraseña -->
+                                <!-- Mensaje de ayuda -->
                                 <div class="flex items-center justify-end">
-                                    <a href="#" class="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors" @click.prevent="openForgotPasswordDialog">¿Olvidaste tu contraseña?</a>
+                                    <p class="text-sm text-gray-600 italic">¿Olvidaste tu contraseña? Contacta al administrador</p>
                                 </div>
 
                                 <!-- Botón de login -->
