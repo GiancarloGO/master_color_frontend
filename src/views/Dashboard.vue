@@ -143,9 +143,10 @@ function getStockStatusSeverity(currentStock, minStock) {
     return 'success';
 }
 
-// Helper para sanitizar y formatear estados de órdenes
+// Helper para sanitizar y formatear estados de órdenes y pagos
 function sanitizeOrderStatus(status) {
     const statusMap = {
+        // Estados de órdenes
         pendiente: 'Pendiente',
         pendiente_pago: 'Pendiente Pago',
         pagado: 'Pagado',
@@ -153,7 +154,12 @@ function sanitizeOrderStatus(status) {
         en_proceso: 'En Proceso',
         completado: 'Completado',
         cancelado: 'Cancelado',
-        entregado: 'Entregado'
+        entregado: 'Entregado',
+        // Estados de pagos
+        approved: 'Aprobado',
+        pending: 'Pendiente',
+        rejected: 'Rechazado',
+        refunded: 'Reembolsado'
     };
     return statusMap[status?.toLowerCase()] || status;
 }
@@ -161,6 +167,7 @@ function sanitizeOrderStatus(status) {
 // Helper para obtener severidad según el estado
 function getOrderStatusSeverity(status) {
     const severityMap = {
+        // Estados de órdenes
         pendiente: 'warning',
         pendiente_pago: 'warning',
         pagado: 'success',
@@ -168,7 +175,12 @@ function getOrderStatusSeverity(status) {
         en_proceso: 'info',
         completado: 'success',
         cancelado: 'danger',
-        entregado: 'success'
+        entregado: 'success',
+        // Estados de pagos
+        approved: 'success',
+        pending: 'warning',
+        rejected: 'danger',
+        refunded: 'info'
     };
     return severityMap[status?.toLowerCase()] || 'info';
 }
