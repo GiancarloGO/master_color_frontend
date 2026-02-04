@@ -165,7 +165,7 @@ function formatDate(date) {
         </div>
 
         <!-- Estadísticas -->
-        <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div v-if="statistics" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="flex items-center justify-between">
                     <div>
@@ -176,11 +176,21 @@ function formatDate(date) {
                 </div>
             </div>
 
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-600 text-sm font-medium">Pendiente de Pago</p>
+                        <p class="text-2xl font-bold text-orange-900">{{ statistics.pending_payment_orders || 0 }}</p>
+                    </div>
+                    <i class="pi pi-credit-card text-orange-500 text-2xl"></i>
+                </div>
+            </div>
+
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-yellow-600 text-sm font-medium">Pendientes</p>
-                        <p class="text-2xl font-bold text-yellow-900">{{ statistics.pending_orders || 0 }}</p>
+                        <p class="text-2xl font-bold text-yellow-900">{{ statistics.pending_confirmation_orders || 0 }}</p>
                     </div>
                     <i class="pi pi-clock text-yellow-500 text-2xl"></i>
                 </div>
