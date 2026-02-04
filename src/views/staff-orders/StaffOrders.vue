@@ -2,12 +2,14 @@
 import { useStaffOrdersStore } from '@/stores/staffOrders';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import OrderDetailModal from './OrderDetailModal.vue';
 import OrderStatusModal from './OrderStatusModal.vue';
 import StaffOrdersTable from './StaffOrdersTable.vue';
 
 const staffOrdersStore = useStaffOrdersStore();
 const toast = useToast();
+const route = useRoute();
 
 const orderDetailDialog = ref(false);
 const statusDialog = ref(false);
@@ -37,7 +39,17 @@ const hasActiveFilters = computed(() => {
 });
 
 onMounted(async () => {
+    // Check if there's a status filter in the query params (from Dashboard navigation)
+    if (route.query.status) {
+        filters.value.status = route.query.status;
+    }
+    
     await loadData();
+    
+    // Apply filters if they were set from query params
+    if (route.query.status) {
+        await applyFilters();
+    }
 });
 
 async function loadData() {

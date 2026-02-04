@@ -4,9 +4,11 @@ import MetricCard from '@/components/dashboard/MetricCard.vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const dashboardStore = useDashboardStore();
 const toast = useToast();
+const router = useRouter();
 
 const selectedPeriod = ref(30);
 const refreshing = ref(false);
@@ -118,10 +120,15 @@ function handleAlertAction(alert) {
         // Mostrar modal con detalles de productos con stock bajo
         selectedAlert.value = alert;
         showLowStockModal.value = true;
+    } else if (alert.type === 'pending_orders') {
+        // Navegar a staff-orders con filtro de pendiente activado
+        router.push({
+            path: '/staff-orders',
+            query: { status: 'pendiente' }
+        });
     } else if (alert.action && alert.action.route) {
         // Navegar a la ruta especificada para otros tipos de alertas
-        console.log('Navegando a:', alert.action.route);
-        window.location.href = alert.action.route;
+        router.push(alert.action.route);
     }
 }
 
