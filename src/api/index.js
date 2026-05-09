@@ -300,6 +300,21 @@ export const clientsApi = {
     toggleVerification: (id) => axios.patch(`/clients/${id}/toggle-verification`)
 };
 
+// Funciones para registros de auditoría
+export const auditLogsApi = {
+    getAuditLogs: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        Object.keys(params).forEach((key) => {
+            if (params[key] !== undefined && params[key] !== null && params[key] !== '') {
+                queryParams.append(key, params[key]);
+            }
+        });
+        const queryString = queryParams.toString();
+        return axios.get(`/audit-logs${queryString ? '?' + queryString : ''}`);
+    },
+    getAuditLogById: (id) => axios.get(`/audit-logs/${id}`)
+};
+
 export const dashboardApi = {
     // Vista general del dashboard
     getOverview: (params = {}) => {

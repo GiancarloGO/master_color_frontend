@@ -69,6 +69,12 @@ const menuConfig = ref([
                 icon: 'pi pi-fw pi-chart-line',
                 to: '/reports',
                 roles: [ROLES.ADMIN]
+            },
+            {
+                label: 'Auditoría',
+                icon: 'pi pi-fw pi-shield',
+                to: '/audit-logs',
+                roles: [ROLES.ADMIN]
             }
         ]
     },
