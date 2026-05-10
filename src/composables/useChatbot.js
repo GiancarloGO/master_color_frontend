@@ -17,7 +17,8 @@ export function useChatbot() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 180000);
 
-        const url = `${import.meta.env.VITE_API_URL}chatbot/message`;
+        const base = import.meta.env.VITE_API_URL.replace(/\/?$/, '/');
+        const url = `${base}chatbot/message`;
         const payload = { session_id: getSessionId(), message, history };
 
         console.log('[Chatbot] URL:', url);
