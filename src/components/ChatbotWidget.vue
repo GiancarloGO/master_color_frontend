@@ -1,6 +1,14 @@
 <script setup>
 import { useChatbot } from '@/composables/useChatbot';
 import { computed, nextTick, ref } from 'vue';
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+
+marked.use({ breaks: true, gfm: true });
+
+function renderMd(text) {
+    return DOMPurify.sanitize(marked.parse(text));
+}
 
 const props = defineProps({
     storeName: { type: String, default: 'Master Color' },
@@ -118,9 +126,11 @@ function formatTime(date) {
                     <div v-for="(msg, i) in messages" :key="i" class="message-row" :class="msg.role">
                         <!-- Assistant / Error bubble -->
                         <div v-if="msg.role !== 'user'" class="bubble-wrap bubble-left">
-                            <div class="bubble" :class="msg.role === 'error' ? 'bubble-error' : 'bubble-assistant'">
-                                {{ msg.content }}
-                            </div>
+                            <div
+                                class="bubble"
+                                :class="msg.role === 'error' ? 'bubble-error' : 'bubble-assistant'"
+                                v-html="msg.role === 'error' ? msg.content : renderMd(msg.content)"
+                            ></div>
                             <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
                         </div>
 
@@ -375,8 +385,18 @@ function formatTime(date) {
     font-size: 0.875rem;
     line-height: 1.5;
     word-break: break-word;
-    white-space: pre-wrap;
+    white-space: normal;
 }
+
+/* Markdown rendered inside assistant bubbles */
+.bubble-assistant :deep(p) { margin: 0 0 6px; }
+.bubble-assistant :deep(p:last-child) { margin-bottom: 0; }
+.bubble-assistant :deep(strong) { font-weight: 600; color: #111827; }
+.bubble-assistant :deep(ul),
+.bubble-assistant :deep(ol) { margin: 4px 0 6px 16px; padding: 0; }
+.bubble-assistant :deep(li) { margin-bottom: 2px; }
+.bubble-assistant :deep(li:last-child) { margin-bottom: 0; }
+.bubble-assistant :deep(hr) { border: none; border-top: 1px solid #e5e7eb; margin: 8px 0; }
 
 .bubble-user {
     background: var(--chat-primary);
