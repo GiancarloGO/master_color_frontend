@@ -7,6 +7,8 @@ const props = defineProps({
     primaryColor: { type: String, default: '#1D9E75' }
 });
 
+const AGENT_NAME = 'Mastercito';
+
 const { sendMessage, isLoading } = useChatbot();
 
 const isOpen = ref(false);
@@ -15,7 +17,7 @@ const messages = ref([]);
 const messagesContainer = ref(null);
 const textarea = ref(null);
 
-const QUICK_SUGGESTIONS = ['¿Qué impresoras tienen?', 'Ver precios', '¿Qué es seminuevo?', 'Comparar modelos'];
+const QUICK_SUGGESTIONS = ['¿Qué impresoras tienen?', 'Ver precios', '¿Qué es seminuevo?', '¿Cuál me recomiendas?'];
 
 const showSuggestions = computed(() => messages.value.filter((m) => m.role === 'user').length === 0);
 
@@ -24,7 +26,7 @@ function toggle() {
     if (isOpen.value && messages.value.length === 0) {
         messages.value.push({
             role: 'assistant',
-            content: `¡Hola! Soy el asistente de ${props.storeName}. ¿En qué puedo ayudarte hoy?`,
+            content: `¡Hola! Soy ${AGENT_NAME}, el asistente de ${props.storeName} 🖨️. ¿En qué puedo ayudarte hoy?`,
             timestamp: new Date()
         });
         nextTick(() => textarea.value?.focus());
@@ -91,15 +93,16 @@ function formatTime(date) {
                 <div class="chat-header">
                     <div class="chat-header-info">
                         <div class="chat-avatar">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                            <!-- Robot face -->
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7v1a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-1H4a1 1 0 0 1-1-1v-1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2zM9 13a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-3 3.5a.5.5 0 0 0-.5.5v.5h1V17a.5.5 0 0 0-.5-.5z"/>
                             </svg>
                         </div>
                         <div>
-                            <p class="chat-title">Asistente {{ storeName }}</p>
+                            <p class="chat-title">Mastercito</p>
                             <div class="chat-status">
                                 <span class="status-dot"></span>
-                                <span class="status-text">En línea</span>
+                                <span class="status-text">Asistente de {{ storeName }}</span>
                             </div>
                         </div>
                     </div>
@@ -136,7 +139,7 @@ function formatTime(date) {
                                 <span class="typing-dot"></span>
                                 <span class="typing-dot"></span>
                             </div>
-                            <span class="typing-label">Consultando catálogo... esto puede tardar hasta 40 segundos</span>
+                            <span class="typing-label">Mastercito está consultando el catálogo...</span>
                         </div>
                     </div>
                 </div>
@@ -160,7 +163,7 @@ function formatTime(date) {
                         v-model="inputText"
                         class="chat-input"
                         :disabled="isLoading"
-                        placeholder="Escribe tu consulta..."
+                        placeholder="Pregúntale a Mastercito..."
                         rows="1"
                         maxlength="500"
                         @keydown="onKeydown"
