@@ -57,7 +57,8 @@ const formData = reactive({
     min_stock: 0,
     max_stock: 0,
     purchase_price: null,
-    sale_price: null
+    sale_price: null,
+    default_warranty_months: 0
 });
 
 const errors = reactive({
@@ -70,7 +71,8 @@ const errors = reactive({
     quantity: '',
     min_stock: '',
     max_stock: '',
-    stock_coherence: ''
+    stock_coherence: '',
+    default_warranty_months: ''
 });
 
 const selectedImage = ref(null);
@@ -132,6 +134,7 @@ watch(
             formData.max_stock = newProduct.max_stock || 0;
             formData.purchase_price = newProduct.purchase_price ? parseFloat(newProduct.purchase_price) : null;
             formData.sale_price = newProduct.sale_price ? parseFloat(newProduct.sale_price) : null;
+            formData.default_warranty_months = Number.isFinite(Number(newProduct.default_warranty_months)) ? Number(newProduct.default_warranty_months) : 0;
 
             // Solo resetear imagen si no hay una nueva imagen seleccionada
             if (!hasNewImage.value) {
@@ -161,6 +164,7 @@ watch(
             formData.max_stock = 0;
             formData.purchase_price = null;
             formData.sale_price = null;
+            formData.default_warranty_months = 0;
 
             selectedImage.value = null;
             imagePreview.value = null;
@@ -279,6 +283,18 @@ const validateForm = () => {
         }
     }
 
+    // Validación de meses de garantía (opcional: entero entre 0 y 120)
+    const warranty = formData.default_warranty_months;
+    if (warranty !== null && warranty !== undefined && warranty !== '') {
+        if (!Number.isInteger(warranty) || warranty < 0) {
+            errors.default_warranty_months = 'La garantía debe ser un número entero igual o mayor a 0';
+            isValid = false;
+        } else if (warranty > 120) {
+            errors.default_warranty_months = 'La garantía no puede exceder 120 meses';
+            isValid = false;
+        }
+    }
+
     return isValid;
 };
 
@@ -349,6 +365,9 @@ const handleSubmit = () => {
     if (validateForm()) {
         const submitData = { ...formData };
 
+        // Si se deja vacío, enviar 0 (el backend lo trata como sin garantía)
+        submitData.default_warranty_months = submitData.default_warranty_months ?? 0;
+
         emit('submit', submitData);
     }
 };
@@ -417,6 +436,26 @@ const handleSubmit = () => {
                             <label for="description" class="field-label">Descripción</label>
                             <InputText id="description" v-model="formData.description" placeholder="Descripción del producto" class="compact-input" />
                         </div>
+                    </div>
+
+                    <!-- Fila 5: Garantía -->
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="default_warranty_months" class="field-label">Meses de garantía</label>
+                            <InputNumber
+                                id="default_warranty_months"
+                                v-model="formData.default_warranty_months"
+                                :class="{ 'p-invalid': errors.default_warranty_months }"
+                                placeholder="0"
+                                :min="0"
+                                :max="120"
+                                :max-fraction-digits="0"
+                                class="compact-input"
+                            />
+                            <small v-if="errors.default_warranty_months" class="p-error">{{ errors.default_warranty_months }}</small>
+                            <small v-else class="upload-hint">0 = sin garantía. Aplica solo a ventas futuras.</small>
+                        </div>
+                        <div class="form-field"></div>
                     </div>
                 </div>
             </div>

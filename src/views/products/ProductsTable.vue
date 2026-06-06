@@ -63,6 +63,15 @@ const deleteProduct = (product) => {
         <Column field="category" header="Categoría" sortable />
         <Column field="presentation" header="Presentación" />
         <Column field="unidad" header="Unidad" />
+        <Column field="default_warranty_months" header="Garantía" sortable style="width: 120px">
+            <template #body="{ data }">
+                <span v-if="Number(data.default_warranty_months) > 0" class="warranty-badge warranty-badge--active">
+                    <i class="pi pi-shield"></i>
+                    {{ data.default_warranty_months }} {{ Number(data.default_warranty_months) === 1 ? 'mes' : 'meses' }}
+                </span>
+                <span v-else class="warranty-badge warranty-badge--none">Sin garantía</span>
+            </template>
+        </Column>
         <Column field="user_name" header="Usuario" />
         <Column header="Acciones" style="width: 120px">
             <template #body="{ data }">
@@ -94,6 +103,24 @@ const deleteProduct = (product) => {
 }
 .delete-btn {
     color: var(--red-600);
+}
+.warranty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.warranty-badge--active {
+    background: rgba(22, 163, 74, 0.12);
+    color: #16a34a;
+}
+.warranty-badge--none {
+    background: var(--surface-200, #e5e7eb);
+    color: var(--text-color-secondary, #6b7280);
 }
 .no-image {
     display: inline-block;

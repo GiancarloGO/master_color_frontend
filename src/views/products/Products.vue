@@ -49,7 +49,8 @@ function openNew() {
         min_stock: 0,
         max_stock: 0,
         purchase_price: null,
-        sale_price: null
+        sale_price: null,
+        default_warranty_months: 0
     };
     productDialog.value = true;
     dialogMode.value = 'create';

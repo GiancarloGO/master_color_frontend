@@ -92,6 +92,7 @@ const loadProducts = async () => {
                 maxStock: product.max_stock || 100,
                 presentation: product.presentation || '',
                 unidad: product.unidad || '',
+                warrantyMonths: Number(product.warranty_months ?? product.default_warranty_months ?? 0) || 0,
                 stock: {
                     quantity: product.stock_quantity || 0,
                     sale_price: parseFloat(product.sale_price || product.price || 0),
@@ -565,6 +566,18 @@ onBeforeUnmount(() => {
                                             ¡Quedan pocos!
                                         </span>
                                     </div>
+                                </div>
+
+                                <!-- Warranty info -->
+                                <div class="mb-3">
+                                    <span v-if="product.warrantyMonths > 0" class="inline-flex items-center text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
+                                        <i class="pi pi-shield mr-1"></i>
+                                        Incluye {{ product.warrantyMonths }} {{ product.warrantyMonths === 1 ? 'mes' : 'meses' }} de garantía
+                                    </span>
+                                    <span v-else class="inline-flex items-center text-xs text-gray-400">
+                                        <i class="pi pi-shield mr-1"></i>
+                                        Sin garantía
+                                    </span>
                                 </div>
 
                                 <!-- Price -->
