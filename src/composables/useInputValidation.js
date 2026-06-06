@@ -7,7 +7,7 @@ import { sanitizeInput, sanitizeEmail, sanitizeName, sanitizeNumber, sanitizeTex
  * @param {Object} options - Opciones de configuración
  */
 export function useInputValidation(inputType = 'text', options = {}) {
-    const { maxLength = getDefaultMaxLength(inputType), required = false, customValidation = null, realTimeValidation = true } = options;
+    const { maxLength = getDefaultMaxLength(inputType), required = false, customValidation = null, realTimeValidation = true, skipStrength = false } = options;
 
     const value = ref('');
     const errors = ref([]);
@@ -117,6 +117,11 @@ export function useInputValidation(inputType = 'text', options = {}) {
                 break;
 
             case 'password':
+                // En login solo importa que no esté vacío (required, ya validado arriba).
+                // Las reglas de fortaleza son responsabilidad del registro/cambio de contraseña.
+                if (skipStrength) {
+                    break;
+                }
                 if (inputValue.length < 10) {
                     validationErrors.push('Mínimo 10 caracteres');
                 }

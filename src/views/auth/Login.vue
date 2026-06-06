@@ -15,7 +15,7 @@ const showPassword = ref(false);
 
 // Validación de inputs con composables
 const emailValidation = useEmailValidation({ required: true });
-const passwordValidation = usePasswordValidation({ required: true });
+const passwordValidation = usePasswordValidation({ required: true, skipStrength: true });
 
 // Destructuring para compatibilidad
 const { value: email, firstError: emailError, inputClasses: emailClasses } = emailValidation;
