@@ -612,6 +612,12 @@ onMounted(async () => {
     }
 
     await loadOrders();
+
+    // Si el usuario no viene del flujo de compra (sin carrito pendiente),
+    // mostrar directamente la lista de órdenes en lugar de la pantalla de bienvenida.
+    if (!showOrderForm.value) {
+        showOrdersList.value = true;
+    }
 });
 
 // Cleanup
@@ -635,7 +641,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
                 <div class="header-actions">
-                    <Button v-if="!showOrderForm && !showOrdersList" label="Volver a la Tienda" icon="pi pi-arrow-left" class="back-button" outlined @click="goBackToStore" />
+                    <Button v-if="!showOrderForm" label="Volver a la Tienda" icon="pi pi-arrow-left" class="back-button" outlined @click="goBackToStore" />
                     <Button v-if="!showOrderForm && !showOrdersList" label="Ver Mis Órdenes" icon="pi pi-list" class="orders-button" @click="viewMyOrders" />
                     <Button v-if="showOrdersList" label="Nueva Orden" icon="pi pi-plus" class="new-order-button" @click="startNewOrder" />
                 </div>
