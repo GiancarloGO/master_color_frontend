@@ -45,7 +45,7 @@ export const useOrdersStore = defineStore('ordersStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    this.purchasedProducts = processed.data.data || processed.data || [];
+                    this.purchasedProducts = processed.data || [];
                     // Guardar caché
                     localStorage.setItem('purchasedProducts', JSON.stringify(this.purchasedProducts));
                 }
@@ -67,7 +67,7 @@ export const useOrdersStore = defineStore('ordersStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    this.orders = processed.data.orders || processed.data || [];
+                    this.orders = processed.data || [];
                 }
 
                 return processed;

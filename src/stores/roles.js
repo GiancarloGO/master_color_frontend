@@ -34,7 +34,7 @@ export const useRolesStore = defineStore('rolesStore', {
             try {
                 const response = await rolesApi.getRoles();
                 const processed = handleProcessSuccess(response, this);
-                this.rolesList = processed.data.roles || processed.data || [];
+                this.rolesList = processed.data || [];
                 cache.setItem('rolesList', this.rolesList);
                 this.success = true;
             } catch (error) {

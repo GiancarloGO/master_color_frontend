@@ -32,7 +32,7 @@ export const useAddressesStore = defineStore('addressesStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    this.addresses = processed.data.addresses || processed.data || [];
+                    this.addresses = processed.data || [];
                 }
 
                 return processed;

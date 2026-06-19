@@ -60,6 +60,7 @@ export function processResponse(response) {
             success: false,
             message: 'Respuesta inesperada del servidor.',
             data: null,
+            pagination: undefined,
             status: 500,
             details: null,
             validationErrors: []
@@ -75,6 +76,9 @@ export function processResponse(response) {
         success: response.success,
         message: filterDatabaseError(response.message),
         data: response.data,
+        // Metadatos de paginación estandarizados a nivel raíz de la respuesta.
+        // Es opcional: los endpoints no paginados (p. ej. /orders sin ?paginate=true) lo omiten.
+        pagination: response.pagination,
         status: response.status,
         details: response.details,
         validationErrors: validationErrors.map(err => filterDatabaseError(err))

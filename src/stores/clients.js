@@ -65,13 +65,9 @@ export const useClientsStore = defineStore('clientsStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    if (processed.data.clients) {
-                        this.clients = processed.data.clients;
-                        if (processed.data.pagination) {
-                            this.pagination = processed.data.pagination;
-                        }
-                    } else {
-                        this.clients = processed.data || [];
+                    this.clients = processed.data || [];
+                    if (processed.pagination) {
+                        this.pagination = processed.pagination;
                     }
                 }
 
@@ -190,13 +186,9 @@ export const useClientsStore = defineStore('clientsStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    if (processed.data.clients) {
-                        this.deletedClients = processed.data.clients;
-                        if (processed.data.pagination) {
-                            this.pagination = processed.data.pagination;
-                        }
-                    } else {
-                        this.deletedClients = processed.data || [];
+                    this.deletedClients = processed.data || [];
+                    if (processed.pagination) {
+                        this.pagination = processed.pagination;
                     }
                 }
 

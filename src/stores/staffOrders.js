@@ -66,18 +66,15 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    // Si la respuesta tiene paginación
-                    if (processed.data.data) {
-                        this.orders = processed.data.data;
+                    this.orders = processed.data || [];
+                    // La paginación es opcional: solo llega cuando se solicita con ?paginate=true
+                    if (processed.pagination) {
                         this.pagination = {
-                            currentPage: processed.data.current_page || 1,
-                            totalPages: processed.data.last_page || 1,
-                            totalItems: processed.data.total || 0,
-                            perPage: processed.data.per_page || 15
+                            currentPage: processed.pagination.current_page || 1,
+                            totalPages: processed.pagination.last_page || 1,
+                            totalItems: processed.pagination.total || 0,
+                            perPage: processed.pagination.per_page || 15
                         };
-                    } else {
-                        // Sin paginación
-                        this.orders = processed.data || [];
                     }
                 }
 
@@ -171,16 +168,15 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    if (processed.data.data) {
-                        this.orders = processed.data.data;
+                    this.orders = processed.data || [];
+                    // La paginación es opcional: solo llega cuando se solicita con ?paginate=true
+                    if (processed.pagination) {
                         this.pagination = {
-                            currentPage: processed.data.current_page || 1,
-                            totalPages: processed.data.last_page || 1,
-                            totalItems: processed.data.total || 0,
-                            perPage: processed.data.per_page || 15
+                            currentPage: processed.pagination.current_page || 1,
+                            totalPages: processed.pagination.last_page || 1,
+                            totalItems: processed.pagination.total || 0,
+                            perPage: processed.pagination.per_page || 15
                         };
-                    } else {
-                        this.orders = processed.data || [];
                     }
                 }
 
@@ -202,16 +198,15 @@ export const useStaffOrdersStore = defineStore('staffOrdersStore', {
                 const processed = handleProcessSuccess(response, this);
 
                 if (processed.success) {
-                    if (processed.data.data) {
-                        this.orders = processed.data.data;
+                    this.orders = processed.data || [];
+                    // La paginación es opcional: solo llega cuando se solicita con ?paginate=true
+                    if (processed.pagination) {
                         this.pagination = {
-                            currentPage: processed.data.current_page || 1,
-                            totalPages: processed.data.last_page || 1,
-                            totalItems: processed.data.total || 0,
-                            perPage: processed.data.per_page || 15
+                            currentPage: processed.pagination.current_page || 1,
+                            totalPages: processed.pagination.last_page || 1,
+                            totalItems: processed.pagination.total || 0,
+                            perPage: processed.pagination.per_page || 15
                         };
-                    } else {
-                        this.orders = processed.data || [];
                     }
                 }
 

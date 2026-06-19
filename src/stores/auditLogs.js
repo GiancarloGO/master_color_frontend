@@ -32,8 +32,8 @@ export const useAuditLogsStore = defineStore('auditLogsStore', {
                 const response = await auditLogsApi.getAuditLogs(params);
                 const processed = handleProcessSuccess(response, this);
                 if (processed.success) {
-                    this.logs = processed.data.logs || [];
-                    const p = processed.data.pagination || {};
+                    this.logs = processed.data || [];
+                    const p = processed.pagination || {};
                     this.pagination = {
                         currentPage: p.current_page || 1,
                         lastPage: p.last_page || 1,

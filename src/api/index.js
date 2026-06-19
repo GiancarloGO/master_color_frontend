@@ -39,7 +39,8 @@ export const authApi = {
 
 // Funciones para direcciones de clientes
 export const clientAddressesApi = {
-    getAddresses: () => axios.get('/client/addresses'),
+    // per_page alto: el endpoint siempre pagina, pero la store consume la lista completa
+    getAddresses: (perPage = 100) => axios.get(`/client/addresses?per_page=${perPage}`),
     getAddressById: (id) => axios.get(`/client/addresses/${id}`),
     createAddress: (payload) => axios.post('/client/addresses', payload),
     updateAddress: (id, payload) => axios.put(`/client/addresses/${id}`, payload),
@@ -59,7 +60,8 @@ export const usersApi = {
 
 // Funciones para roles
 export const rolesApi = {
-    getRoles: () => axios.get('/roles'),
+    // per_page alto: el endpoint siempre pagina, pero la store consume la lista completa
+    getRoles: (perPage = 100) => axios.get(`/roles?per_page=${perPage}`),
     getRoleById: (id) => axios.get(`/roles/${id}`),
     createRole: (payload) => axios.post('/roles', payload),
     updateRole: (id, payload) => axios.put(`/roles/${id}`, payload),
@@ -113,7 +115,8 @@ export const ordersApi = {
     createOrder: (payload) => axios.post('/client/orders', payload),
 
     // Obtener órdenes del cliente autenticado
-    getMyOrders: () => axios.get('/client/orders?include=products,order_details'),
+    // per_page alto: el endpoint siempre pagina, pero la store consume la lista completa
+    getMyOrders: (perPage = 100) => axios.get(`/client/orders?include=products,order_details&per_page=${perPage}`),
 
     // Obtener orden específica del cliente
     getOrderById: (id) => axios.get(`/client/orders/${id}?include=products,order_details`),
