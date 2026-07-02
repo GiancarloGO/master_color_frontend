@@ -65,6 +65,12 @@ const menuConfig = ref([
                 roles: [ROLES.ADMIN, ROLES.ALMACEN]
             },
             {
+                label: 'Categorías',
+                icon: 'pi pi-fw pi-tags',
+                to: '/categories',
+                roles: [ROLES.ADMIN, ROLES.ALMACEN]
+            },
+            {
                 label: 'Reportes',
                 icon: 'pi pi-fw pi-chart-line',
                 to: '/reports',

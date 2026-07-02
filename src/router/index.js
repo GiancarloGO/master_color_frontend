@@ -28,6 +28,12 @@ const router = createRouter({
                     meta: { roles: ['admin', 'almacen'] }
                 },
                 {
+                    path: '/categories',
+                    name: 'categories',
+                    component: () => import('@/views/categories/Categories.vue'),
+                    meta: { roles: ['admin', 'almacen'] }
+                },
+                {
                     path: '/users',
                     name: 'users',
                     component: () => import('@/views/users/Users.vue'),

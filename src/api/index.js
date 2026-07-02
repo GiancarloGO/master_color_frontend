@@ -88,6 +88,15 @@ export const productsApi = {
     deleteProduct: (id) => axios.delete(`/products/${id}`)
 };
 
+// Funciones para categorías
+export const categoriesApi = {
+    getCategories: () => axios.get('/categories'),
+    getCategoryById: (id) => axios.get(`/categories/${id}`),
+    createCategory: (payload) => axios.post('/categories', payload),
+    updateCategory: (id, payload) => axios.put(`/categories/${id}`, payload),
+    deleteCategory: (id) => axios.delete(`/categories/${id}`)
+};
+
 // Funciones para stock
 export const stockApi = {
     getStocks: () => axios.get('/stocks'),

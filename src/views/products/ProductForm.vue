@@ -1,5 +1,8 @@
 <script setup>
-import { computed, reactive, ref, watch, watchEffect } from 'vue';
+import { useCategoriesStore } from '@/stores/categories';
+import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue';
+
+const categoriesStore = useCategoriesStore();
 
 const props = defineProps({
     product: {
@@ -34,14 +37,22 @@ const unidadOptions = [
     { label: 'Otro', value: 'otro' }
 ];
 
-const categoriesOptions = [
-    { label: 'Impresoras', value: 'impresoras' },
-    { label: 'Tintas', value: 'tintas' },
-    { label: 'Tóners', value: 'toners' },
-    { label: 'Papel', value: 'papel' },
-    { label: 'Repuestos', value: 'repuestos' },
-    { label: 'Accesorios', value: 'accesorios' }
-];
+// Categorías cargadas dinámicamente desde el backend (entidad Category).
+// Se mapean a { label: nombre, value: slug } para mantener compatibilidad con
+// el campo string `category` que espera la API.
+const categoriesOptions = computed(() =>
+    (categoriesStore.getActiveCategories || []).map((c) => ({ label: c.name, value: c.slug }))
+);
+
+onMounted(async () => {
+    if (!categoriesStore.categoriesList || categoriesStore.categoriesList.length === 0) {
+        try {
+            await categoriesStore.fetchCategories();
+        } catch (e) {
+            // Silencioso: el formulario sigue usable; el select quedará vacío si falla.
+        }
+    }
+});
 
 const formData = reactive({
     name: '',

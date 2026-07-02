@@ -43,19 +43,36 @@ const checkScreenSize = () => {
     isSmallScreen.value = window.innerWidth < 640;
 };
 
-const categories = ref([
-    { id: 1, name: 'impresoras', label: 'Impresoras', icon: 'pi-print' },
-    { id: 2, name: 'tintas', label: 'Tintas', icon: 'pi-palette' },
-    { id: 3, name: 'toners', label: 'Tóners', icon: 'pi-inbox' },
-    { id: 4, name: 'papel', label: 'Papel', icon: 'pi-file' },
-    { id: 5, name: 'repuestos', label: 'Repuestos', icon: 'pi-cog' },
-    { id: 6, name: 'accesorios', label: 'Accesorios', icon: 'pi-star' }
-]);
+// Iconos por slug de categoría conocido. Las categorías nuevas (creadas desde el
+// panel admin) usan un icono genérico por defecto.
+const CATEGORY_ICONS = {
+    impresoras: 'pi-print',
+    tintas: 'pi-palette',
+    toners: 'pi-inbox',
+    papel: 'pi-file',
+    repuestos: 'pi-cog',
+    accesorios: 'pi-star'
+};
 
-// Dynamic categories computed from loaded products
+// Convierte un slug en una etiqueta legible como fallback ('escaneres' -> 'Escaneres').
+const prettifySlug = (slug) => (slug || '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+// Categorías derivadas dinámicamente de los productos cargados. Ya no se
+// hardcodean: cualquier categoría registrada desde el panel aparece aquí en
+// cuanto tenga productos asociados. La etiqueta usa category_name del backend.
 const availableCategories = computed(() => {
-    const productCategories = [...new Set((productsStore.productsList || []).map((p) => p.category).filter(Boolean))];
-    return categories.value.filter((cat) => productCategories.includes(cat.name));
+    const map = new Map();
+    (productsStore.productsList || []).forEach((p) => {
+        const slug = p.category;
+        if (!slug || map.has(slug)) return;
+        map.set(slug, {
+            id: slug,
+            name: slug,
+            label: p.categoryName || prettifySlug(slug),
+            icon: CATEGORY_ICONS[slug] || 'pi-tag'
+        });
+    });
+    return Array.from(map.values());
 });
 
 // Sort options
@@ -79,6 +96,7 @@ const loadProducts = async () => {
                 id: product.id,
                 name: product.name,
                 category: product.category,
+                categoryName: product.category_name || null,
                 price: parseFloat(product.sale_price || product.price || 0),
                 originalPrice: parseFloat(product.purchase_price || product.sale_price || 0),
                 image: product.image_url || `https://placehold.co/300x200/4F46E5/FFFFFF?text=${encodeURIComponent(product.name)}`,
