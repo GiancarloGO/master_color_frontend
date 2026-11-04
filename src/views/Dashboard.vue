@@ -149,6 +149,9 @@ function sanitizeOrderStatus(status) {
         // Estados de órdenes
         pendiente: 'Pendiente',
         pendiente_pago: 'Pendiente Pago',
+        confirmado: 'Confirmado',
+        procesando: 'En Preparación',
+        enviado: 'Enviado',
         pagado: 'Pagado',
         pago_fallido: 'Pago Fallido',
         en_proceso: 'En Proceso',
@@ -170,6 +173,9 @@ function getOrderStatusSeverity(status) {
         // Estados de órdenes
         pendiente: 'warning',
         pendiente_pago: 'warning',
+        confirmado: 'success',
+        procesando: 'info',
+        enviado: 'success',
         pagado: 'success',
         pago_fallido: 'contrast',
         en_proceso: 'info',

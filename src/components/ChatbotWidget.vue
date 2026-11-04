@@ -47,16 +47,10 @@ async function submit() {
 
     inputText.value = '';
 
-    // Last 10 valid messages before this one
-    const history = messages.value
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(-10)
-        .map((m) => ({ role: m.role, content: m.content }));
-
     messages.value.push({ role: 'user', content: text, timestamp: new Date() });
     await scrollBottom();
 
-    const { reply, error } = await sendMessage(text, history);
+    const { reply, error } = await sendMessage(text);
 
     if (reply) {
         messages.value.push({ role: 'assistant', content: reply, timestamp: new Date() });
