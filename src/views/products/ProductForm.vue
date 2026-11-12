@@ -357,6 +357,13 @@ const marginIcon = computed(() => {
     return 'pi pi-check-circle';
 });
 
+// Proporciones de la barra de ayuda: zona amarilla = hasta el mínimo, verde = hasta el máximo.
+const stockScale = computed(() => {
+    const min = Math.max(Number(formData.min_stock) || 0, 1);
+    const max = Math.max(Number(formData.max_stock) || 0, min + 1);
+    return { warning: min, success: max - min };
+});
+
 const stockCoherenceStatus = computed(() => {
     if (formData.min_stock >= 0 && formData.max_stock > 0) {
         if (formData.max_stock > formData.min_stock) {
@@ -616,6 +623,30 @@ const handleSubmit = () => {
                                 </small>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Ayuda visual: cómo funcionan las alertas de stock -->
+                    <div class="stock-help">
+                        <div class="stock-help-title">
+                            <i class="pi pi-info-circle"></i>
+                            Cómo funcionan las alertas de stock
+                        </div>
+                        <div class="stock-scale" aria-hidden="true">
+                            <div class="stock-zone zone-danger" style="flex: 0 0 8%"></div>
+                            <div class="stock-zone zone-warning" :style="{ flex: stockScale.warning }"></div>
+                            <div class="stock-zone zone-success" :style="{ flex: stockScale.success }"></div>
+                        </div>
+                        <div class="stock-scale-labels">
+                            <span>0</span>
+                            <span>Mín: {{ formData.min_stock ?? 0 }}</span>
+                            <span>Máx: {{ formData.max_stock ?? 0 }}</span>
+                        </div>
+                        <ul class="stock-legend">
+                            <li><span class="dot zone-danger"></span><strong>Sin stock:</strong> 0 unidades. Alerta roja.</li>
+                            <li><span class="dot zone-warning"></span><strong>Stock bajo:</strong> hasta {{ formData.min_stock ?? 0 }} unidades (el mínimo). Alerta amarilla: toca reponer.</li>
+                            <li><span class="dot zone-success"></span><strong>Disponible:</strong> más de {{ formData.min_stock ?? 0 }} unidades. Sin alerta.</li>
+                            <li><span class="dot zone-info"></span><strong>Máximo:</strong> {{ formData.max_stock ?? 0 }} unidades es lo recomendado a tener; sirve de referencia para cuánto reponer.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -951,5 +982,56 @@ const handleSubmit = () => {
         grid-column: 1 / -1;
         max-width: 50%;
     }
+}
+
+/* Ayuda visual de alertas de stock */
+.stock-help {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px dashed var(--surface-border, #d1d5db);
+    border-radius: 8px;
+    background: var(--surface-ground, #f8fafc);
+}
+.stock-help-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+.stock-scale {
+    display: flex;
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.stock-scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+.zone-danger { background: #ef4444; }
+.zone-warning { background: #f59e0b; }
+.zone-success { background: #22c55e; }
+.zone-info { background: #3b82f6; }
+.stock-legend {
+    list-style: none;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    color: #4b5563;
+}
+.stock-legend .dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
 }
 </style>
