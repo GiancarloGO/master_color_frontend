@@ -58,6 +58,7 @@ const initializeForm = () => {
                 stock_id: detail.stock.id,
                 quantity: detail.quantity,
                 unit_price: parseFloat(detail.unit_price) || 0,
+                price_touched: true,
                 selectedProduct: {
                     id: detail.stock.product.id,
                     name: detail.stock.product.name,
@@ -152,6 +153,30 @@ const searchProducts = async (event) => {
     }
 };
 
+// Precio de referencia: venta para salidas, compra para el resto de movimientos.
+const getReferencePrice = (product) => {
+    if (!product) return 0;
+    const price = formData.movement_type === 'salida' ? product.sale_price : product.purchase_price;
+    return parseFloat(price) || 0;
+};
+
+const onUnitPriceInput = (index) => {
+    // El usuario decidió el precio: no pisarlo al cambiar tipo de movimiento.
+    formData.stocks[index].price_touched = true;
+};
+
+// Al cambiar el tipo de movimiento, actualizar la referencia de los ítems sin precio editado a mano.
+watch(
+    () => formData.movement_type,
+    () => {
+        formData.stocks.forEach((stock) => {
+            if (stock.selectedProduct && !stock.price_touched) {
+                stock.unit_price = getReferencePrice(stock.selectedProduct);
+            }
+        });
+    }
+);
+
 const onProductSelect = (event, index) => {
     const product = event.value;
 
@@ -171,6 +196,10 @@ const onProductSelect = (event, index) => {
             quantity: product.stock_quantity || 0
         }
     };
+
+    // Precio unitario actual como referencia (editable)
+    formData.stocks[index].unit_price = getReferencePrice(product);
+    formData.stocks[index].price_touched = false;
 
     // Clear related errors
     delete errors.value[`stocks.${index}.stock_id`];
@@ -466,6 +495,7 @@ onMounted(() => {
                                     <InputNumber
                                         :id="`unit_price_${index}`"
                                         v-model="stock.unit_price"
+                                        @input="onUnitPriceInput(index)"
                                         :min="0"
                                         :min-fraction-digits="2"
                                         :max-fraction-digits="2"
@@ -477,6 +507,10 @@ onMounted(() => {
                                     />
                                     <small v-if="errors[`stocks.${index}.unit_price`]" class="p-error">
                                         {{ errors[`stocks.${index}.unit_price`] }}
+                                    </small>
+                                    <small v-else-if="stock.selectedProduct" class="price-reference">
+                                        Precio {{ formData.movement_type === 'salida' ? 'de venta' : 'de compra' }} actual:
+                                        {{ formatCurrency(getReferencePrice(stock.selectedProduct)) }}
                                     </small>
                                 </div>
                             </div>
@@ -972,5 +1006,9 @@ onMounted(() => {
     .form-actions {
         flex-direction: column;
     }
+}
+.price-reference {
+    color: #6b7280;
+    font-size: 0.75rem;
 }
 </style>
