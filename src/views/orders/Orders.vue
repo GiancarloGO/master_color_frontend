@@ -58,6 +58,51 @@ const paymentLoading = ref(false);
 const orders = computed(() => ordersStore.getOrders);
 const addresses = computed(() => addressesStore.getAddresses);
 
+const statusOptions = [
+    { label: 'Pendiente de Pago', value: 'pendiente_pago' },
+    { label: 'Pagado - Preparando Envío', value: 'pendiente' },
+    { label: 'Confirmado', value: 'confirmado' },
+    { label: 'En Preparación', value: 'procesando' },
+    { label: 'Enviado', value: 'enviado' },
+    { label: 'Entregado', value: 'entregado' },
+    { label: 'Pago Fallido', value: 'pago_fallido' },
+    { label: 'Cancelado', value: 'cancelado' }
+];
+
+// Filtros (en cliente: cada cliente solo ve sus propios registros)
+const filters = reactive({
+    status: null,
+    date_from: null,
+    date_to: null
+});
+
+const hasActiveFilters = computed(() => !!(filters.status || filters.date_from || filters.date_to));
+
+const clearFilters = () => {
+    filters.status = null;
+    filters.date_from = null;
+    filters.date_to = null;
+};
+
+const matchesFilters = (item) => {
+    if (filters.status && item.status !== filters.status) return false;
+
+    const date = new Date(item.created_at);
+    if (filters.date_from) {
+        const from = new Date(filters.date_from);
+        from.setHours(0, 0, 0, 0);
+        if (date < from) return false;
+    }
+    if (filters.date_to) {
+        const to = new Date(filters.date_to);
+        to.setHours(23, 59, 59, 999);
+        if (date > to) return false;
+    }
+    return true;
+};
+
+const filteredOrders = computed(() => orders.value.filter(matchesFilters));
+
 const totalQuantity = computed(() => {
     return orderItems.value.reduce((total, item) => total + (item.quantity || 0), 0);
 });
@@ -776,7 +821,32 @@ onBeforeUnmount(() => {
 
             <!-- Orders table -->
             <div v-else class="orders-table">
-                <DataTable :value="orders" responsive-layout="scroll" class="orders-datatable">
+            <!-- Filtros -->
+            <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 mb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-surface-900">Filtros de Órdenes</h3>
+                    <Button icon="pi pi-filter-slash" label="Limpiar Filtros" severity="secondary" outlined size="small" :disabled="!hasActiveFilters" @click="clearFilters" />
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-surface-700 mb-2">Estado de la Orden</label>
+                        <Dropdown v-model="filters.status" :options="statusOptions" option-label="label" option-value="value" placeholder="Seleccionar estado" class="w-full" show-clear />
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-surface-700 mb-2">Fecha Desde</label>
+                        <Calendar v-model="filters.date_from" placeholder="Seleccionar fecha" date-format="dd/mm/yy" :max-date="filters.date_to || undefined" show-icon show-button-bar class="w-full" />
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-sm font-medium text-surface-700 mb-2">Fecha Hasta</label>
+                        <Calendar v-model="filters.date_to" placeholder="Seleccionar fecha" date-format="dd/mm/yy" :min-date="filters.date_from || undefined" show-icon show-button-bar class="w-full" />
+                    </div>
+                </div>
+            </div>
+
+                <DataTable :value="filteredOrders" responsive-layout="scroll" class="orders-datatable">
+                    <template #empty>
+                        <div class="text-center py-6 text-surface-500">No hay órdenes que coincidan con los filtros.</div>
+                    </template>
                     <Column field="id" header="Orden #" style="min-width: 100px">
                         <template #body="slotProps">
                             <strong>#{{ slotProps.data.id }}</strong>
