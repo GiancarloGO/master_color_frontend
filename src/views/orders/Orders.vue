@@ -71,14 +71,16 @@ const statusOptions = [
 
 // Filtros (en cliente: cada cliente solo ve sus propios registros)
 const filters = reactive({
+    search: '',
     status: null,
     date_from: null,
     date_to: null
 });
 
-const hasActiveFilters = computed(() => !!(filters.status || filters.date_from || filters.date_to));
+const hasActiveFilters = computed(() => !!(filters.search.trim() || filters.status || filters.date_from || filters.date_to));
 
 const clearFilters = () => {
+    filters.search = '';
     filters.status = null;
     filters.date_from = null;
     filters.date_to = null;
@@ -97,6 +99,13 @@ const matchesFilters = (item) => {
         const to = new Date(filters.date_to);
         to.setHours(23, 59, 59, 999);
         if (date > to) return false;
+    }
+
+    // Búsqueda multiparámetro: cada palabra debe coincidir con el nº de orden o con algún producto.
+    const terms = filters.search.toLowerCase().split(/\s+/).map((t) => t.replace(/^#/, '')).filter(Boolean);
+    if (terms.length) {
+        const haystack = `${item.id} ${getOrderProducts(item).map((p) => p.name).join(' ')}`.toLowerCase();
+        if (!terms.every((t) => haystack.includes(t))) return false;
     }
     return true;
 };
@@ -826,6 +835,13 @@ onBeforeUnmount(() => {
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-surface-900">Filtros de Órdenes</h3>
                     <Button icon="pi pi-filter-slash" label="Limpiar Filtros" severity="secondary" outlined size="small" :disabled="!hasActiveFilters" @click="clearFilters" />
+                </div>
+                <div class="mb-4">
+                    <label class="text-sm font-medium text-surface-700 mb-2 block">Buscar</label>
+                    <IconField>
+                        <InputIcon class="pi pi-search" />
+                        <InputText v-model="filters.search" placeholder="Buscar por producto o nº de orden (ej. canon 49)" class="w-full" />
+                    </IconField>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="flex flex-col">

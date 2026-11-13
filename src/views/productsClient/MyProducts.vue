@@ -51,7 +51,12 @@ const matchesFilters = (item) => {
         to.setHours(23, 59, 59, 999);
         if (date > to) return false;
     }
-    if (filters.search && !(item.product?.name || '').toLowerCase().includes(filters.search.trim().toLowerCase())) return false;
+    // Búsqueda multiparámetro: cada palabra debe coincidir con el producto o el nº de orden.
+    const terms = filters.search.toLowerCase().split(/\s+/).map((t) => t.replace(/^#/, '')).filter(Boolean);
+    if (terms.length) {
+        const haystack = `${item.product?.name || ''} ${item.order_id}`.toLowerCase();
+        if (!terms.every((t) => haystack.includes(t))) return false;
+    }
     return true;
 };
 
@@ -112,8 +117,8 @@ onMounted(() => {
             </div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="flex flex-col">
-                    <label class="text-sm font-medium text-surface-700 mb-2">Producto</label>
-                    <InputText v-model="filters.search" placeholder="Buscar por nombre" class="w-full" />
+                    <label class="text-sm font-medium text-surface-700 mb-2">Buscar</label>
+                    <InputText v-model="filters.search" placeholder="Producto o nº de orden" class="w-full" />
                 </div>
                 <div class="flex flex-col">
                     <label class="text-sm font-medium text-surface-700 mb-2">Estado de la Orden</label>
