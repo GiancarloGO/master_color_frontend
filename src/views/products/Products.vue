@@ -90,7 +90,14 @@ async function handleSaveProduct(productData) {
         await productsStore.fetchProducts();
         hideDialog();
     } catch (error) {
-        if (productsStore.validationErrors) {
+        if (Object.keys(productsStore.fieldErrors).length) {
+            toast.add({
+                severity: 'error',
+                summary: 'Datos inválidos',
+                detail: Object.values(productsStore.fieldErrors).join(' '),
+                life: 6000
+            });
+        } else if (productsStore.validationErrors?.length) {
             for (let i = 0; i < productsStore.validationErrors.length; i++) {
                 toast.add({
                     severity: 'error',
@@ -200,7 +207,7 @@ onMounted(async () => {
                 </div>
             </template>
 
-            <ProductForm :product="selectedProduct" :loading="productsStore.loading" @submit="handleSaveProduct" @cancel="hideDialog" />
+            <ProductForm :product="selectedProduct" :loading="productsStore.loading" :server-errors="productsStore.fieldErrors" @submit="handleSaveProduct" @cancel="hideDialog" />
         </Dialog>
 
         <!-- Compact Delete Dialog -->

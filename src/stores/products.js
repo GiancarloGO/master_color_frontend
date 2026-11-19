@@ -3,6 +3,13 @@ import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
 
+// El interceptor de axios deja en validationErrors el objeto `errors` de Laravel (campo -> mensajes)
+function extractFieldErrors(error) {
+    const errs = error?.validationErrors;
+    if (!errs || Array.isArray(errs) || typeof errs !== 'object') return {};
+    return Object.fromEntries(Object.entries(errs).map(([field, msgs]) => [field, Array.isArray(msgs) ? msgs[0] : String(msgs)]));
+}
+
 export const useProductsStore = defineStore('productsStore', {
     state: () => ({
         productsList: cache.getItem('productsList') || [],
@@ -11,7 +18,9 @@ export const useProductsStore = defineStore('productsStore', {
         error: null,
         success: false,
         message: '',
-        validationErrors: []
+        validationErrors: [],
+        // Errores 422 por campo del backend: { sku: ['Este SKU ya existe...'] }
+        fieldErrors: {}
     }),
 
     getters: {
@@ -62,6 +71,7 @@ export const useProductsStore = defineStore('productsStore', {
             this.loading = true;
             this.error = null;
             this.validationErrors = [];
+            this.fieldErrors = {};
             try {
                 const response = await productsApi.createProduct(payload);
                 const processed = handleProcessSuccess(response, this);
@@ -79,6 +89,7 @@ export const useProductsStore = defineStore('productsStore', {
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                this.fieldErrors = extractFieldErrors(error);
                 throw error;
             } finally {
                 this.loading = false;
@@ -88,6 +99,7 @@ export const useProductsStore = defineStore('productsStore', {
         async updateProduct(id, payload) {
             this.loading = true;
             this.error = null;
+            this.fieldErrors = {};
             try {
                 //payload.append('_method', 'PUT');
                 const response = await productsApi.updateProduct(id, payload);
@@ -109,6 +121,7 @@ export const useProductsStore = defineStore('productsStore', {
             } catch (error) {
                 this.error = error;
                 handleProcessError(error, this);
+                this.fieldErrors = extractFieldErrors(error);
                 throw error;
             } finally {
                 this.loading = false;

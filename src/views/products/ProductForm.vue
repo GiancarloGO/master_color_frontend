@@ -12,6 +12,11 @@ const props = defineProps({
     loading: {
         type: Boolean,
         default: false
+    },
+    // Errores por campo devueltos por el backend (422), p. ej. SKU o nombre duplicado
+    serverErrors: {
+        type: Object,
+        default: () => ({})
     }
 });
 
@@ -184,6 +189,15 @@ watch(
         clearErrors();
     },
     { immediate: true }
+);
+
+watch(
+    () => props.serverErrors,
+    (serverErrors) => {
+        Object.entries(serverErrors || {}).forEach(([field, message]) => {
+            if (field in errors) errors[field] = message;
+        });
+    }
 );
 
 const validateForm = () => {
