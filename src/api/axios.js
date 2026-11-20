@@ -116,6 +116,8 @@ api.interceptors.response.use(
                     if (backendData?.errors && typeof backendData.errors === 'object' && !Array.isArray(backendData.errors)) {
                         validationMsgs = Object.entries(backendData.errors).flatMap(([field, messages]) => messages.map((msg) => `${field}: ${msg}`));
                         errResponse.validationErrors = validationMsgs;
+                        // Se conserva el objeto original { campo: [mensajes] } para marcar cada campo del formulario
+                        errResponse.fieldErrors = backendData.errors;
                     } else if (Array.isArray(backendData?.errors)) {
                         validationMsgs = backendData.errors;
                         errResponse.validationErrors = validationMsgs;

@@ -3,9 +3,9 @@ import { handleProcessError, handleProcessSuccess } from '@/utils/apiHelpers';
 import cache from '@/utils/cache';
 import { defineStore } from 'pinia';
 
-// El interceptor de axios deja en validationErrors el objeto `errors` de Laravel (campo -> mensajes)
+// El interceptor de axios deja en fieldErrors el objeto `errors` de Laravel (campo -> mensajes)
 function extractFieldErrors(error) {
-    const errs = error?.validationErrors;
+    const errs = error?.fieldErrors;
     if (!errs || Array.isArray(errs) || typeof errs !== 'object') return {};
     return Object.fromEntries(Object.entries(errs).map(([field, msgs]) => [field, Array.isArray(msgs) ? msgs[0] : String(msgs)]));
 }
