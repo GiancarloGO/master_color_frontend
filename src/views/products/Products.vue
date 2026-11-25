@@ -34,6 +34,8 @@ const filteredProducts = computed(() => {
 });
 
 function openNew() {
+    productsStore.fieldErrors = {};
+    productsStore.validationErrors = [];
     selectedProduct.value = {
         name: '',
         sku: '',
@@ -57,12 +59,16 @@ function openNew() {
 }
 
 function editProduct(product) {
+    productsStore.fieldErrors = {};
+    productsStore.validationErrors = [];
     selectedProduct.value = { ...product };
     dialogMode.value = 'edit';
     productDialog.value = true;
 }
 
 function hideDialog() {
+    productsStore.fieldErrors = {};
+    productsStore.validationErrors = [];
     productDialog.value = false;
     selectedProduct.value = {};
 }

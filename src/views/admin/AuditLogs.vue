@@ -28,6 +28,7 @@ const actorTypeOptions = [
 
 const entityTypeOptions = [
     { label: 'Todas las entidades', value: '' },
+    { label: 'Producto', value: 'Product' },
     { label: 'Usuario', value: 'User' },
     { label: 'Cliente', value: 'Client' },
     { label: 'Orden', value: 'Order' },
@@ -125,6 +126,7 @@ function getActionSeverity(action) {
     if (!action) return 'secondary';
     if (action.startsWith('client.auth.')) return 'success';
     if (action.startsWith('auth.')) return 'info';
+    if (action.startsWith('product.')) return 'info';
     if (action.startsWith('order.')) return 'warning';
     if (action.startsWith('stock.')) return 'contrast';
     if (action.startsWith('payment.')) return 'success';

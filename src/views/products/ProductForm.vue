@@ -81,7 +81,12 @@ const errors = reactive({
     name: '',
     sku: '',
     barcode: '',
+    brand: '',
+    category: '',
+    presentation: '',
     unidad: '',
+    description: '',
+    image: '',
     purchase_price: '',
     sale_price: '',
     quantity: '',
@@ -90,6 +95,10 @@ const errors = reactive({
     stock_coherence: '',
     default_warranty_months: ''
 });
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const selectedImage = ref(null);
 const imagePreview = ref(null);
@@ -102,10 +111,33 @@ const clearErrors = () => {
     });
 };
 
+const validateImageFile = (file) => {
+    if (!file) return '';
+    const name = (file.name || '').toLowerCase();
+    const validExt = ALLOWED_IMAGE_EXTS.some((ext) => name.endsWith(ext));
+    const validMime = !file.type || ALLOWED_IMAGE_TYPES.includes(file.type);
+    if (!validExt || !validMime) {
+        return 'La imagen debe ser de tipo: jpg, jpeg, png o webp';
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+        return 'La imagen no puede ser mayor a 5MB';
+    }
+    return '';
+};
+
 // MODIFICADO: Función onImageSelect actualizada
 const onImageSelect = (event) => {
     const file = event.files[0];
     if (file) {
+        const imgError = validateImageFile(file);
+        if (imgError) {
+            errors.image = imgError;
+            selectedImage.value = null;
+            formData.image = null;
+            hasNewImage.value = false;
+            return;
+        }
+        errors.image = '';
         selectedImage.value = file;
         formData.image = file;
         hasNewImage.value = true; // Marcar que hay nueva imagen
@@ -125,6 +157,7 @@ const onImageClear = () => {
     formData.image = null;
     imagePreview.value = null;
     hasNewImage.value = false; // Marcar que no hay nueva imagen
+    errors.image = '';
 };
 
 const removeImage = () => {
@@ -194,156 +227,173 @@ watch(
 watch(
     () => props.serverErrors,
     (serverErrors) => {
+        clearErrors();
         Object.entries(serverErrors || {}).forEach(([field, message]) => {
-            if (field in errors) errors[field] = message;
+            if (field in errors) errors[field] = Array.isArray(message) ? message[0] : message;
         });
     }
 );
+
+const fieldValidators = {
+    name: () => {
+        const val = (formData.name || '').trim();
+        if (!val) return 'El nombre es requerido';
+        if (val.length > 255) return 'El nombre no puede exceder 255 caracteres';
+        return '';
+    },
+    sku: () => {
+        const val = (formData.sku || '').trim();
+        if (!val) return 'El SKU es requerido';
+        if (val.length > 255) return 'El SKU no puede exceder 255 caracteres';
+        return '';
+    },
+    barcode: () => {
+        const val = (formData.barcode || '').trim();
+        if (val.length > 255) return 'El código de barras no puede exceder 255 caracteres';
+        return '';
+    },
+    brand: () => {
+        const val = (formData.brand || '').trim();
+        if (val.length > 255) return 'La marca no puede exceder 255 caracteres';
+        return '';
+    },
+    category: () => {
+        if (!formData.category) return 'La categoría es requerida';
+        return '';
+    },
+    presentation: () => {
+        const val = (formData.presentation || '').trim();
+        if (val.length > 255) return 'La presentación no puede exceder 255 caracteres';
+        return '';
+    },
+    unidad: () => {
+        if (!formData.unidad) return 'La unidad es requerida';
+        return '';
+    },
+    description: () => {
+        const val = (formData.description || '').trim();
+        if (val.length > 2000) return 'La descripción no puede exceder 2000 caracteres';
+        return '';
+    },
+    image: () => validateImageFile(formData.image),
+    purchase_price: () => {
+        if (formData.purchase_price === null || formData.purchase_price === '' || formData.purchase_price <= 0) {
+            return 'El precio de compra es requerido y debe ser mayor a 0';
+        }
+        if (formData.purchase_price > 1000000) return 'El precio de compra no puede exceder S/ 1,000,000';
+        if (formData.purchase_price < 0.01) return 'El precio de compra debe ser al menos S/ 0.01';
+        return '';
+    },
+    sale_price: () => {
+        if (formData.sale_price === null || formData.sale_price === '' || formData.sale_price <= 0) {
+            return 'El precio de venta es requerido y debe ser mayor a 0';
+        }
+        if (formData.sale_price > 1000000) return 'El precio de venta no puede exceder S/ 1,000,000';
+        if (formData.sale_price < 0.01) return 'El precio de venta debe ser al menos S/ 0.01';
+        if (formData.purchase_price && formData.sale_price <= formData.purchase_price) {
+            return 'El precio de venta debe ser mayor al precio de compra';
+        }
+        return '';
+    },
+    quantity: () => {
+        if (formData.quantity < 0) return 'La cantidad inicial no puede ser negativa';
+        if (formData.quantity > 1000000) return 'La cantidad inicial no puede exceder 1,000,000 unidades';
+        if (!isEdit.value) {
+            if (formData.quantity < (formData.min_stock ?? 0)) {
+                return 'La cantidad inicial debe ser al menos igual al stock mínimo';
+            }
+            if ((formData.max_stock ?? 0) > 0 && formData.quantity > formData.max_stock) {
+                return 'La cantidad inicial no puede exceder el stock máximo';
+            }
+        }
+        return '';
+    },
+    min_stock: () => {
+        if (formData.min_stock < 0) return 'El stock mínimo no puede ser negativo';
+        if (formData.min_stock > 100000) return 'El stock mínimo no puede exceder 100,000 unidades';
+        return '';
+    },
+    max_stock: () => {
+        if (formData.max_stock < 0) return 'El stock máximo no puede ser negativo';
+        if (formData.max_stock > 1000000) return 'El stock máximo no puede exceder 1,000,000 unidades';
+        return '';
+    },
+    stock_coherence: () => {
+        const min = formData.min_stock ?? 0;
+        const max = formData.max_stock ?? 0;
+        if (min >= 0 && max > 0 && max <= min) {
+            return 'El stock máximo debe ser mayor al stock mínimo';
+        }
+        return '';
+    },
+    default_warranty_months: () => {
+        const warranty = formData.default_warranty_months;
+        if (warranty !== null && warranty !== undefined && warranty !== '') {
+            if (!Number.isInteger(warranty) || warranty < 0) {
+                return 'La garantía debe ser un número entero igual o mayor a 0';
+            }
+            if (warranty > 120) return 'La garantía no puede exceder 120 meses';
+        }
+        return '';
+    }
+};
+
+// Re-valida reactivamente cada campo que ya muestre error cuando el usuario lo edita
+Object.keys(fieldValidators).forEach((field) => {
+    if (field === 'stock_coherence' || !(field in formData)) return;
+    watch(
+        () => formData[field],
+        () => {
+            if (errors[field]) {
+                errors[field] = fieldValidators[field]();
+            }
+        }
+    );
+});
 
 const validateForm = () => {
     clearErrors();
     let isValid = true;
 
-    // Validaciones básicas
-    if (!formData.name.trim()) {
-        errors.name = 'El nombre es requerido';
-        isValid = false;
-    }
-
-    if (!formData.sku.trim()) {
-        errors.sku = 'El SKU es requerido';
-        isValid = false;
-    }
-
-    if (!formData.barcode.trim()) {
-        errors.barcode = 'El código de barras es requerido';
-        isValid = false;
-    }
-
-    if (!formData.unidad) {
-        errors.unidad = 'La unidad es requerida';
-        isValid = false;
-    }
-
-    // Validaciones de precios con límites máximos
-    if (!formData.purchase_price || formData.purchase_price <= 0) {
-        errors.purchase_price = 'El precio de compra es requerido y debe ser mayor a 0';
-        isValid = false;
-    } else if (formData.purchase_price > 1000000) {
-        errors.purchase_price = 'El precio de compra no puede exceder S/ 1,000,000';
-        isValid = false;
-    } else if (formData.purchase_price < 0.01) {
-        errors.purchase_price = 'El precio de compra debe ser al menos S/ 0.01';
-        isValid = false;
-    }
-
-    if (!formData.sale_price || formData.sale_price <= 0) {
-        errors.sale_price = 'El precio de venta es requerido y debe ser mayor a 0';
-        isValid = false;
-    } else if (formData.sale_price > 1000000) {
-        errors.sale_price = 'El precio de venta no puede exceder S/ 1,000,000';
-        isValid = false;
-    } else if (formData.sale_price < 0.01) {
-        errors.sale_price = 'El precio de venta debe ser al menos S/ 0.01';
-        isValid = false;
-    }
-
-    // Validación de coherencia de precios
-    if (formData.purchase_price && formData.sale_price) {
-        if (formData.sale_price <= formData.purchase_price) {
-            errors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
+    Object.entries(fieldValidators).forEach(([field, validator]) => {
+        const msg = validator();
+        if (msg) {
+            errors[field] = msg;
             isValid = false;
         }
-        
-        // Alerta si el margen es muy bajo (menos del 10%)
+    });
+
+    if (formData.purchase_price && formData.sale_price && formData.sale_price > formData.purchase_price) {
         const margin = ((formData.sale_price - formData.purchase_price) / formData.purchase_price) * 100;
         if (margin < 10 && margin > 0) {
-            // Solo advertencia, no bloquea el formulario
             console.warn(`Margen de ganancia bajo: ${margin.toFixed(2)}%`);
-        }
-    }
-
-    // Validaciones de stock
-    if (formData.quantity < 0) {
-        errors.quantity = 'La cantidad inicial no puede ser negativa';
-        isValid = false;
-    } else if (formData.quantity > 1000000) {
-        errors.quantity = 'La cantidad inicial no puede exceder 1,000,000 unidades';
-        isValid = false;
-    }
-
-    if (formData.min_stock < 0) {
-        errors.min_stock = 'El stock mínimo no puede ser negativo';
-        isValid = false;
-    } else if (formData.min_stock > 100000) {
-        errors.min_stock = 'El stock mínimo no puede exceder 100,000 unidades';
-        isValid = false;
-    }
-
-    if (formData.max_stock < 0) {
-        errors.max_stock = 'El stock máximo no puede ser negativo';
-        isValid = false;
-    } else if (formData.max_stock > 1000000) {
-        errors.max_stock = 'El stock máximo no puede exceder 1,000,000 unidades';
-        isValid = false;
-    }
-
-    // Validación de coherencia de stock
-    if (formData.min_stock >= 0 && formData.max_stock >= 0) {
-        if (formData.max_stock > 0 && formData.max_stock <= formData.min_stock) {
-            errors.stock_coherence = 'El stock máximo debe ser mayor al stock mínimo';
-            isValid = false;
-        }
-    }
-
-    // Validación de cantidad inicial vs stock mínimo/máximo
-    if (!isEdit.value) { // Solo al crear nuevo producto
-        if (formData.quantity < formData.min_stock) {
-            errors.quantity = 'La cantidad inicial debe ser al menos igual al stock mínimo';
-            isValid = false;
-        }
-        if (formData.max_stock > 0 && formData.quantity > formData.max_stock) {
-            errors.quantity = 'La cantidad inicial no puede exceder el stock máximo';
-            isValid = false;
-        }
-    }
-
-    // Validación de meses de garantía (opcional: entero entre 0 y 120)
-    const warranty = formData.default_warranty_months;
-    if (warranty !== null && warranty !== undefined && warranty !== '') {
-        if (!Number.isInteger(warranty) || warranty < 0) {
-            errors.default_warranty_months = 'La garantía debe ser un número entero igual o mayor a 0';
-            isValid = false;
-        } else if (warranty > 120) {
-            errors.default_warranty_months = 'La garantía no puede exceder 120 meses';
-            isValid = false;
         }
     }
 
     return isValid;
 };
 
-// Validación en tiempo real para coherencia de precios
+// Validación en tiempo real para coherencia de precios y stock
 watchEffect(() => {
-    if (formData.purchase_price && formData.sale_price) {
-        if (formData.sale_price > 0 && formData.purchase_price > 0) {
-            if (formData.sale_price <= formData.purchase_price) {
-                errors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
-            } else if (errors.sale_price === 'El precio de venta debe ser mayor al precio de compra') {
-                errors.sale_price = '';
-            }
+    if (formData.purchase_price && formData.sale_price && formData.sale_price > 0 && formData.purchase_price > 0) {
+        if (formData.sale_price <= formData.purchase_price) {
+            errors.sale_price = 'El precio de venta debe ser mayor al precio de compra';
+        } else if (errors.sale_price === 'El precio de venta debe ser mayor al precio de compra') {
+            errors.sale_price = '';
         }
     }
 });
 
-// Validación en tiempo real para coherencia de stock
 watchEffect(() => {
-    if (formData.min_stock >= 0 && formData.max_stock >= 0) {
-        if (formData.max_stock > 0 && formData.max_stock <= formData.min_stock) {
-            errors.stock_coherence = 'El stock máximo debe ser mayor al stock mínimo';
-        } else {
-            errors.stock_coherence = '';
-        }
+    const min = formData.min_stock ?? 0;
+    const max = formData.max_stock ?? 0;
+    if (min >= 0 && max > 0 && max <= min) {
+        errors.stock_coherence = 'El stock máximo debe ser mayor al stock mínimo';
+    } else {
+        errors.stock_coherence = '';
+    }
+    if (!isEdit.value && errors.quantity) {
+        errors.quantity = fieldValidators.quantity();
     }
 });
 
@@ -395,10 +445,24 @@ const stockCoherenceStatus = computed(() => {
 
 const handleSubmit = () => {
     if (validateForm()) {
-        const submitData = { ...formData };
+        const submitData = {
+            ...formData,
+            name: (formData.name || '').trim(),
+            sku: (formData.sku || '').trim(),
+            barcode: (formData.barcode || '').trim(),
+            brand: (formData.brand || '').trim(),
+            presentation: (formData.presentation || '').trim(),
+            description: (formData.description || '').trim(),
+            default_warranty_months: formData.default_warranty_months ?? 0,
+            quantity: formData.quantity ?? 0,
+            min_stock: formData.min_stock ?? 0,
+            max_stock: formData.max_stock ?? 0
+        };
 
-        // Si se deja vacío, enviar 0 (el backend lo trata como sin garantía)
-        submitData.default_warranty_months = submitData.default_warranty_months ?? 0;
+        // No enviar `image` si no se seleccionó archivo (evita serializar "null" en multipart/form-data)
+        if (!submitData.image) {
+            delete submitData.image;
+        }
 
         emit('submit', submitData);
     }
@@ -435,25 +499,28 @@ const handleSubmit = () => {
                     <!-- Fila 2: Código de barras y Marca -->
                     <div class="form-row">
                         <div class="form-field">
-                            <label for="barcode" class="field-label">Código de barras *</label>
-                            <InputText id="barcode" v-model="formData.barcode" :class="{ 'p-invalid': errors.barcode }" placeholder="Código de barras" class="compact-input" />
+                            <label for="barcode" class="field-label">Código de barras</label>
+                            <InputText id="barcode" v-model="formData.barcode" :class="{ 'p-invalid': errors.barcode }" placeholder="Código de barras (opcional)" class="compact-input" />
                             <small v-if="errors.barcode" class="p-error">{{ errors.barcode }}</small>
                         </div>
                         <div class="form-field">
                             <label for="brand" class="field-label">Marca</label>
-                            <InputText id="brand" v-model="formData.brand" placeholder="Marca del producto" class="compact-input" />
+                            <InputText id="brand" v-model="formData.brand" :class="{ 'p-invalid': errors.brand }" placeholder="Marca del producto (opcional)" class="compact-input" />
+                            <small v-if="errors.brand" class="p-error">{{ errors.brand }}</small>
                         </div>
                     </div>
 
                     <!-- Fila 3: Categoría y Presentación -->
                     <div class="form-row">
                         <div class="form-field">
-                            <label for="category" class="field-label">Categoría</label>
-                            <Select id="category" v-model="formData.category" :options="categoriesOptions" option-label="label" option-value="value" placeholder="Categoría del producto" class="compact-input" />
+                            <label for="category" class="field-label">Categoría *</label>
+                            <Select id="category" v-model="formData.category" :options="categoriesOptions" option-label="label" option-value="value" :class="{ 'p-invalid': errors.category }" placeholder="Selecciona categoría" class="compact-input" />
+                            <small v-if="errors.category" class="p-error">{{ errors.category }}</small>
                         </div>
                         <div class="form-field">
                             <label for="presentation" class="field-label">Presentación</label>
-                            <InputText id="presentation" v-model="formData.presentation" placeholder="Presentación del producto" class="compact-input" />
+                            <InputText id="presentation" v-model="formData.presentation" :class="{ 'p-invalid': errors.presentation }" placeholder="Presentación (opcional)" class="compact-input" />
+                            <small v-if="errors.presentation" class="p-error">{{ errors.presentation }}</small>
                         </div>
                     </div>
 
@@ -466,7 +533,8 @@ const handleSubmit = () => {
                         </div>
                         <div class="form-field">
                             <label for="description" class="field-label">Descripción</label>
-                            <InputText id="description" v-model="formData.description" placeholder="Descripción del producto" class="compact-input" />
+                            <InputText id="description" v-model="formData.description" :class="{ 'p-invalid': errors.description }" placeholder="Descripción (opcional)" class="compact-input" />
+                            <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
                         </div>
                     </div>
 
@@ -505,8 +573,9 @@ const handleSubmit = () => {
                     <div class="form-row image-upload-row">
                         <div class="form-field image-field">
                             <label class="field-label">Seleccionar Imagen</label>
-                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept="image/*" :max-file-size="5000000" class="compact-upload" @select="onImageSelect" @clear="onImageClear" />
-                            <small class="upload-hint">Formatos: JPG, PNG, GIF. Máximo 5MB</small>
+                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" :max-file-size="5000000" class="compact-upload" @select="onImageSelect" @clear="onImageClear" />
+                            <small v-if="errors.image" class="p-error">{{ errors.image }}</small>
+                            <small v-else class="upload-hint">Formatos: JPG, PNG, WEBP. Máximo 5MB (opcional)</small>
                         </div>
                         <div v-if="imagePreview" class="form-field image-preview-field">
                             <label class="field-label">Vista previa</label>
