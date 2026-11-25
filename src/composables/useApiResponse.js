@@ -30,6 +30,11 @@ function filterDatabaseError(message) {
         return 'Error al procesar la información. Por favor intenta nuevamente';
     }
     
+    // Detectar claves crudas de Laravel (ej. validation.uploaded) o errores técnicos
+    if (/^validation\.[a-z0-9_.-]+$/i.test(message.trim()) || msg.includes('failed to upload')) {
+        return 'Uno de los datos o archivos enviados no es válido. Revisa el formulario e intenta nuevamente.';
+    }
+
     // Detectar errores de validación largos y técnicos
     if (message.length > 200 && (msg.includes('error:') || msg.includes('detail:'))) {
         return 'Error de validación. Por favor revisa los datos ingresados';
@@ -51,8 +56,7 @@ export function processResponse(response) {
         }
     }
     if (response && response.validationErrors && Array.isArray(response.validationErrors)) {
-        console.log(response.validationErrors);
-        validationErrors = response.validationErrors.map((err) => (typeof err === 'string' ? err.toUpperCase() : err));
+        validationErrors = response.validationErrors;
     }
 
     if (!response || typeof response !== 'object') {

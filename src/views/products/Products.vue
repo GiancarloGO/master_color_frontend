@@ -1,5 +1,6 @@
 <script setup>
 import { useProductsStore } from '@/stores/products';
+import { humanizeErrorMessage } from '@/utils/friendlyErrors';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, ref } from 'vue';
 import ProductForm from './ProductForm.vue';
@@ -96,27 +97,26 @@ async function handleSaveProduct(productData) {
         await productsStore.fetchProducts();
         hideDialog();
     } catch (error) {
-        if (Object.keys(productsStore.fieldErrors).length) {
+        const friendlyFieldMsgs = Object.values(productsStore.fieldErrors || {}).filter(Boolean);
+        if (friendlyFieldMsgs.length === 1) {
             toast.add({
-                severity: 'error',
-                summary: 'Datos inválidos',
-                detail: Object.values(productsStore.fieldErrors).join(' '),
-                life: 6000
+                severity: 'warn',
+                summary: 'Revisa el formulario',
+                detail: friendlyFieldMsgs[0],
+                life: 5000
             });
-        } else if (productsStore.validationErrors?.length) {
-            for (let i = 0; i < productsStore.validationErrors.length; i++) {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: productsStore.validationErrors[i],
-                    life: 5000
-                });
-            }
+        } else if (friendlyFieldMsgs.length > 1) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Algunos datos necesitan revisión',
+                detail: `Hay ${friendlyFieldMsgs.length} campos por corregir. Revisa los mensajes en rojo en el formulario.`,
+                life: 5500
+            });
         } else {
             toast.add({
                 severity: 'error',
-                summary: 'Error',
-                detail: productsStore.message || 'Ha ocurrido un error inesperado',
+                summary: 'No se pudo guardar el producto',
+                detail: humanizeErrorMessage(productsStore.message, 'Ocurrió un inconveniente al guardar. Verifica los datos e intenta nuevamente.'),
                 life: 5000
             });
         }
@@ -141,23 +141,12 @@ async function deleteProduct() {
             life: 4000
         });
     } catch (error) {
-        if (productsStore.validationErrors) {
-            for (let i = 0; i < productsStore.validationErrors.length; i++) {
-                toast.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: productsStore.validationErrors[i],
-                    life: 5000
-                });
-            }
-        } else {
-            toast.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: productsStore.message || 'No se pudo eliminar el producto',
-                life: 5000
-            });
-        }
+        toast.add({
+            severity: 'error',
+            summary: 'No se pudo eliminar',
+            detail: humanizeErrorMessage(productsStore.message, 'No pudimos eliminar el producto en este momento. Inténtalo nuevamente.'),
+            life: 5000
+        });
     }
 }
 

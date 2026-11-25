@@ -98,7 +98,7 @@ const errors = reactive({
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
 
 const selectedImage = ref(null);
 const imagePreview = ref(null);
@@ -117,10 +117,10 @@ const validateImageFile = (file) => {
     const validExt = ALLOWED_IMAGE_EXTS.some((ext) => name.endsWith(ext));
     const validMime = !file.type || ALLOWED_IMAGE_TYPES.includes(file.type);
     if (!validExt || !validMime) {
-        return 'La imagen debe ser de tipo: jpg, jpeg, png o webp';
+        return 'Elige una imagen en formato JPG, PNG o WEBP.';
     }
     if (file.size > MAX_IMAGE_SIZE) {
-        return 'La imagen no puede ser mayor a 5MB';
+        return 'La imagen es muy pesada. Debe pesar máximo 2 MB.';
     }
     return '';
 };
@@ -573,9 +573,9 @@ const handleSubmit = () => {
                     <div class="form-row image-upload-row">
                         <div class="form-field image-field">
                             <label class="field-label">Seleccionar Imagen</label>
-                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" :max-file-size="5000000" class="compact-upload" @select="onImageSelect" @clear="onImageClear" />
+                            <FileUpload mode="basic" :choose-label="selectedImage ? 'Cambiar imagen' : 'Seleccionar imagen'" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="compact-upload" @select="onImageSelect" @clear="onImageClear" />
                             <small v-if="errors.image" class="p-error">{{ errors.image }}</small>
-                            <small v-else class="upload-hint">Formatos: JPG, PNG, WEBP. Máximo 5MB (opcional)</small>
+                            <small v-else class="upload-hint">Formatos: JPG, PNG, WEBP. Máximo 2MB (opcional)</small>
                         </div>
                         <div v-if="imagePreview" class="form-field image-preview-field">
                             <label class="field-label">Vista previa</label>
