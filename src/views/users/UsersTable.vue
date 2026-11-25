@@ -2,6 +2,7 @@
 import { useAuthStore } from '@/stores/auth';
 import { useRolesStore } from '@/stores/roles';
 import { useUsersStore } from '@/stores/users';
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { FilterMatchMode } from '@primevue/core/api';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
@@ -324,6 +325,15 @@ const closePasswordDialog = () => {
             <Column field="is_active" header="Estado" :sortable="true" style="min-width: 8rem">
                 <template #body="{ data }">
                     <Tag :value="getStatusLabel(data.is_active)" :severity="getStatusSeverity(data.is_active)" class="standard-tag" />
+                </template>
+            </Column>
+
+            <Column field="created_at" header="Fecha de registro" :sortable="true" style="min-width: 10rem">
+                <template #body="{ data }">
+                    <div class="flex flex-column">
+                        <span>{{ formatRegistrationDate(data.created_at) }}</span>
+                        <small v-if="data.created_at" class="text-500">{{ formatRegistrationTime(data.created_at) }}</small>
+                    </div>
                 </template>
             </Column>
 

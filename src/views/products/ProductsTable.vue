@@ -1,4 +1,5 @@
 <script setup>
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { FilterMatchMode } from '@primevue/core/api';
 import { ref } from 'vue';
 
@@ -73,6 +74,14 @@ const deleteProduct = (product) => {
             </template>
         </Column>
         <Column field="user_name" header="Usuario" />
+        <Column field="created_at" header="Fecha de registro" sortable style="min-width: 140px">
+            <template #body="{ data }">
+                <div class="flex flex-col">
+                    <span>{{ formatRegistrationDate(data.created_at) }}</span>
+                    <small v-if="data.created_at" class="text-surface-500">{{ formatRegistrationTime(data.created_at) }}</small>
+                </div>
+            </template>
+        </Column>
         <Column header="Acciones" style="width: 120px">
             <template #body="{ data }">
                 <Button icon="pi pi-pencil" class="p-button-text p-button-sm edit-btn" @click="$emit('edit', data)" />

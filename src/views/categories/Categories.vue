@@ -1,5 +1,6 @@
 <script setup>
 import { useCategoriesStore } from '@/stores/categories';
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, reactive, ref } from 'vue';
 
@@ -136,6 +137,14 @@ onMounted(async () => {
                 <Column field="active" header="Estado" sortable>
                     <template #body="{ data }">
                         <Tag :value="data.active ? 'Activa' : 'Inactiva'" :severity="data.active ? 'success' : 'secondary'" />
+                    </template>
+                </Column>
+                <Column field="created_at" header="Fecha de registro" sortable style="min-width: 140px">
+                    <template #body="{ data }">
+                        <div class="flex flex-col">
+                            <span>{{ formatRegistrationDate(data.created_at) }}</span>
+                            <small v-if="data.created_at" class="text-surface-500">{{ formatRegistrationTime(data.created_at) }}</small>
+                        </div>
                     </template>
                 </Column>
                 <Column header="Acciones" :exportable="false" style="width: 8rem">
