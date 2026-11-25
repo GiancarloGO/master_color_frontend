@@ -195,7 +195,7 @@ const getDialogSubtitle = () => {
         devolucion: 'salida'
     };
 
-    return `Se creará un movimiento de ${typeLabels[inverseType]} para reestablecer el stock`;
+    return `Se registrará una ${typeLabels[inverseType]} automática para restablecer el stock`;
 };
 
 const getInverseTypeLabel = () => {
@@ -222,9 +222,9 @@ const getCancellationMessage = () => {
         entrada: 'entrada de productos'
     };
 
-    const actionText = typeLabels[inverseType] || 'movimiento';
+    const actionText = typeLabels[inverseType] || 'ajuste';
 
-    return `Se va a crear un movimiento de ${actionText} con la finalidad de reestablecer el stock y cancelar el movimiento número ${movement.id}`;
+    return `Se anulará el movimiento #${movement.id} y se generará una ${actionText} para devolver el inventario a su estado anterior.`;
 };
 
 const isAlreadyCancelled = (movement) => {
@@ -379,13 +379,13 @@ onMounted(() => {
                         <p class="warning-text">
                             <strong>{{ getCancellationMessage() }}</strong>
                         </p>
-                        <p class="warning-subtext">El backend se encargará automáticamente de crear el movimiento inverso y actualizar el inventario.</p>
+                        <p class="warning-subtext">El sistema se encargará automáticamente de revertir este movimiento y actualizar las existencias.</p>
                     </div>
                 </div>
 
                 <!-- Readonly products list -->
                 <div class="products-readonly">
-                    <h4 class="products-title">Productos que serán reestablecidos automáticamente:</h4>
+                    <h4 class="products-title">Productos cuyo stock será actualizado:</h4>
                     <div class="products-list">
                         <div v-for="(detail, index) in selectedMovement?.details || []" :key="index" class="product-item-readonly">
                             <div class="product-info">
@@ -404,16 +404,16 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- Info about backend process -->
+                <!-- Info about automatic process -->
                 <div class="info-box">
                     <i class="pi pi-info-circle"></i>
                     <div>
-                        <p><strong>Proceso automático del sistema:</strong></p>
+                        <p><strong>¿Qué sucederá al confirmar?</strong></p>
                         <ul>
-                            <li>✅ El movimiento original será marcado como cancelado</li>
-                            <li>✅ Se creará automáticamente un movimiento de {{ getInverseTypeLabel() }}</li>
-                            <li>✅ El inventario se actualizará en una transacción atómica</li>
-                            <li>✅ Se mantendrá la trazabilidad completa</li>
+                            <li>✅ El movimiento original quedará registrado como anulado</li>
+                            <li>✅ Se creará automáticamente un movimiento compensatorio de {{ getInverseTypeLabel() }}</li>
+                            <li>✅ El inventario se actualizará de forma segura al instante</li>
+                            <li>✅ Se conservará el historial completo para futuras consultas</li>
                         </ul>
                     </div>
                 </div>
@@ -421,7 +421,7 @@ onMounted(() => {
                 <!-- Final confirmation -->
                 <div class="confirmation-box">
                     <p><strong>¿Confirmas que deseas cancelar este movimiento?</strong></p>
-                    <p>Esta acción no se puede deshacer, pero mantendrá la trazabilidad completa.</p>
+                    <p>Esta acción no se puede deshacer, pero conservará el registro completo en el historial.</p>
                 </div>
             </div>
 
