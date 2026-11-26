@@ -1,5 +1,6 @@
 <script setup>
 import { useClientsStore } from '@/stores/clients';
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { FilterMatchMode } from '@primevue/core/api';
 import { ref, computed } from 'vue';
 
@@ -234,19 +235,21 @@ const getMainAddress = (client) => {
             </Column>
 
             <!-- Fecha de registro -->
-            <Column field="created_at" header="Registro" :sortable="true" style="width: 120px">
+            <Column field="created_at" header="Fecha de registro" :sortable="true" style="min-width: 140px">
                 <template #body="{ data }">
-                    <div class="date-info">
-                        <span class="date-value">{{ formatDate(data.created_at) }}</span>
+                    <div class="flex flex-col">
+                        <span>{{ formatRegistrationDate(data.created_at) }}</span>
+                        <small v-if="data.created_at" class="text-surface-500">{{ formatRegistrationTime(data.created_at) }}</small>
                     </div>
                 </template>
             </Column>
 
             <!-- Fecha de eliminación (solo para vista de eliminados) -->
-            <Column v-if="showDeleted" field="deleted_at" header="Eliminado" :sortable="true" style="width: 150px">
+            <Column v-if="showDeleted" field="deleted_at" header="Eliminado" :sortable="true" style="min-width: 140px">
                 <template #body="{ data }">
-                    <div class="date-info">
-                        <span class="date-value">{{ formatDateTime(data.deleted_at) }}</span>
+                    <div class="flex flex-col">
+                        <span>{{ formatRegistrationDate(data.deleted_at) }}</span>
+                        <small v-if="data.deleted_at" class="text-surface-500">{{ formatRegistrationTime(data.deleted_at) }}</small>
                     </div>
                 </template>
             </Column>

@@ -1,5 +1,6 @@
 <script setup>
 import { useOrdersStore } from '@/stores/orders';
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { useToast } from 'primevue/usetoast';
 import { computed, onMounted, reactive, ref } from 'vue';
 
@@ -195,9 +196,12 @@ onMounted(() => {
             </Column>
 
             <!-- Fecha de compra -->
-            <Column field="order_created_at" header="Fecha de compra" sortable style="width: 9rem; text-align: center">
+            <Column field="order_created_at" header="Fecha de compra" sortable style="width: 10rem; text-align: center">
                 <template #body="{ data }">
-                    {{ new Date(data.order_created_at).toLocaleDateString() }}
+                    <div class="flex flex-col items-center">
+                        <span>{{ formatRegistrationDate(data.order_created_at) }}</span>
+                        <small v-if="data.order_created_at" class="text-surface-500">{{ formatRegistrationTime(data.order_created_at) }}</small>
+                    </div>
                 </template>
             </Column>
 

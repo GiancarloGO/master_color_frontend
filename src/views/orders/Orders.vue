@@ -3,6 +3,7 @@ import { ordersApi } from '@/api/index';
 import { useCart } from '@/composables/useCart';
 import { useAddressesStore } from '@/stores/addresses';
 import { useOrdersStore } from '@/stores/orders';
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { useToast } from 'primevue/usetoast';
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -871,7 +872,10 @@ onBeforeUnmount(() => {
 
                     <Column field="created_at" header="Fecha" style="min-width: 150px">
                         <template #body="slotProps">
-                            {{ formatDate(slotProps.data.created_at) }}
+                            <div class="flex flex-col">
+                                <span>{{ formatRegistrationDate(slotProps.data.created_at) }}</span>
+                                <small v-if="slotProps.data.created_at" class="text-surface-500">{{ formatRegistrationTime(slotProps.data.created_at) }}</small>
+                            </div>
                         </template>
                     </Column>
 

@@ -1,4 +1,5 @@
 <script setup>
+import { formatRegistrationDate, formatRegistrationTime } from '@/utils/dateFormat';
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
@@ -74,24 +75,9 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
-const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-    });
-};
+const formatDate = (dateString) => formatRegistrationDate(dateString);
 
-const formatTime = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
+const formatTime = (dateString) => formatRegistrationTime(dateString);
 
 const isCancellationMovement = (movement) => {
     // Verificar por el campo canceled_at (forma principal)

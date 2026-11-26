@@ -330,9 +330,9 @@ const closePasswordDialog = () => {
 
             <Column field="created_at" header="Fecha de registro" :sortable="true" style="min-width: 10rem">
                 <template #body="{ data }">
-                    <div class="flex flex-column">
+                    <div class="flex flex-col">
                         <span>{{ formatRegistrationDate(data.created_at) }}</span>
-                        <small v-if="data.created_at" class="text-500">{{ formatRegistrationTime(data.created_at) }}</small>
+                        <small v-if="data.created_at" class="text-surface-500">{{ formatRegistrationTime(data.created_at) }}</small>
                     </div>
                 </template>
             </Column>
